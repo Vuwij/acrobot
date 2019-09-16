@@ -26,6 +26,7 @@ codegen/
 
 # Simulink cache files
 *.slxc
+*.r2017a
 
 # Octave session info
 octave-workspace
