@@ -33,3 +33,10 @@ octave-workspace
 
 # Temporary files
 *~
+
+# Generated files
+reference/Psi1_func.m
+reference/Psi2_func.m
+reference/acrobot_syms.mat
+reference/h_extra_vars.mat
+reference/h_vars.mat
