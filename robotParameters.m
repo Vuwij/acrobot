@@ -22,8 +22,8 @@ plane_y = 3;
 contact_point_radius = 1e-4;
 
 %% Foot parameters
-foot_radius = 0.001;
-foot_length = 0.05;
+foot_radius = 0.0075;
+foot_length = 0.008;
 
 %% Leg parameters
 leg_radius = 0.75;
@@ -32,6 +32,8 @@ leg_length = 20;
 %% Torso parameters
 torso_radius = 0.03;
 torso_length = 0.03;
+foot_z = 0;
+foot_offset = 0;
 init_height = foot_z + leg_length + torso_radius/2 + height_plane/2;
 
 
