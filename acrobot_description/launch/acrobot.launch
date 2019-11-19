@@ -1,6 +1,8 @@
 <launch>
+    <arg name="model_name" default="acrobot" />
+
     <param name="use_gui" value="true"/>
-    <param name="robot_description" command="xacro --inorder '$(find acrobot_description)/models/acrobot.xacro'" />
+    <param name="robot_description" command="xacro --inorder '$(find acrobot_description)/models/$(arg model_name).xacro'" />
 
     <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />

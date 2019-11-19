@@ -7,7 +7,7 @@ TO RUN THE CODE:
 	- existence_test < 0
 	- 0 < stability_test < 1
 - Will produce plots of:
-	- Virutal constraint in Q space
+	- Virtual constraint in Q space
 	- Mass and Potential of reduced dynamics with respect to parameterizing variable theta
 	- Check for regularity of VHC curve (should never cross 0)
 	- q2_{desired} - q2 over the simulation time 

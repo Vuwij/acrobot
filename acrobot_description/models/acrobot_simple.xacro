@@ -1,0 +1,70 @@
+<robot name="acrobot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <xacro:property name="JOINT_FRICTION" value="0.05"/>
+    <xacro:property name="JOINT_DAMPING" value="0.02"/>
+    <xacro:property name="MOTOR_TORQUE" value="0.22"/>
+    <xacro:property name="MOTOR_VELOCITY" value="1.8"/>
+    <xacro:property name="PI" value="3.1415928"/>
+
+    <xacro:property name="LEG_MASS"     value="3.2"/>
+    <xacro:property name="LENGTH"       value="0.4"/>
+    <xacro:property name="WIDTH"        value="0.03"/>
+    <xacro:property name="HEIGHT"       value="0.03"/>
+
+
+    <link name="base_link" />
+
+    <link name="leg1">
+        <inertial>
+            <mass value="${LEG_MASS}"/>
+            <origin rpy="0 0 0" xyz="${LENGTH/2} 0 0"/>
+            <inertia ixx="${1/12*LEG_MASS * (WIDTH*WIDTH + HEIGHT*HEIGHT)}" ixy="0.0" ixz="0.0"
+                     iyy="${1/12*LEG_MASS * (LENGTH*LENGTH + WIDTH*WIDTH)}" iyz="0.0"
+                     izz="${1/12*LEG_MASS * (LENGTH*LENGTH + HEIGHT*HEIGHT)}"/>
+        </inertial>
+        <visual name="visual">
+            <origin rpy="0 0 0" xyz="${LENGTH/2} 0 0"/>
+            <geometry>
+                <box size="${LENGTH} ${WIDTH} ${HEIGHT}" />
+            </geometry>
+            <material name="blue">
+                <color rgba="0 0 0.8 1"/>
+            </material>
+        </visual>
+    </link>
+
+    <link name="leg2">
+        <inertial>
+            <mass value="${LEG_MASS}"/>
+            <origin rpy="0 0 0" xyz="${-LENGTH/2} 0 0"/>
+            <inertia ixx="${1/12*LEG_MASS * (WIDTH*WIDTH + HEIGHT*HEIGHT)}" ixy="0.0" ixz="0.0"
+                     iyy="${1/12*LEG_MASS * (LENGTH*LENGTH + WIDTH*WIDTH)}" iyz="0.0"
+                     izz="${1/12*LEG_MASS * (LENGTH*LENGTH + HEIGHT*HEIGHT)}"/>
+        </inertial>
+        <visual name="visual">
+            <origin rpy="0 0 0" xyz="${-LENGTH/2} 0 0"/>
+            <geometry>
+                <box size="${LENGTH} ${WIDTH} ${HEIGHT}" />
+            </geometry>
+            <material name="red">
+                <color rgba="0.8 0 0 1"/>
+            </material>
+        </visual>
+    </link>
+
+    <joint name="base_link" type="fixed">
+        <parent link="base_link"/>
+        <child link="leg1"/>
+        <origin rpy="0 ${PI/2} 0" xyz="0 0 0.354"/>
+    </joint>
+
+    <joint name="joint" type="revolute">
+        <parent link="leg1"/>
+        <child link="leg2"/>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <axis xyz="0 1 0"/>
+        <dynamics damping="${JOINT_DAMPING}" friction="${JOINT_FRICTION}" />
+        <limit effort="${MOTOR_TORQUE}" lower="-${PI*98/100}" upper="${PI*98/100}" velocity="${MOTOR_VELOCITY}"/>
+    </joint>
+
+</robot>

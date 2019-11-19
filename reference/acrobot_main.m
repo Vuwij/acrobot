@@ -1,7 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Ver. Sept 21, 2019                                                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-
 %% Main file for computing all necessary EOM, controller, and impact map expressions
 clc; clear; 
 close all;
@@ -98,8 +97,7 @@ while (isempty(te) ~= 1)&&((tmax-te(size(te,1)))>t_step)
     
     %Restart simulation with new initial conditions
     [t_new,x_new,te,xe]=ode45(@(t_new,x_new)acrobot(t_new,x_new,l,m,B,calc_D,calc_b1, beta, Kp,Kd,g_func),tspan_new,x0_new,options);
-
-
+    
     %Save new values to vector
     step_time = size(t_new,1)-1; %Time for current step
     xtot(t_stop_index+1:t_stop_index+step_time,:)=x_new(1:end-1,:);

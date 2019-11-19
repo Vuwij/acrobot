@@ -9,9 +9,7 @@ clc; clear;
 %%Setup
 syms q1 q2 q1dot q2dot q1d_dot q2d_dot 
 syms l1 lc1 l2 lc2 
-syms m1 m2  g 
-syms phi %phi = slope of ground; alpha = arc of foot
-syms z1 z2 %coordinates of stance leg reference frame
+syms m1 m2 g 
 
 q = [q1; q2];
 qdot = [q1dot; q2dot];
