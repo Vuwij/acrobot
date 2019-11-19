@@ -1,23 +1,31 @@
 classdef acrobot_anim < acrobot.acrobot
     
     properties
-        q = zeros(2,1); % Current q
         x = zeros(4,1); % Current x state space
         gamma = 0.05;
         g = 9.81;
         pheel = [0; 0];      % Position of the heel
-        show_plot = 0;
         
+        
+        % Plots
+        show_plot = 0;
         q_field_plotted = 0;
+        tau = 0;
+        e = 0;
+        
+        tau_limit = 50;
     end
     
     methods
         function obj = acrobot_anim()
             obj = obj@acrobot.acrobot();
         
-            %Initial conditions
-            obj.q = ppval(fnder(obj.sigma,1),0) * 7.2295;                                   % Values when on the limit cycle
-            obj.x = [(pi + obj.beta)/2 - 0.05; pi - obj.beta; obj.q(1) - 1; obj.q(2) + 1];  % Currently set to start off the configuration manifold
+            %Initial conditions (Already moving)
+%             q = ppval(fnder(obj.sigma,1),0) * 7.2295;                               % Values when on the limit cycle
+%             obj.x = [(pi + obj.beta)/2 - 0.05; pi - obj.beta; q(1) - 1; q(2) + 1];  % Currently set to start off the configuration manifold
+
+            % Initial conditions (standing)
+            obj.x = [pi/2; 0; 0; -1];
         end
         
         function Kp = Kp(obj)
@@ -62,19 +70,16 @@ classdef acrobot_anim < acrobot.acrobot
             g_prime_val = ppval(g_prime,q1);
             g_d_prime_val = ppval(g_d_prime,q1);
 
-            e = q2 - g_val;
+            obj.e = q2 - g_val;
             e_dot = q2dot - g_prime_val*q1dot;
 
             tmp1 = inv([-g_prime_val 1] * inv(D) * obj.B);
-            tmp2 = (-obj.Kp * e - obj.Kd * e_dot + g_d_prime_val * q1dot ^ 2 + [-g_prime_val 1] * inv(D) * (-b));
+            tmp2 = (-obj.Kp * obj.e - obj.Kd * e_dot + g_d_prime_val * q1dot ^ 2 + [-g_prime_val 1] * inv(D) * (-b));
+            
+            tau_new = tmp1 * tmp2;
+            obj.tau = max(min(obj.tau_limit, tau_new), -obj.tau_limit);
 
-            tau_star = tmp1 * tmp2;
-
-            tau = tau_star;
-            % tau = 0; %no controller
-
-            qddot = D \ (obj.B * tau) + D \ b; 
-
+            qddot = D \ (obj.B * obj.tau) + D \ b; 
 
             dxdt = [qdot; qddot];
         end
@@ -119,12 +124,13 @@ classdef acrobot_anim < acrobot.acrobot
             rH = obj.leg_length * [cos(q1); sin(q1)];                       % Hip position
             step_diff = rH + obj.leg_length * [cos(q1+q2); sin(q1+q2)];     % Swing foot position
             obj.pheel = obj.pheel + step_diff;
+            obj.pheel(2) = 0;
         end
         
         function show(obj, t)
 
             % Plot Robot
-            subplot(1,2,1)
+            subplot(2,2,1)
             
             hold off;
             Xslope_plot = linspace(-10,10,100);
@@ -161,14 +167,31 @@ classdef acrobot_anim < acrobot.acrobot
             r2.Color = 'black';
 
             % Plotting the subplot field
-            subplot(1,2,2);
+            subplot(2,2,2);
             if ~obj.q_field_plotted
                 obj.plotQField();
                 hold on;
                 obj.q_field_plotted = 1;
+                ylabel('q2');
+                xlabel('q1');
             end
             
             plot(q1(1), q2(1), '.', 'markersize',3,'color','m');
+            
+            % Plotting tau
+            subplot(2,2,3);
+            hold on;
+            plot(t, obj.tau, '.', 'markersize',3,'color','m');
+            ylabel('Tau N*m');
+            xlabel('Time (s)');
+            
+            % Plotting error
+            subplot(2,2,4);
+            hold on;
+            plot(t, obj.e, '.', 'markersize',3,'color','m');
+            ylabel('Error');
+            xlabel('Time (s)');
+            
 %            text(-0.8,0.5,sprintf('time: %f', t)); % Display current time
             drawnow;
         end
