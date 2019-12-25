@@ -15,8 +15,12 @@ classdef acrobot < handle
         
         % Function Handles
         calc_D;
-        calc_De;
+        calc_C;
+        calc_P;
         calc_b;
+        calc_qddot;
+        
+        calc_De;
         calc_E;
         calc_dUde;
         
@@ -120,16 +124,13 @@ classdef acrobot < handle
             s_bar = s(s_start_truncate+1:end-s_end_truncate);
 
             theta_truncated = [r_bar, s_bar, 1 + t_bar];
-            q_truncated= [q_start(:,1:end-r1_truncate), q_mid(:,s_start_truncate+1:end-s_end_truncate), q_end(:,t0_truncate+1:end)];
+            q_truncated = [q_start(:,1:end-r1_truncate), q_mid(:,s_start_truncate+1:end-s_end_truncate), q_end(:,t0_truncate+1:end)];
 
             % The curve
             obj.sigma = spline(theta_truncated, [v q_truncated w]);
-            obj.theta_f = linspace(obj.theta_start,obj.theta_end,1000);
-            q_curve = ppval(obj.sigma,obj.theta_f);
+            obj.theta_f = linspace(theta_rough(1),theta_rough(end),800);
             
-            % The full curve
-            thetaf = linspace(theta_rough(1),theta_rough(end),800);
-            q_f = ppval(obj.sigma,thetaf);
+            q_f = ppval(obj.sigma,obj.theta_f);
             obj.g_func = spline(q_f(1,:),q_f(2,:)); %q2 as function of q1
             yy = linspace(q_f(1,1), q_f(1,end));
             zz = ppval(obj.g_func, yy);
@@ -146,7 +147,6 @@ classdef acrobot < handle
             plot(q_end(1,1), q_end(2, 1), '.','MarkerSize',10,'color','g');
 
             plot(q_rough(1,:), q_rough(2,:), '+', 'color', 'r');
-            plot(q_curve(1,:), q_curve(2,:), 'k');
             plot(yy, zz, '.');
 
             title('Plot of sigma(theta)')
@@ -161,7 +161,7 @@ classdef acrobot < handle
             
             syms q1 q2 q3 q4 real
             syms q1dot q2dot q1d_dot q2d_dot real
-            syms theta g
+            syms theta g real
             
             g = 9.81;
             
@@ -193,19 +193,16 @@ classdef acrobot < handle
             C = sym(zeros(length(q)));
             Q = sym(zeros(length(q),length(q),length(q)));
             for k = 1:size(q)
-              for j = 1:size(q)
-                for i = 1:size(q)
-                  Q(i,j,k) = 0.5*(diff(D(k,j),q(i)) + ...
-                         diff(D(k,i),q(j)) - ...
-                         diff(D(i,j),q(k)));
-                  C(k,j) = C(k,j) + simplify(Q(i,j,k)) * qdot(i);
+                for j = 1:size(q)
+                    for i = 1:size(q)
+                        Q(i,j,k) = 0.5*(diff(D(k,j),q(i)) + diff(D(k,i),q(j)) - diff(D(i,j),q(k)));
+                        C(k,j) = C(k,j) + simplify(Q(i,j,k)) * qdot(i);
+                    end
                 end
-              end
             end
 
 
             % Compute Psi1, Psi2 terms
-
             sigma_prime = sym('sigma_prime',[2 1]);
             sigma_d_prime = sym('sigma_d_prime',[2 1]);
 
@@ -354,9 +351,9 @@ classdef acrobot < handle
         function solveRoboticsEquation(obj)
             % Equations of Motion
             
-            syms q1 q2 q1dot q2dot q1ddot q2ddot 
-            syms l1 lc1 l2 lc2 
-            syms m1 m2 g 
+            syms q1 q2 q1dot q2dot q1ddot q2ddot real
+            syms l1 lc1 l2 lc2 real
+            syms m1 m2 g real
 
             q = [q1; q2];
             qdot = [q1dot; q2dot];
@@ -383,8 +380,19 @@ classdef acrobot < handle
             ddtdLdqdot = jacobian(dLdqdot,q) * qdot + jacobian(dLdqdot,qdot) * qddot;
             Tau = simplify(ddtdLdqdot - dLdq);
 
-            % Find the D Matrix
+            % Find the C, D, P Matrix
+            syms C D P real
             [D, b] = equationsToMatrix(Tau, [q1ddot; q2ddot]);
+            P = -subs(b, [q1dot, q2dot], [0, 0]);
+            C = sym(zeros(length(q)));
+            for k = 1:size(q)
+                for j = 1:size(q)
+                    for i = 1:size(q)
+                        Qijk = 0.5*(diff(D(k,j),q(i)) + diff(D(k,i),q(j)) - diff(D(i,j),q(k)));
+                        C(k,j) = C(k,j) + simplify(Qijk) * qdot(i);
+                    end
+                end
+            end
 
             % Impact Map
             % Solving for EOM and impact map following
@@ -392,7 +400,7 @@ classdef acrobot < handle
             % Based on the 3 link model on p. 67 and the paper "Asymptotically Stable
             % Walking for Biped Robots: Analysis via Systems with Impulse Effects"
 
-            syms q3 q4 q3dot q4dot q3ddot q4ddot
+            syms q3 q4 q3dot q4dot q3ddot q4ddot real
 
             qe = [q1; q2; q3; q4];
             qedot = [q1dot; q2dot; q3dot; q4dot];
@@ -429,8 +437,11 @@ classdef acrobot < handle
             dUde = simplify(jacobian(e,q));
             
             % Add the matlab functions
+            obj.calc_qddot = matlabFunction(simplify(inv(D) * [0; 1]));
             obj.calc_D = matlabFunction(D);
+            obj.calc_C = matlabFunction(C);
             obj.calc_b = matlabFunction(b);
+            obj.calc_P = matlabFunction(P);
             obj.calc_De = matlabFunction(De);
             obj.calc_E = matlabFunction(E);
             obj.calc_dUde = matlabFunction(dUde);

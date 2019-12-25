@@ -1,0 +1,4 @@
+[submodule "libraries/ContactLib"]
+	path = libraries/ContactLib
+	branch = R2019a
+	url = https://github.com/mathworks/Simscape-Multibody-Contact-Forces-Library
