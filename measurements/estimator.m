@@ -25,7 +25,7 @@ classdef estimator < handle
          count = readCount(obj.encoder);
          cycles = 9;
          count_per_revolution = abs(count) / cycles;
-         angle = count * count_per_revolution;
+         angle = count / count_per_revolution * 360;
          if (abs(angle) >= 360) 
             if (angle < 0) 
                 angle = angle + 360;
