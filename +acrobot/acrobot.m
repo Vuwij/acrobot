@@ -1,17 +1,12 @@
 classdef acrobot < handle
     
-    properties
-        % Mechanical Parameters
+    properties(Access = protected)
         robot = importrobot("acrobot_description/models/acrobot_simple.urdf");
-        leg_length = 0.4; % 0.348;
-        foot_radius = 0.0075;
         
-        % VHC Parameters
-        B = [0; 1];
-
-        beta = pi/4; % Angle between legs on impact
-        vwscale = 1;
-        kappa = 2.1;
+        % Convenience values
+        mass = zeros(2,1);
+        com = zeros(2,1);
+        inertia = zeros(2,1);
         
         % Function Handles
         calc_D;
@@ -24,18 +19,27 @@ classdef acrobot < handle
         calc_E;
         calc_dUde;
         
+        g_func;
+        
+        % VHC Parameters
+        B = [0; 1];
+        
         % Output curves properties
         delta_qsdot;
         sigma;
         theta_f;
         theta_start;
         theta_end;
-        g_func;
-        
-        % Convenience values
-        mass = zeros(2,1);
-        com = zeros(2,1);
-        inertia = zeros(2,1);
+    end
+    properties
+        % Mechanical Parameters
+        leg_length = 0.4; % 0.348;
+        foot_radius = 0.0075;
+
+        % Curve Parameters
+        beta = pi/4;
+        vwscale = 1;
+        kappa = 2.1;
     end
     
     methods

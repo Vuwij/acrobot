@@ -1,9 +1,15 @@
 classdef acrobot_control < acrobot.acrobot
     
-    properties
+    properties(Access = protected)
         x = zeros(4,1);     % Current x state space
-        g = 9.81;
         pheel = [0; 0];      % Position of the heel
+        
+        q_field_plotted = 0;
+        tau = 0;
+        e = 0;
+    end
+    properties
+        g = 9.81;
         
         % Controller parameters
         gamma = 0.06;
@@ -12,12 +18,8 @@ classdef acrobot_control < acrobot.acrobot
         K = 0.9;
         
         % Plots
-        show_plot = 0;
-        q_field_plotted = 0;
-        tau = 0;
-        e = 0;
-        
-        tau_limit = 5;
+        show_plot = 0;        
+        tau_limit = 10;
     end
     
     methods

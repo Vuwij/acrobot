@@ -17,6 +17,7 @@ while (t < tmax)
     dxdt = robot.step(t, robot.x);
     robot.x = robot.x + dxdt * tstep;
     
+    % Alternate foot
     if (robot.dist_to_floor(t,robot.x) < 0)
         robot.impact_foot(robot.x);
     end
