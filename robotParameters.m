@@ -23,3 +23,7 @@ plane_y = 3;
 %% Foot parameters
 foot_radius = 0.0075;
 line_depth_to_reference_frame = 0.05;
+
+
+%% Motor properties
+steps_per_rotation = 100;

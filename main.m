@@ -14,7 +14,8 @@ set(fig, 'Position',  [100, 100, 1500, 700]);
 while (t < tmax)
     
     % Make a step
-    dxdt = robot.step(t, robot.x);
+    tau = robot.getTau(robot.x);
+    dxdt = robot.step(robot.x, tau);
     robot.x = robot.x + dxdt * tstep;
     
     % Alternate foot

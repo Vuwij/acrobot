@@ -1,7 +1,6 @@
 classdef acrobot_control < acrobot.acrobot
     
     properties(Access = protected)
-        x = zeros(4,1);     % Current x state space
         pheel = [0; 0];      % Position of the heel
         
         q_field_plotted = 0;
@@ -10,6 +9,7 @@ classdef acrobot_control < acrobot.acrobot
     end
     properties
         g = 9.81;
+        x = zeros(4,1);     % Current x state space
         
         % Controller parameters
         gamma = 0.06;
@@ -18,7 +18,6 @@ classdef acrobot_control < acrobot.acrobot
         K = 0.9;
         
         % Plots
-        show_plot = 0;        
         tau_limit = 10;
     end
     
@@ -62,7 +61,21 @@ classdef acrobot_control < acrobot.acrobot
             end
         end
         
-        function dxdt = step(obj, ~, x)
+        function dxdt = step(obj, x, tau)
+            q = [x(1); x(2)];
+            qdot = [x(3); x(4)];
+            
+            % Robotics Equation Parameters
+            D = obj.calc_D(obj.leg_length, obj.com(1), obj.com(2), obj.mass(1), obj.mass(2),q(2));
+            C = obj.calc_C(obj.leg_length, obj.com(2), obj.mass(2), q(2), qdot(1), qdot(2));
+            P = obj.calc_P(obj.g, obj.leg_length, obj.com(1), obj.com(2), obj.mass(1), obj.mass(2), q(1), q(2));
+            
+            qddot_new = D \ (-C * qdot - P + tau); 
+
+            dxdt = [qdot; qddot_new];
+        end
+        
+        function tau = getTau(obj, x)
             q = [x(1); x(2)];
             qdot = [x(3); x(4)];
             
@@ -87,21 +100,12 @@ classdef acrobot_control < acrobot.acrobot
             qs_dot = qd_dot - qdot;
             qs_ddot = qd_ddot - qddot;
             
-%             a = qd_ddot - obj.L * qs_ddot;
-%             v = qd_dot - obj.L * qs_dot;
-%             r = qd - obj.L * qs;
-%             obj.tau = D * a + C * v + obj.K * r + P;
-%             obj.tau(1) = 0;
-            
             a = (obj.Kp * qs(2) + obj.Kd * qs_dot(2) + qs_ddot(2)); % Acceleration of q2
             obj.tau = C * qdot + [0; inv([-gfd(q(1)) 1] * inv(D) * obj.B) * a];
             obj.tau(1) = 0;
             
             obj.tau = max(min(obj.tau_limit, obj.tau), -obj.tau_limit);
-            
-            qddot_new = D \ (-C * qdot - P + obj.tau); 
-
-            dxdt = [qdot; qddot_new];
+            tau = obj.tau;
         end
         
         function impact_foot(obj, x)

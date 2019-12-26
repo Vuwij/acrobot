@@ -15,7 +15,7 @@ classdef acrobot_state_estimator < matlab.System
 
     % Pre-computed constants
     properties(Access = private)
-
+        
     end
 
     methods
@@ -32,7 +32,7 @@ classdef acrobot_state_estimator < matlab.System
             % Perform one-time calculations, such as computing constants
         end
 
-        function state = stepImpl(obj, gyro, acc)
+        function state = stepImpl(obj, gyro, acc, motor_step)
             % Implement algorithm. Calculate y as a function of input u and
             % discrete states.
             state = [0; 0; 0; 0];

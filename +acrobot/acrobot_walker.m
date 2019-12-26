@@ -36,11 +36,24 @@ classdef acrobot_walker < acrobot.acrobot_control & matlab.System
         function tau = stepImpl(obj,state)
             % Implement algorithm. Calculate y as a function of input u and
             % discrete states.
-            tau = 0;
+            tau = obj.getTau(state);
+            tau = tau(2);
         end
-
-        function resetImpl(obj)
-            % Initialize / reset discrete-state properties
+        
+        function s1 = getOutputSizeImpl(~)
+            s1 = 1;
+        end
+        
+        function d1 = getOutputDataTypeImpl(~)
+            d1 = 'double';
+        end
+        
+        function c1 = isOutputComplexImpl(~)
+            c1 = false;
+        end
+        
+        function c1 = isOutputFixedSizeImpl(~)
+            c1 = true;
         end
     end
 end

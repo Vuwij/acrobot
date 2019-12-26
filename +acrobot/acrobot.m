@@ -40,6 +40,9 @@ classdef acrobot < handle
         beta = pi/4;
         vwscale = 1;
         kappa = 2.1;
+        
+        % Debugging
+        show_plot = 0;
     end
     
     methods
@@ -60,7 +63,9 @@ classdef acrobot < handle
             obj.calcHolonomicCurve();
             
             % Tests
-            obj.testHolonomicCurve();
+            if obj.show_plot
+                obj.testHolonomicCurve();
+            end
         end
         
         function calcHolonomicCurve(obj)
@@ -140,24 +145,26 @@ classdef acrobot < handle
             zz = ppval(obj.g_func, yy);
             
             % Plotting the curve
-            figure;
-            obj.plotQField();
-            hold on;
-            
-            plot(q_truncated(1,:), q_truncated(2,:), '*', 'color', 'y');
-            plot(qp(1), qp(2),'.', 'MarkerSize',13,'color','g');
-            plot(qm(1), qm(2),'.', 'MarkerSize',13,'color','g');
-            plot(q_start(1,end), q_start(2,end),'.', 'MarkerSize',10,'color','g');
-            plot(q_end(1,1), q_end(2, 1), '.','MarkerSize',10,'color','g');
+            if obj.show_plot
+                figure;
+                obj.plotQField();
+                hold on;
 
-            plot(q_rough(1,:), q_rough(2,:), '+', 'color', 'r');
-            plot(yy, zz, '.');
+                plot(q_truncated(1,:), q_truncated(2,:), '*', 'color', 'y');
+                plot(qp(1), qp(2),'.', 'MarkerSize',13,'color','g');
+                plot(qm(1), qm(2),'.', 'MarkerSize',13,'color','g');
+                plot(q_start(1,end), q_start(2,end),'.', 'MarkerSize',10,'color','g');
+                plot(q_end(1,1), q_end(2, 1), '.','MarkerSize',10,'color','g');
 
-            title('Plot of sigma(theta)')
-            xlabel('q1')
-            ylabel('q2')
-            axis square
-            hold off;
+                plot(q_rough(1,:), q_rough(2,:), '+', 'color', 'r');
+                plot(yy, zz, '.');
+
+                title('Plot of sigma(theta)')
+                xlabel('q1')
+                ylabel('q2')
+                axis square
+                hold off;
+            end
         end
         
         function testHolonomicCurve(obj)
