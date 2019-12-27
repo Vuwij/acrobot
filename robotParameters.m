@@ -1,6 +1,3 @@
-% Walking Robot Parameters
-% Copyright 2017 The MathWorks, Inc.
-
 %% General parameters
 density = 1000;
 foot_density = 2000;

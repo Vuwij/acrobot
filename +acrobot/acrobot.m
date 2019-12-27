@@ -1,7 +1,7 @@
 classdef acrobot < handle
     
     properties(Access = protected)
-        robot = importrobot("acrobot_description/models/acrobot_simple.urdf");
+        robot = importrobot("acrobot_description/models/acrobot.urdf");
         
         % Convenience values
         mass = zeros(2,1);
@@ -33,7 +33,7 @@ classdef acrobot < handle
     end
     properties
         % Mechanical Parameters
-        leg_length = 0.4; % 0.348;
+        leg_length = 0.348;
         foot_radius = 0.0075;
 
         % Curve Parameters
@@ -371,7 +371,7 @@ classdef acrobot < handle
             qddot = [q1ddot; q2ddot];
 
             % Positions
-            rc1 = lc1 * [cos(q1); sin(q1)];
+            rc1 = (l1 - lc1) * [cos(q1); sin(q1)];
             rH = l1 * [cos(q1); sin(q1)];
             rc2 = rH + lc2 * [cos(q1+q2); sin(q1+q2)];
 

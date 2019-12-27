@@ -19,6 +19,7 @@ classdef acrobot_control < acrobot.acrobot
         
         % Plots
         tau_limit = 10;
+        step_count = 0;
     end
     
     methods
@@ -34,6 +35,28 @@ classdef acrobot_control < acrobot.acrobot
             
             % Straight up
             obj.x = [pi/2; 0; 0; 0];
+        end
+        
+        function mass = lmass(obj, num)
+            if rem(obj.step_count,2) == 1
+                if num == 2
+                    num = 1;
+                else
+                    num = 2;
+                end
+            end
+            mass = obj.mass(num);
+        end
+        
+        function com = lcom(obj, num)
+            if rem(obj.step_count,2) == 1
+                if num == 2
+                    num = 1;
+                else
+                    num = 2;
+                end
+            end
+            com = obj.com(num);
         end
         
         function Kp = Kp(obj)
@@ -66,9 +89,9 @@ classdef acrobot_control < acrobot.acrobot
             qdot = [x(3); x(4)];
             
             % Robotics Equation Parameters
-            D = obj.calc_D(obj.leg_length, obj.com(1), obj.com(2), obj.mass(1), obj.mass(2),q(2));
-            C = obj.calc_C(obj.leg_length, obj.com(2), obj.mass(2), q(2), qdot(1), qdot(2));
-            P = obj.calc_P(obj.g, obj.leg_length, obj.com(1), obj.com(2), obj.mass(1), obj.mass(2), q(1), q(2));
+            D = obj.calc_D(obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q(2));
+            C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
+            P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
             
             qddot_new = D \ (-C * qdot - P + tau); 
 
@@ -80,9 +103,9 @@ classdef acrobot_control < acrobot.acrobot
             qdot = [x(3); x(4)];
             
             % Robotics Equation Parameters
-            D = obj.calc_D(obj.leg_length, obj.com(1), obj.com(2), obj.mass(1), obj.mass(2),q(2));
-            C = obj.calc_C(obj.leg_length, obj.com(2), obj.mass(2), q(2), qdot(1), qdot(2));
-            P = obj.calc_P(obj.g, obj.leg_length, obj.com(1), obj.com(2), obj.mass(1), obj.mass(2), q(1), q(2));
+            D = obj.calc_D(obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q(2));
+            C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
+            P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
             
             qddot = D \ (-C * qdot - P); 
             
@@ -118,7 +141,7 @@ classdef acrobot_control < acrobot.acrobot
             q2_dot_m = x(4);
             qs_dot = [q1_dot_m; q2_dot_m];
 
-            De = obj.calc_De(obj.leg_length, obj.com(1), obj.com(2), obj.mass(1), obj.mass(2),q1, q2);
+            De = obj.calc_De(obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q1, q2);
             E = obj.calc_E(obj.leg_length, obj.leg_length, q1, q2);
 
             dUde = obj.calc_dUde(); 
@@ -166,9 +189,9 @@ classdef acrobot_control < acrobot.acrobot
             q1 = obj.x(1);
             q2 = obj.x(2);
             
-            rc1 = obj.com(1) * [cos(q1); sin(q1)] + obj.pheel;
+            rc1 = (obj.leg_length - obj.lcom(1)) * [cos(q1); sin(q1)] + obj.pheel;
             rH = obj.leg_length * [cos(q1); sin(q1)] + obj.pheel;
-            rc2 = rH + obj.com(2) * [cos(q1+q2); sin(q1+q2)];
+            rc2 = rH + obj.lcom(2) * [cos(q1+q2); sin(q1+q2)];
             pH2 = rH + obj.leg_length * [cos(q1+q2); sin(q1+q2)];
             
             hold on;
