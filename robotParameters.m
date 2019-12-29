@@ -26,4 +26,4 @@ line_depth_to_reference_frame = 0.05;
 
 
 %% Motor properties
-steps_per_rotation = 100;
+steps_per_rotation = 2797;
