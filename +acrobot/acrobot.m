@@ -12,8 +12,6 @@ classdef acrobot < handle
         calc_D;
         calc_C;
         calc_P;
-        calc_b;
-        calc_qddot;
         
         calc_De;
         calc_E;
@@ -418,20 +416,21 @@ classdef acrobot < handle
             qeddot = [q1ddot; q2ddot; q3ddot; q4ddot];
 
             % Positions
-            rc1d = rc1 + [q3; q4];
-            rc2d = rc2 + [q3; q4];
+            e = [q3; q4];
+            rc1e = rc1 + e;
+            rc2e = rc2 + e;
 
-            rc1ddot = simplify(jacobian(rc1d, qe) * qedot);
-            rc2ddot = simplify(jacobian(rc2d, qe) * qedot);
+            rc1edot = simplify(jacobian(rc1e, qe) * qedot);
+            rc2edot = simplify(jacobian(rc2e, qe) * qedot);
 
             % Kinetic and Potential Energy
-            Td1 = 0.5 * m1 * (transpose(rc1ddot) * rc1ddot);
-            Td2 = 0.5 * m2 * (transpose(rc2ddot) * rc2ddot);
-            Td = Td1 + Td2 ;
-            Ud1 = m1 * g * rc1d(2);
-            Ud2 = m2 * g * rc2d(2);
-            Ud = Ud1 + Ud2;
-            Le = simplify(Td - Ud);
+            Te1 = 0.5 * m1 * (rc1edot' * rc1edot);
+            Te2 = 0.5 * m2 * (rc2edot' * rc2edot);
+            Te = Te1 + Te2 ;
+            Ue1 = m1 * g * rc1e(2);
+            Ue2 = m2 * g * rc2e(2);
+            Ue = Ue1 + Ue2;
+            Le = simplify(Te - Ue);
 
             % Finding the EOM
             dLedq = transpose(jacobian(Le,qe));
@@ -443,15 +442,13 @@ classdef acrobot < handle
             [De, ~] = equationsToMatrix(Taue, qeddot);
 
             % Upsilons
-            e = [q3;q4];
-            E = simplify(jacobian(rc2d, qe));
+            rend = rH + l2 * [cos(q1+q2); sin(q1+q2)] + e;
+            E = simplify(jacobian(rend, qe));
             dUde = simplify(jacobian(e,q));
             
             % Add the matlab functions
-            obj.calc_qddot = matlabFunction(simplify(inv(D) * [0; 1]));
             obj.calc_D = matlabFunction(D);
             obj.calc_C = matlabFunction(C);
-            obj.calc_b = matlabFunction(b);
             obj.calc_P = matlabFunction(P);
             obj.calc_De = matlabFunction(De);
             obj.calc_E = matlabFunction(E);

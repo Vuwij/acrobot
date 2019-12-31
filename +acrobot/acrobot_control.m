@@ -18,7 +18,7 @@ classdef acrobot_control < acrobot.acrobot
         K = 0.9;
         
         % Plots
-        tau_limit = 10;
+        tau_limit = 3;
         step_count = 0;
     end
     
@@ -34,7 +34,7 @@ classdef acrobot_control < acrobot.acrobot
             obj.x = [q1; q2; q1dot; q2dot];
             
             % Straight up
-            obj.x = [pi/2; 0; 0; 0];
+            obj.x = [pi/2; 0; -pi/10; 0];
         end
         
         function mass = lmass(obj, num)
@@ -78,13 +78,11 @@ classdef acrobot_control < acrobot.acrobot
 
             direction = 0;
             isterminal = 1;
-            
-            if obj.show_plot
-                obj.show(t);
-            end
         end
         
-        function dxdt = step(obj, x, tau)
+        function dxdt = step(obj, ~, x)
+            obj.tau = obj.getTau(x);
+            
             q = [x(1); x(2)];
             qdot = [x(3); x(4)];
             
@@ -93,7 +91,7 @@ classdef acrobot_control < acrobot.acrobot
             C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
             P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
             
-            qddot_new = D \ (-C * qdot - P + tau); 
+            qddot_new = D \ (-C * qdot - P + obj.tau); 
 
             dxdt = [qdot; qddot_new];
         end
@@ -132,43 +130,42 @@ classdef acrobot_control < acrobot.acrobot
         end
         
         function impact_foot(obj, x)
-
-            q1 = x(1);      % pre-impact
-            q2 = x(2);      % pre-impact
-            qs = [q1; q2];
+            q1 = x(1);
+            q2 = x(2);
+            q1_dot = x(3);
+            q2_dot = x(4);
             
-            q1_dot_m = x(3);
-            q2_dot_m = x(4);
-            qs_dot = [q1_dot_m; q2_dot_m];
+            q = [q1; q2];
+            q_dot = [q1_dot; q2_dot];
 
-            De = obj.calc_De(obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q1, q2);
+            De = obj.calc_De(obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q1, q2);
             E = obj.calc_E(obj.leg_length, obj.leg_length, q1, q2);
 
             dUde = obj.calc_dUde(); 
             last_term = [eye(2); dUde];
 
-            delta_F = -((E/De)*transpose(E))\E*last_term;
-            delta_qedot = (De\transpose(E))*delta_F + last_term;
-
+            delta_F = -(E/De*E')\E*last_term;
+            delta_qedot = De\E'*delta_F + last_term;
+            
+            
             % Relabelling
             T = [1 1; 0 -1];
-            delta_qsdot = [T zeros(2,2)] * delta_qedot;
-
-            % Relabelled
-            q_p_r = T * qs + [-pi; 0];
-            qdot_p_r = delta_qsdot * qs_dot;
+            
+            qp = T * q + [-pi; 0];
+            qp_dot = [T zeros(2,2)] * delta_qedot * q_dot;
             
             % TODO: Fix impact map instead of conserve energy
-            qdot_p_r = [q2_dot_m; q1_dot_m];
+%             qp_dot = [q2_dot; q1_dot];
             
             % Update the X term
-            obj.x = [q_p_r ; qdot_p_r];
+            obj.x = [qp; qp_dot];
             obj.x(1:2) = wrapTo2Pi(obj.x(1:2));
 
             % Change heel location
             rH = obj.leg_length * [cos(q1); sin(q1)];                       % Hip position
             step_diff = rH + obj.leg_length * [cos(q1+q2); sin(q1+q2)];     % Swing foot position
             obj.pheel(1) = obj.pheel(1) + step_diff(1);
+            
         end
         
         function show(obj, t)
