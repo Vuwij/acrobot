@@ -1,7 +1,7 @@
 classdef acrobot < handle
     
     properties(Access = protected)
-        robot = importrobot("acrobot_description/models/acrobot.urdf");
+        robot = importrobot("acrobot_description/models/acrobot_simple.urdf");
         
         % Convenience values
         mass = zeros(2,1);
@@ -25,17 +25,19 @@ classdef acrobot < handle
         % Output curves properties
         delta_qsdot;
         sigma;
+        q_f;
+        q_truncated;
         theta_f;
         theta_start;
         theta_end;
     end
     properties
         % Mechanical Parameters
-        leg_length = 0.348;
+        leg_length = 0.4;% 0.348;
         foot_radius = 0.0075;
 
         % Curve Parameters
-        beta = pi/4;
+        beta = pi/4.2;
         vwscale = 1;
         kappa = 2.1;
         
@@ -62,6 +64,7 @@ classdef acrobot < handle
             
             % Tests
             if obj.show_plot
+                obj.plotHolonomicCurve();
                 obj.testHolonomicCurve();
             end
         end
@@ -71,13 +74,15 @@ classdef acrobot < handle
 
             qm = [(pi - obj.beta)/2; obj.beta - pi]; % Joint angles pre impact
             qp = [(pi + obj.beta)/2; pi - obj.beta]; % Joint angles post impact
-
+            
+            % Post impact calculations
             De = obj.calc_De(obj.leg_length, obj.com(1), obj.com(2), obj.mass(1), obj.mass(2), qm(1), qm(2)); 
             E = obj.calc_E(obj.leg_length, obj.leg_length, qm(1), qm(2));
             dUde = obj.calc_dUde(); 
-            
-            delF = -((E / De) * transpose(E)) \ E * [eye(2); dUde];
-            delta_qedot = (De \ transpose(E)) * delF + [eye(2); dUde];
+            last_term = [eye(2); dUde];
+
+            delta_F = -(E/De*E')\E*last_term;
+            delta_qedot = De\E'*delta_F + last_term;
             obj.delta_qsdot = [[1 1; 0 -1] zeros(2,2)] * delta_qedot;
 
             v = (obj.delta_qsdot) * w / obj.vwscale;
@@ -131,38 +136,36 @@ classdef acrobot < handle
             s_bar = s(s_start_truncate+1:end-s_end_truncate);
 
             theta_truncated = [r_bar, s_bar, 1 + t_bar];
-            q_truncated = [q_start(:,1:end-r1_truncate), q_mid(:,s_start_truncate+1:end-s_end_truncate), q_end(:,t0_truncate+1:end)];
+            obj.q_truncated = [q_start(:,1:end-r1_truncate), q_mid(:,s_start_truncate+1:end-s_end_truncate), q_end(:,t0_truncate+1:end)];
 
             % The curve
-            obj.sigma = spline(theta_truncated, [v q_truncated w]);
+            obj.sigma = spline(theta_truncated, [v obj.q_truncated w]);
             obj.theta_f = linspace(theta_rough(1),theta_rough(end),800);
             
-            q_f = ppval(obj.sigma,obj.theta_f);
-            obj.g_func = spline(q_f(1,:),q_f(2,:)); %q2 as function of q1
-            yy = linspace(q_f(1,1), q_f(1,end));
+            obj.q_f = ppval(obj.sigma,obj.theta_f);
+            obj.g_func = spline(obj.q_f(1,:),obj.q_f(2,:)); %q2 as function of q1
+        end
+        
+        function plotHolonomicCurve(obj)
+            obj.plotQField();
+            hold on;
+
+            yy = linspace(obj.q_f(1,1), obj.q_f(1,end));
             zz = ppval(obj.g_func, yy);
-            
-            % Plotting the curve
-            if obj.show_plot
-                figure;
-                obj.plotQField();
-                hold on;
 
-                plot(q_truncated(1,:), q_truncated(2,:), '*', 'color', 'y');
-                plot(qp(1), qp(2),'.', 'MarkerSize',13,'color','g');
-                plot(qm(1), qm(2),'.', 'MarkerSize',13,'color','g');
-                plot(q_start(1,end), q_start(2,end),'.', 'MarkerSize',10,'color','g');
-                plot(q_end(1,1), q_end(2, 1), '.','MarkerSize',10,'color','g');
+            plot(obj.q_truncated(1,:), obj.q_truncated(2,:), '*', 'color', 'y');
+%             plot(qp(1), qp(2),'.', 'MarkerSize',13,'color','g');
+%             plot(qm(1), qm(2),'.', 'MarkerSize',13,'color','g');
+%             plot(q_start(1,end), q_start(2,end),'.', 'MarkerSize',10,'color','g');
+%             plot(q_end(1,1), q_end(2, 1), '.','MarkerSize',10,'color','g');
 
-                plot(q_rough(1,:), q_rough(2,:), '+', 'color', 'r');
-                plot(yy, zz, '.');
+            plot(yy, zz, '.');
 
-                title('Plot of sigma(theta)')
-                xlabel('q1')
-                ylabel('q2')
-                axis square
-                hold off;
-            end
+            title('Plot of sigma(theta)')
+            xlabel('q1')
+            ylabel('q2')
+            axis square
+            hold off;
         end
         
         function testHolonomicCurve(obj)
@@ -377,8 +380,8 @@ classdef acrobot < handle
             rc2dot = simplify(jacobian(rc2,q) * qdot);
 
             % Kinetic and Potential Energy
-            T1 = 0.5 * m1 * (transpose(rc1dot) * rc1dot);
-            T2 = 0.5 * m2 * (transpose(rc2dot) * rc2dot);
+            T1 = 0.5 * m1 * (rc1dot' * rc1dot);
+            T2 = 0.5 * m2 * (rc2dot' * rc2dot);
             T = T1 + T2;
             U1 = m1 * g * rc1(2);
             U2 = m2 * g * rc2(2);
@@ -391,7 +394,7 @@ classdef acrobot < handle
 
             % Find the C, D, P Matrix
             syms C D P real
-            [D, b] = equationsToMatrix(Tau, [q1ddot; q2ddot]);
+            [D, b] = equationsToMatrix(Tau, qddot);
             P = -subs(b, [q1dot, q2dot], [0, 0]);
             C = sym(zeros(length(q)));
             for k = 1:size(q)
@@ -433,8 +436,8 @@ classdef acrobot < handle
             Le = simplify(Te - Ue);
 
             % Finding the EOM
-            dLedq = transpose(jacobian(Le,qe));
-            dLedqdot = transpose(jacobian(Le,qedot));
+            dLedq = jacobian(Le,qe)';
+            dLedqdot = jacobian(Le,qedot)';
             ddtdLedqdot = simplify(jacobian(dLedqdot, qe) * qedot + jacobian(dLedqdot, qedot) * qeddot);
             Taue = simplify(ddtdLedqdot - dLedq);
 
@@ -453,6 +456,6 @@ classdef acrobot < handle
             obj.calc_De = matlabFunction(De);
             obj.calc_E = matlabFunction(E);
             obj.calc_dUde = matlabFunction(dUde);
-        end    
+        end
     end
 end

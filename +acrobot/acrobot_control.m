@@ -12,13 +12,13 @@ classdef acrobot_control < acrobot.acrobot
         x = zeros(4,1);     % Current x state space
         
         % Controller parameters
-        gamma = 0.06;
-        poles = [-1 -1];
+        gamma = 0.05;
+        poles = [-20 -20];
         L = 0.9;
         K = 0.9;
         
         % Plots
-        tau_limit = 3;
+        tau_limit = 10;
         step_count = 0;
     end
     
@@ -27,14 +27,19 @@ classdef acrobot_control < acrobot.acrobot
             obj = obj@acrobot.acrobot();
         
             % Start on the limit cycle
-            q1 = pi;
-            q1dot = -pi;
-            q2 = ppval(obj.g_func, q1);
-            q2dot = ppval(fnder(obj.g_func,1),q1) * q1dot;
-            obj.x = [q1; q2; q1dot; q2dot];
+%             q1 = pi/2;
+%             q1dot = -pi;
+%             q2 = ppval(obj.g_func, q1);
+%             q2dot = -2*pi; %ppval(fnder(obj.g_func,1),q1) * q1dot;
+%             obj.x = [q1; q2; q1dot; q2dot];
+            
+            % Original Starting point
+%             q_dot_0 = ppval(fnder(obj.sigma,1),0)*7.2295; %Values when on the limit cycle
+%             x0 = [(pi+obj.beta)/2 - 0.05; pi-obj.beta; q_dot_0(1)-1; q_dot_0(2)+1];  %Currently set to start off the configuration manifold
+%             obj.x = x0;
             
             % Straight up
-            obj.x = [pi/2; 0; -pi/10; 0];
+           obj.x = [pi/2; 0; -pi/10; 0];
         end
         
         function mass = lmass(obj, num)
@@ -60,11 +65,13 @@ classdef acrobot_control < acrobot.acrobot
         end
         
         function Kp = Kp(obj)
-            Kp = -obj.poles(1) * -obj.poles(2);
+            Kp = (1/obj.gamma)^2;
+%            Kp = -obj.poles(1) * -obj.poles(2);
         end
         
         function Kd = Kd(obj)
-            Kd = -obj.poles(1) + -obj.poles(2);
+            Kd = 2/obj.gamma;
+%            Kd = -obj.poles(1) + -obj.poles(2);
         end
         
         function [dist, isterminal, direction] = dist_to_floor(obj, t, x)
@@ -80,6 +87,10 @@ classdef acrobot_control < acrobot.acrobot
             isterminal = 1;
         end
         
+        function dxdt = autostep(obj, t, x)
+            dxdt = obj.step(t, x);
+        end
+        
         function dxdt = step(obj, ~, x)
             obj.tau = obj.getTau(x);
             
@@ -90,9 +101,7 @@ classdef acrobot_control < acrobot.acrobot
             D = obj.calc_D(obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q(2));
             C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
             P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
-            
-            qddot_new = D \ (-C * qdot - P + obj.tau); 
-
+            qddot_new = D \ (-C * qdot - P) + D \ obj.tau; 
             dxdt = [qdot; qddot_new];
         end
         
@@ -122,7 +131,7 @@ classdef acrobot_control < acrobot.acrobot
             qs_ddot = qd_ddot - qddot;
             
             a = (obj.Kp * qs(2) + obj.Kd * qs_dot(2) + qs_ddot(2)); % Acceleration of q2
-            obj.tau = C * qdot + [0; inv([-gfd(q(1)) 1] * inv(D) * obj.B) * a];
+            obj.tau = [0; inv([-gfd(q(1)) 1] * inv(D) * obj.B) * a];
             obj.tau(1) = 0;
             
             obj.tau = max(min(obj.tau_limit, obj.tau), -obj.tau_limit);
@@ -140,32 +149,32 @@ classdef acrobot_control < acrobot.acrobot
 
             De = obj.calc_De(obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q1, q2);
             E = obj.calc_E(obj.leg_length, obj.leg_length, q1, q2);
-
             dUde = obj.calc_dUde(); 
             last_term = [eye(2); dUde];
 
             delta_F = -(E/De*E')\E*last_term;
             delta_qedot = De\E'*delta_F + last_term;
-            
-            
-            % Relabelling
-            T = [1 1; 0 -1];
+            T = [1 1; 0 -1]; % Relabelling
             
             qp = T * q + [-pi; 0];
-            qp_dot = [T zeros(2,2)] * delta_qedot * q_dot;
+            qp_dot = [T zeros(2,2)] * (delta_qedot * q_dot);
             
             % TODO: Fix impact map instead of conserve energy
 %             qp_dot = [q2_dot; q1_dot];
             
             % Update the X term
-            obj.x = [qp; qp_dot];
+            obj.x = [qp; -qp_dot];
             obj.x(1:2) = wrapTo2Pi(obj.x(1:2));
+            
 
             % Change heel location
             rH = obj.leg_length * [cos(q1); sin(q1)];                       % Hip position
             step_diff = rH + obj.leg_length * [cos(q1+q2); sin(q1+q2)];     % Swing foot position
             obj.pheel(1) = obj.pheel(1) + step_diff(1);
             
+            % Recalculate the holonomic cruve
+            obj.calcHolonomicCurve();
+            obj.q_field_plotted = 0;
         end
         
         function show(obj, t)
@@ -203,19 +212,9 @@ classdef acrobot_control < acrobot.acrobot
             % Plotting the subplot field
             subplot(2,2,2);
             if ~obj.q_field_plotted
-                obj.plotQField();
-                hold on;
-                
-                q_f = ppval(obj.sigma,obj.theta_f);
-                obj.g_func = spline(q_f(1,:),q_f(2,:)); %q2 as function of q1
-                yy = linspace(q_f(1,1), q_f(1,end));
-                zz = ppval(obj.g_func, yy);
-                plot(yy, zz, '.');
-
-                hold on;
+                plotHolonomicCurve(obj);
                 obj.q_field_plotted = 1;
-                ylabel('q2');
-                xlabel('q1');
+                hold on;
             end
             
             plot(q1(1), q2(1), '.', 'markersize',3,'color','m');

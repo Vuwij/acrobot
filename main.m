@@ -24,8 +24,8 @@ while (t < tmax)
     robot.show(t);
     
     % Search for foot placement when close to floor
-    if (robot.dist_to_floor(t,robot.x) < search_for_collision_threshold && robot.x(2) < 0)
-        [t_anim,x_anim,t,xe] = ode45(@(t, x) robot.step(t, x), t:tstep:tmax, robot.x, options);
+    if (robot.dist_to_floor(t,robot.x) < search_for_collision_threshold && ((robot.x(2) < 0 && robot.x(4) < 0)))
+        [t_anim,x_anim,t,xe] = ode45(@(t, x) robot.autostep(t, x), t:tstep:tmax, robot.x, options);
         
         % Impact Map and replace feet
         robot.impact_foot(xe)
