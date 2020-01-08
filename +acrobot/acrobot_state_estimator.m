@@ -1,7 +1,8 @@
 classdef acrobot_state_estimator < matlab.System
     % Public, tunable properties
     properties
-
+        steps_per_rotation = 2797;
+        sample_time = 0.01;
     end
 
     % Public, non-tunable properties
@@ -10,17 +11,17 @@ classdef acrobot_state_estimator < matlab.System
     end
 
     properties(DiscreteState)
-
+      
+        
     end
 
     % Pre-computed constants
     properties(Access = private)
-        imuf = imufilter('SampleRate',100);
-        prev_time = 0;
-        prev_q2 = 0;
-        pitch = 0;
-        roll = 0;
-        yaw = 0;
+        imuf;
+        leg_length;
+        prev_dist_to_floor = 0.0;
+        state= [0;0;0;0];
+        dir = true;
     end
 
     methods
@@ -36,48 +37,55 @@ classdef acrobot_state_estimator < matlab.System
         function setupImpl(obj)
             % Perform one-time calculations, such as computing constants
             
-            obj.imuf.GyroscopeNoise          = 7.6154e-7;
-            obj.imuf.AccelerometerNoise      = 0.0015398;
-            obj.imuf.GyroscopeDriftNoise     = 3.0462e-12;
-            obj.imuf.LinearAccelerationNoise = 0.00096236;
-            onj.imuf.InitialProcessNoise = 10*obj.imuf.InitialProcessNoise;
-            
-            tic
+%             obj.imuf.GyroscopeNoise          = 7.6154e-7;
+%             obj.imuf.AccelerometerNoise      = 0.0015398;
+%             obj.imuf.GyroscopeDriftNoise     = 3.0462e-12;
+%             obj.imuf.LinearAccelerationNoise = 0.00096236;
+%             obj.imuf.InitialProcessNoise = 10*obj.imuf.InitialProcessNoise;
+              obj.imuf = imufilter('SampleRate',100);
+              obj.leg_length = 0.4;
         end
 
         function state = stepImpl(obj, gyro, acc, motor_step)
-            % Implement algorithm. Calculate y as a function of input u and
-            % discrete states.
-%             fprintf('a(1): %0.3f, a(2): %0.3f, a(3):%0.3f\n', a(1), a(2), a(3));
-             [orient, angVelocity] = obj.imuf(acc', gyro');
-%              % Find angles from accelerometer
-%             tau = 0.98;
-%             accelPitch = rad2deg(atan2(a(2), a(3)));
-%             accelRoll = rad2deg(atan2(a(1), a(3)));
-%             
-%             % Calculate dt
-            dt = toc - obj.prev_time;
-            obj.prev_time = toc;
-% 
-%             % Apply complementary filter
-%             obj.pitch = (tau)*(obj.pitch + g(1) * dt) + (1 - tau)*(accelPitch);
-%             obj.roll = (tau)*(obj.roll - g(2) * dt) + (1 - tau)*(accelRoll);
-%             obj.yaw = (obj.yaw + g(3) * dt);
-
-            % Print results
-%             fprintf('Pitch: %0.3f,', obj.pitch)
-%             rpy = eulerd(q);
-            zyx = euler(orient,'ZYX','frame');
-%             rpy = quat2eul(q);
-%             rpy = rad2deg(rpy);
+            % yaw
+            [orient, angVelocity] = obj.imuf(acc', gyro');
+            zyx = eulerd(orient,'ZYX','frame');
+            zyx = deg2rad(zyx);
+            % motor angle
+            qm = pi  - motor_step / (obj.steps_per_rotation/ 2* pi);
             
-            q1 = zyx(2);
-            q1_dot = -1*angVelocity(2);
-            steps_per_rotation = 2797;
-            q2 = motor_step / (steps_per_rotation/2*pi);
-            obj.prev_q2 = q2;
-            q2_dot = (q2 - obj.prev_q2)/dt;
-            state = [q1;q2 ; q1_dot;q2_dot];
+            if(obj.dir)
+                % imu leg on the ground
+                q1 = pi/2 + zyx(1);
+                q1_dot = -1*angVelocity(2);
+                q2 = qm - pi;
+                q2_dot = (qm - obj.state(2))/obj.sample_time;
+                fprintf("imu on ground\n");
+            else
+                % imu leg in the air
+                
+%                 q1 = (qm -zyx(1)) - pi;
+                fprintf("imu in air\n");
+                q1_dot = -1*angVelocity(2);
+                q2 = pi - qm;
+                q2_dot = (qm - obj.state(2))/obj.sample_time;
+                q1 = pi +(q2 - zyx(1));
+            end
+
+            rH = obj.leg_length * [cos(q1); sin(q1)];
+            rc2 = rH + obj.leg_length * [cos(q1+q2); sin(q1+q2)];
+            dist_to_floor = rc2(2);
+            delta_dist = dist_to_floor - obj.prev_dist_to_floor;
+            obj.prev_dist_to_floor = dist_to_floor;
+            if  abs(dist_to_floor) < 0.01 && delta_dist < 0
+                fprintf("here");
+                obj.dir = ~obj.dir;
+                fprintf('%.4f', dist_to_floor);  
+            end
+            
+            state = [q1;q2;q1_dot;q2_dot];
+            obj.state = state;
+            return;
         end
         
         function s1 = getOutputSizeImpl(~)
@@ -94,6 +102,11 @@ classdef acrobot_state_estimator < matlab.System
         
         function c1 = isOutputFixedSizeImpl(~)
             c1 = true;
+        end
+        
+        function sts = getSampleTimeImpl(obj)
+            sts = createSampleTime(obj,'Type','Discrete',...
+              'SampleTime',obj.sample_time,'OffsetTime',0.0);
         end
     end
 end
