@@ -25,21 +25,22 @@ classdef acrobot < handle
         % Output curves properties
         delta_qsdot;
         sigma;
-        q_f;
-        q_truncated;
+        q1_range;
         theta_f;
         theta_start;
         theta_end;
     end
     properties
+        % Physical Parameters
+        g = 9.81;
+        
         % Mechanical Parameters
         leg_length = 0.4;% 0.348;
         foot_radius = 0.0075;
 
         % Curve Parameters
-        beta = pi/4.2;
+        beta = pi/8;
         vwscale = 1;
-        kappa = 2.1;
         
         % Debugging
         show_plot = 0;
@@ -69,11 +70,34 @@ classdef acrobot < handle
             end
         end
         
-        function calcHolonomicCurve(obj)
-            w = [cos(obj.kappa); sin(obj.kappa)]; 
+        function t_value = bezier(~, precision, p1, p2, p3, p4)
+            t_range = 0:precision:1;
+            t_value = zeros(2,length(t_range));
+            
+            for s = 1:length(t_range)
+                t = t_range(s);
+                for d = 1:2
+                    bez_param = [p1(d) p2(d) p3(d) p4(d)];
 
+                    % Cubic bezier
+                    for i = 0:3
+                        t_value(d, s) = t_value(d, s) + bez_param(i+1) * nchoosek(3, i) * (1 - t)^(3 - i) * t ^ i;
+                    end
+                end
+            end
+        end
+        
+        function calcHolonomicCurve(obj)
             qm = [(pi - obj.beta)/2; obj.beta - pi]; % Joint angles pre impact
             qp = [(pi + obj.beta)/2; pi - obj.beta]; % Joint angles post impact
+            
+            % Use the gravity potential field for calculation of w
+            D = obj.calc_D(obj.leg_length, obj.com(1), obj.com(2), ...
+                            obj.mass(1), obj.mass(2), qm(2));
+            P = obj.calc_P(obj.g, obj.leg_length, obj.com(1), obj.com(2), ...
+                            obj.mass(1), obj.mass(2), qm(1), qm(2));
+            w = D \ -P;
+            w = (w / norm(w));
             
             % Post impact calculations
             De = obj.calc_De(obj.leg_length, obj.com(1), obj.com(2), obj.mass(1), obj.mass(2), qm(1), qm(2)); 
@@ -85,79 +109,48 @@ classdef acrobot < handle
             delta_qedot = De\E'*delta_F + last_term;
             obj.delta_qsdot = [[1 1; 0 -1] zeros(2,2)] * delta_qedot;
 
-            v = (obj.delta_qsdot) * w / obj.vwscale;
+            v = (-obj.delta_qsdot) * w / obj.vwscale;
             v = (v / norm(v));
-
-            % Line parameters
-            r0 = 0.2;   % start to qp
-            r1 = 0.55;  % qp to qa
-            t0 = 0.05;  % qb to qm
-            t1 = 0.2;   % qm to end
-
-            % Number of samples
-            r0_samples = 2; % start to qp
-            r1_samples = 3; % qp to qa
-            s_samples = 10; % qa to qb
-            t0_samples = 6; % qb to qm
-            t1_samples = 2; % qm to end
-
-            % Truncating indices
-            % Note: without truncation there is overlap at qa and qb
-            r1_truncate = 1;        % Truncate before qa
-            s_start_truncate = 4;   % Truncate after qa
-            s_end_truncate = 5;     % Truncate before qb
-            t0_truncate = 3;        % Truncate after qb
-
-            % Creating the curve
-            r0_vec = linspace(-r0,0,r0_samples);
-            r1_vec = linspace(0,r1,r1_samples);
-            r = [r0_vec(1:end-1), r1_vec]; % start to qa
-            t0_vec = linspace(-t0,0,t0_samples);
-            t1_vec = linspace(0,t1,t1_samples);
-            t = [t0_vec(1:end-1), t1_vec]; % qb to end
-
-            % Points on the curve
-            q_start = qp + v * r;
-            q_end = qm + w * t;
-            s = linspace(r1_vec(end),1-abs(t0_vec(1)),s_samples); %qa to qb
-            q_mid = q_start(:,end) + (q_end(:,1) - q_start(:,end))/(s(end) - s(1)) * (s-s(1));
-            q_rough = [q_start, q_mid, q_end];
-
-            % Middle section
-            theta_rough = [r, s, t + 1]; 
-
-            % Find theta values for start and end of curve (intersecting S+, S-)
-            obj.theta_start = theta_rough(r == 0);
-            obj.theta_end = theta_rough(find(t == 0) + size(r,2) + size(s,2));
-
-            % Create breakpoints for spline
-            r_bar = r(1:end - r1_truncate);
-            t_bar = t(t0_truncate+1:end);
-            s_bar = s(s_start_truncate+1:end-s_end_truncate);
-
-            theta_truncated = [r_bar, s_bar, 1 + t_bar];
-            obj.q_truncated = [q_start(:,1:end-r1_truncate), q_mid(:,s_start_truncate+1:end-s_end_truncate), q_end(:,t0_truncate+1:end)];
-
-            % The curve
-            obj.sigma = spline(theta_truncated, [v obj.q_truncated w]);
-            obj.theta_f = linspace(theta_rough(1),theta_rough(end),800);
             
-            obj.q_f = ppval(obj.sigma,obj.theta_f);
-            obj.g_func = spline(obj.q_f(1,:),obj.q_f(2,:)); %q2 as function of q1
+            % Line parameters (r0, r1, t0, t1):length of the line segments used to construct h(q)
+            r0 = 0.5;   % start to qp
+            r1 = 0.55;  % qp to qa
+            t0 = 0.55;  % qb to qm
+            t1 = 0.5;   % qm to end
+            
+            p1 = qp - v * r0;
+            p2 = qp + v * r1;
+            p3 = qm - w * t0;
+            p4 = qm + w * t1;
+            
+%             plot(qp(1), qp(2),'.', 'MarkerSize',13,'color','k');
+%             hold on;
+%             plot(qm(1), qm(2),'.', 'MarkerSize',13,'color','k');
+%             plot(p1(1), p1(2),'.', 'MarkerSize',13,'color','k');
+%             plot(p2(1), p2(2),'.', 'MarkerSize',13,'color','k');
+%             plot(p3(1), p3(2),'.', 'MarkerSize',13,'color','k');
+%             plot(p4(1), p4(2),'.', 'MarkerSize',13,'color','k');
+
+            % Using cubic bezier curve
+            full_range = obj.bezier(0.01, qp, p2, p3, qm);
+            full_range = [p1 full_range p4];
+            finity2 = 0.01;
+            obj.q1_range = p4(1):finity2:p1(1);
+            obj.g_func = spline(full_range(1,:), full_range(2,:)); %q2 as function of q1
         end
         
         function plotHolonomicCurve(obj)
             obj.plotQField();
             hold on;
-
-            yy = linspace(obj.q_f(1,1), obj.q_f(1,end));
+            obj.plotPField();
+            
+            qm = [(pi - obj.beta)/2; obj.beta - pi]; % Joint angles pre impact
+            qp = [(pi + obj.beta)/2; pi - obj.beta]; % Joint angles post impact
+            plot(qp(1), qp(2),'.', 'MarkerSize',13,'color','k');
+            plot(qm(1), qm(2),'.', 'MarkerSize',13,'color','k');
+            
+            yy = linspace(obj.q1_range(1), obj.q1_range(end));
             zz = ppval(obj.g_func, yy);
-
-            plot(obj.q_truncated(1,:), obj.q_truncated(2,:), '*', 'color', 'y');
-%             plot(qp(1), qp(2),'.', 'MarkerSize',13,'color','g');
-%             plot(qm(1), qm(2),'.', 'MarkerSize',13,'color','g');
-%             plot(q_start(1,end), q_start(2,end),'.', 'MarkerSize',10,'color','g');
-%             plot(q_end(1,1), q_end(2, 1), '.','MarkerSize',10,'color','g');
 
             plot(yy, zz, '.');
 
@@ -356,8 +349,38 @@ classdef acrobot < handle
             % Plot impact surfaces S+, S-
             plot(q1_range, -2 * q1_range(1,:) + 2 * pi,'color','cyan');
             plot(q1_range, -2 * q1_range, 'color','cyan');
+            axis square;
             
             hold off;
+        end
+        
+        function plotPField(obj)
+            % Plot vector field inv(D)*B
+            finity = 0.2;
+            q1_range = 0:finity:pi;
+            q2_range = -2*pi:2*finity:2*pi;
+            [X1,X2] = meshgrid(q1_range,q2_range);
+            
+            R = zeros(size(X1));
+            Z = zeros(size(X2));
+
+            % Dinv * B
+            m1 = obj.mass(1);
+            m2 = obj.mass(2);
+            obj.calc_P
+            for i=1:size(X2,1)
+                for j=1:size(X2,2)
+                    D = obj.calc_D(obj.leg_length, obj.com(1), obj.com(2), ...
+                                    m1, m2, X2(i,j));
+                    P = obj.calc_P(obj.g, obj.leg_length, obj.com(1), obj.com(2), ...
+                                    m1, m2, X1(i,j), X2(i,j));
+                    temp = D \ -P;
+                    R(i,j) = temp(1);
+                    Z(i,j) = temp(2);
+                end
+            end
+            
+            quiver(X1,X2,R,Z,'color',[1 0 1])            
         end
         
         function solveRoboticsEquation(obj)

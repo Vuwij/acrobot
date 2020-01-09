@@ -8,7 +8,6 @@ classdef acrobot_control < acrobot.acrobot
         e = 0;
     end
     properties
-        g = 9.81;
         x = zeros(4,1);     % Current x state space
         
         % Controller parameters
@@ -18,7 +17,7 @@ classdef acrobot_control < acrobot.acrobot
         K = 0.9;
         
         % Plots
-        tau_limit = 10;
+        tau_limit = 0;
         step_count = 0;
     end
     
@@ -27,11 +26,11 @@ classdef acrobot_control < acrobot.acrobot
             obj = obj@acrobot.acrobot();
         
             % Start on the limit cycle
-%             q1 = pi/2;
-%             q1dot = -pi;
-%             q2 = ppval(obj.g_func, q1);
-%             q2dot = -2*pi; %ppval(fnder(obj.g_func,1),q1) * q1dot;
-%             obj.x = [q1; q2; q1dot; q2dot];
+            q1 = pi/2;
+            q1dot = -pi;
+            q2 = ppval(obj.g_func, q1);
+            q2dot = ppval(fnder(obj.g_func,1),q1) * q1dot;
+            obj.x = [q1; q2; q1dot; q2dot];
             
             % Original Starting point
 %             q_dot_0 = ppval(fnder(obj.sigma,1),0)*7.2295; %Values when on the limit cycle
@@ -39,7 +38,7 @@ classdef acrobot_control < acrobot.acrobot
 %             obj.x = x0;
             
             % Straight up
-           obj.x = [pi/2; 0; -pi/10; 0];
+            obj.x = [pi/2; 0; -pi/2; 0];
         end
         
         function mass = lmass(obj, num)
@@ -159,14 +158,13 @@ classdef acrobot_control < acrobot.acrobot
             qp = T * q + [-pi; 0];
             qp_dot = [T zeros(2,2)] * (delta_qedot * q_dot);
             
-            % TODO: Fix impact map instead of conserve energy
+            % Symmetrical landing
 %             qp_dot = [q2_dot; q1_dot];
             
             % Update the X term
             obj.x = [qp; -qp_dot];
             obj.x(1:2) = wrapTo2Pi(obj.x(1:2));
             
-
             % Change heel location
             rH = obj.leg_length * [cos(q1); sin(q1)];                       % Hip position
             step_diff = rH + obj.leg_length * [cos(q1+q2); sin(q1+q2)];     % Swing foot position
@@ -217,7 +215,7 @@ classdef acrobot_control < acrobot.acrobot
                 hold on;
             end
             
-            plot(q1(1), q2(1), '.', 'markersize',3,'color','m');
+            plot(q1(1), q2(1), '.', 'markersize',3,'color',[0 0 0]);
             
             % Plotting tau
             subplot(2,2,3);
@@ -225,14 +223,16 @@ classdef acrobot_control < acrobot.acrobot
             plot(t, obj.tau, '.', 'markersize',3,'color','m');
             ylabel('Tau N*m');
             xlabel('Time (s)');
-            
+            axis square
+
             % Plotting error
             subplot(2,2,4);
             hold on;
             plot(t, obj.e, '.', 'markersize',3,'color','m');
             ylabel('Error');
             xlabel('Time (s)');
-            
+            axis square
+
 %            text(-0.8,0.5,sprintf('time: %f', t)); % Display current time
             drawnow;
         end
