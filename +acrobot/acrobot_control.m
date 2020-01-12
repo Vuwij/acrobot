@@ -5,6 +5,7 @@ classdef acrobot_control < acrobot.acrobot
         
         q_field_plotted = 0;
         tau = 0;
+        tau_q;
         e = 0;
     end
     properties
@@ -38,7 +39,11 @@ classdef acrobot_control < acrobot.acrobot
 %             obj.x = x0;
             
             % Straight up
-            obj.x = [pi/2; 0; -pi/2; 0];
+            obj.x = [pi/2; 0; 0; -pi/2];
+                    
+
+
+%            obj.x = [2.3; -2.8; -9.5835; -3.0];
         end
         
         function mass = lmass(obj, num)
@@ -100,7 +105,9 @@ classdef acrobot_control < acrobot.acrobot
             D = obj.calc_D(obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q(2));
             C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
             P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
-            qddot_new = D \ (-C * qdot - P) + D \ obj.tau; 
+            
+            obj.tau_q = D \ obj.tau;
+            qddot_new = D \ (-C * qdot - P) + obj.tau_q; 
             dxdt = [qdot; qddot_new];
         end
         
@@ -148,7 +155,7 @@ classdef acrobot_control < acrobot.acrobot
 
             De = obj.calc_De(obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q1, q2);
             E = obj.calc_E(obj.leg_length, obj.leg_length, q1, q2);
-            dUde = obj.calc_dUde(); 
+            dUde = obj.calc_dUde(obj.leg_length, q1); 
             last_term = [eye(2); dUde];
 
             delta_F = -(E/De*E')\E*last_term;
@@ -162,7 +169,7 @@ classdef acrobot_control < acrobot.acrobot
 %             qp_dot = [q2_dot; q1_dot];
             
             % Update the X term
-            obj.x = [qp; -qp_dot];
+            obj.x = [qp; qp_dot];
             obj.x(1:2) = wrapTo2Pi(obj.x(1:2));
             
             % Change heel location
@@ -186,7 +193,7 @@ classdef acrobot_control < acrobot.acrobot
             plot(Xslope_plot,Yslope_plot)
 
             axis_vec = [-0.6 0.8 -0.5 0.9];
-            axis square
+            axis equal
             axis(axis_vec);
 
             % Heel of stance foot
@@ -208,7 +215,7 @@ classdef acrobot_control < acrobot.acrobot
             r2.Color = 'black';
 
             % Plotting the subplot field
-            subplot(2,2,2);
+            subplot(2,2,[2,4]);
             if ~obj.q_field_plotted
                 plotHolonomicCurve(obj);
                 obj.q_field_plotted = 1;
@@ -216,6 +223,7 @@ classdef acrobot_control < acrobot.acrobot
             end
             
             plot(q1(1), q2(1), '.', 'markersize',3,'color',[0 0 0]);
+            quiver(q1(1), q2(1), obj.tau_q(1) * 0.001, obj.tau_q(2) * 0.001);
             
             % Plotting tau
             subplot(2,2,3);
@@ -223,15 +231,6 @@ classdef acrobot_control < acrobot.acrobot
             plot(t, obj.tau, '.', 'markersize',3,'color','m');
             ylabel('Tau N*m');
             xlabel('Time (s)');
-            axis square
-
-            % Plotting error
-            subplot(2,2,4);
-            hold on;
-            plot(t, obj.e, '.', 'markersize',3,'color','m');
-            ylabel('Error');
-            xlabel('Time (s)');
-            axis square
 
 %            text(-0.8,0.5,sprintf('time: %f', t)); % Display current time
             drawnow;
