@@ -21,8 +21,10 @@ classdef acrobot_state_estimator < matlab.System
         leg_length;
         prev_dist_to_floor = 0.0;
         state= [0;0;0;0];
+        prev_yaw = 0.0;
         dir = true;
         entered = false;
+        wrapped_around = false;
     end
 
     methods
@@ -55,25 +57,34 @@ classdef acrobot_state_estimator < matlab.System
             % motor angle
             qm = pi  + motor_step / (obj.steps_per_rotation/ 2* pi);
             
+            
+            yaw = wrapToPi(zyx(1));
+            delta_yaw = yaw - obj.prev_yaw;
+            if abs(delta_yaw) >= (2* pi - 0.2)
+                obj.wrapped_around = ~obj.wrapped_around;
+            end
+            obj.prev_yaw = yaw;
+          
+            temp_yaw = pi/2 + yaw;
+            if(obj.wrapped_around)
+                    temp_yaw = yaw - pi/2;
+            end
             if(obj.dir)
                 % imu leg on the ground
-                q1 = pi/2 + zyx(1);
+                q1 = temp_yaw ;
                 q1_dot = -1*angVelocity(2);
                 q2 = qm - pi;
-                q2_dot = (qm - obj.state(2))/obj.sample_time;
+                q2_dot = (q2 - obj.state(2))/obj.sample_time;
                 fprintf("imu on ground\n");
             else
-                % imu leg in the air
-                
-%                 q1 = (qm -zyx(1)) - pi;
+                % imu leg in the air             
                 fprintf("imu in air\n");
                 q1_dot = -1*angVelocity(2);
                 q2 = pi - qm;
-                q2_dot = (qm - obj.state(2))/obj.sample_time;
-                if(qm > pi)
-                    q1 = pi -(qm - zyx(1));
-                else
-                    q1 = -(qm - zyx(1));
+                q1 = pi - q2 + (temp_yaw);
+                q2_dot = (q2 - obj.state(2))/obj.sample_time;
+                if(obj.wrapped_around)
+                    q1 = -q2 + temp_yaw;
                 end
             end
 
@@ -92,7 +103,7 @@ classdef acrobot_state_estimator < matlab.System
                 end
             end
             
-            state = [q1;q2;q1_dot;qm];
+            state = [q1;q2;q1_dot;q2_dot];
             obj.state = state;
             return;
         end
