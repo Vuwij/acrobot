@@ -1,6 +1,6 @@
 %% Arduino Rotary Encoder input
 clear; clc;
-a = arduino('/dev/ttyUSB0','Nano3','Libraries',{'RotaryEncoder', 'I2C'});
+a = arduino('COM4','Nano3','Libraries',{'RotaryEncoder', 'I2C'});
 encoder = rotaryEncoder(a,'D2','D3');
 imu = mpu6050(a);
 
