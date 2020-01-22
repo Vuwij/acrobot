@@ -6,13 +6,9 @@ classdef acrobot < handle
         p2;
         p3;
         p4;
-        qm;
-        qp;
-        w;
-        v;
     end
     properties(Access = protected)
-        robot = importrobot("acrobot_description/models/acrobot_simple.urdf");
+        robot = importrobot("acrobot_description/models/acrobot.urdf");
         
         % Convenience values
         mass = zeros(2,1);
@@ -33,6 +29,10 @@ classdef acrobot < handle
         
         % VHC Parameters
         B = [0; 1];
+        BX;
+        BY;
+        BU;
+        BV;
         
         % Output curves properties
         delta_qsdot;
@@ -40,20 +40,26 @@ classdef acrobot < handle
         theta_f;
         theta_start;
         theta_end;
+        
+        % Curve parameters
+        qm;
+        qp;
+        w;
+        v;
     end
     properties
         % Physical Parameters
         g = 9.81;
         
         % Mechanical Parameters
-        leg_length = 0.4;% 0.348;
+        leg_length = 0.348;
         foot_radius = 0.0075;
 
         % Curve Parameters
-        beta = pi/8;
+        beta = pi/9.5;
         vwscale = 1;
-        impact_velocity = 3.0*pi; % To be computed using energy considerations
-        
+        impact_velocity = 2.5*pi; % To be computed using energy considerations
+
         % Debugging
         show_plot = 0;
     end
@@ -74,6 +80,9 @@ classdef acrobot < handle
             
             % Solve for the curve
             obj.calcHolonomicCurve();
+            
+            % Calculate Q Curve
+            obj.calculateQField();
         end
         
         function t_value = bezier(~, precision, p1, p2, p3, p4)
@@ -103,12 +112,12 @@ classdef acrobot < handle
             P = obj.calc_P(obj.g, obj.leg_length, obj.com(1), obj.com(2), ...
                             obj.mass(1), obj.mass(2), obj.qm(1), obj.qm(2));
             J = obj.calc_J(obj.leg_length,obj.leg_length, obj.qm(1), obj.qm(2));
-            
+
             min_angle = 2*pi;
             for angle = -pi:0.001:0 % Search for the angle of impact with the most natural fall
                 wt = [cos(angle); sin(angle)] * obj.impact_velocity;
                 qdot = J \ wt;
-                
+
                 C = obj.calc_C(obj.leg_length, obj.com(2), obj.mass(2), obj.qm(2), qdot(1), qdot(2));
                 qddt = D \ (-C * qdot - P);
                 if abs(angdiff(atan2(qddt(2), qddt(1)),angle)) < min_angle
@@ -118,19 +127,25 @@ classdef acrobot < handle
             end
             
             % Post impact calculations
-            De = obj.calc_De(obj.leg_length, obj.com(1), obj.com(2), obj.mass(1), obj.mass(2), obj.qm(1), obj.qm(2)); 
+            De = obj.calc_De(obj.leg_length, obj.com(1), obj.com(2), obj.mass(1), obj.mass(2), obj.qm(1), obj.qm(2));
             E = obj.calc_E(obj.leg_length, obj.leg_length, obj.qm(1), obj.qm(2));
-            dUde = obj.calc_dUde(obj.leg_length, obj.qm(1)); 
+            dUde = obj.calc_dUde(obj.leg_length, obj.qm(1));
             last_term = [eye(2); dUde];
 
             delta_F = -(E/De*E')\E*last_term;
             delta_qedot = De\E'*delta_F + last_term;
             T = [1 1; 0 -1]; % Relabelling
-            obj.v = [T zeros(2,2)] * (delta_qedot * obj.w);
+            qp_dot = [T zeros(2,2)] * (delta_qedot * obj.w);
+            rend_dot = obj.calc_J(obj.leg_length, obj.leg_length, obj.qp(1), obj.qp(2)) * qp_dot;
+            if (rend_dot(2) < 0)
+                obj.v = -qp_dot;
+            else
+                obj.v = qp_dot;
+            end
             
             % Use post fall curve
             X = obj.getFallingCurve([obj.qm; obj.w], 0.3, -1);
-            obj.g_func = spline(X(:,2), X(:,1)); %q1 as function of q2
+            obj.g_func = cscvn(X(:,1:2)');
         end
         
         function plotHolonomicCurve(obj)
@@ -139,20 +154,17 @@ classdef acrobot < handle
             obj.plotPField();
             % obj.plotControllerSensitivityField();
             obj.plotFallingCurve();
-            
-            plot(obj.qp(1), obj.qp(2),'.', 'MarkerSize',13,'color','k');
-            plot(obj.qm(1), obj.qm(2),'.', 'MarkerSize',13,'color','k');
 
-            yy = linspace(-pi, pi);
-            zz = ppval(obj.g_func, yy);
-        
-            plot(zz, yy);
+            plot(obj.qp(1), obj.qp(2),'o', 'MarkerSize',5,'color','k');
+            plot(obj.qm(1), obj.qm(2),'o', 'MarkerSize',5,'color','k');
+            
+            fnplt(obj.g_func);
             
             title('Plot of sigma(theta)')
             xlabel('q1')
             ylabel('q2')
-            xlim([0, pi])
             axis equal
+            xlim([0, pi])
             hold off;
         end
         
@@ -162,7 +174,7 @@ classdef acrobot < handle
             syms q1 q2 q3 q4 real
             syms q1dot q2dot q1d_dot q2d_dot real
             syms theta g real
-                        
+
             q = [q1; q2];
             qdot = [q1dot; q2dot];
 
@@ -313,33 +325,36 @@ classdef acrobot < handle
             dxdt = [-2*Psi2_num 0;-Psi1_num 0]*x;
         end
         
-        function plotQField(obj)
+        function calculateQField(obj)
             % Plot vector field inv(D)*B
             q1_range = 0:0.05:pi;
             q2_range = -pi:0.05:pi;
-            [X1,X2] = meshgrid(q1_range,q2_range);
+            [obj.BX,obj.BY] = meshgrid(q1_range,q2_range);
             
-            R = zeros(size(X1));
-            Z = zeros(size(X2));
+            obj.BU = zeros(size(obj.BX));
+            obj.BV = zeros(size(obj.BY));
 
             % Dinv * B
             m1 = obj.mass(1);
             m2 = obj.mass(2);
-            for i=1:size(X2,1)
-                for j=1:size(X2,2)
+            for i=1:size(obj.BX,1)
+                for j=1:size(obj.BY,2)
                     temp = obj.calc_D(obj.leg_length, obj.com(1), obj.com(2), ...
-                                    m1, m2, X2(i,j)) \ obj.B;
-                    R(i,j) = temp(1);
-                    Z(i,j) = temp(2);
+                                    m1, m2, obj.BY(i,j)) \ obj.B;
+                    obj.BU(i,j) = temp(1);
+                    obj.BV(i,j) = temp(2);
                 end
-            end
+            end            
+        end
+        
+        function plotQField(obj)
+            q1_range = 0:0.05:pi;
+            q2_range = -pi:0.05:pi;
             
-            quiver(X1,X2,R,Z) %orbits
-            
-            streamslice(X1,X2,R,Z,'color','cyan') %orbits
+%             quiver(obj.BX,obj.BY,obj.BU,obj.BV) %orbits
+            streamslice(obj.BX,obj.BY,obj.BU,obj.BV,'color','cyan') %orbits
             
             hold on;
-            
 
             % Plot impact surfaces S+, S-
             plot(q1_range, -2 * q1_range + 2 * pi,'color','cyan');
@@ -376,18 +391,18 @@ classdef acrobot < handle
             end
             
             quiver(X1,X2,R,Z,'color',[1 0 1])
-            hold on;
-            h = streamline(X1,X2,-R,-Z,obj.qm(1),obj.qm(2));
-            set(h,'Color','red');
-            h = streamline(X1,X2,-R,-Z,obj.qp(1),obj.qp(2));
-            set(h,'Color','red');
+%             hold on;
+%             h = streamline(X1,X2,-R,-Z,obj.qm(1),obj.qm(2));
+%             set(h,'Color','red');
+%             h = streamline(X1,X2,-R,-Z,obj.qp(1),obj.qp(2));
+%             set(h,'Color','red');
         end
-        
+
         function X = getFallingCurve(obj, X_s, tend, dir)
             % Basically perform a fall in reverse, TODO, use ODE
             tstep = 0.005;
             s = 1;
-            
+
             % Prefalling phase
             X = zeros(length(0:tstep:tend),4);
             X(1,:) = X_s; % End state
@@ -397,35 +412,35 @@ classdef acrobot < handle
                 P = obj.calc_P(obj.g, obj.leg_length, obj.com(1), obj.com(2), ...
                                 obj.mass(1), obj.mass(2), X(s,1), X(s,2));
                 C = obj.calc_C(obj.leg_length, obj.com(2), obj.mass(2), X(s,2), X(s,3), X(s,4));
-                qddot_new = D \ (-C * X(s, 3:4)' - P); 
-                dxdt = dir * [X(s, 3:4)'; qddot_new];
+                qddot_new = D \ (-C * X(s, 3:4)' - P);
+                dxdt = [X(s, 3:4)'; qddot_new];
                 s = s + 1;
-                X(s,:) = X(s-1,:) + (dxdt * tstep)';
+                X(s,:) = X(s-1,:) + (dir * dxdt * tstep)';
             end
         end
-        
+
         function plotFallingCurve(obj)
             % Basically perform a fall in reverse, TODO, use ODE
             X = obj.getFallingCurve([obj.qm; obj.w], 0.3, -1);
             quiver(X(:,1),X(:,2),X(:,3),X(:,4),'color',[0 1 0])
             xlabel('q1');
-            xlabel('q2');
-            
+            ylabel('q2');
+
             hold on;
-            
+
             X = obj.getFallingCurve([obj.qp; obj.v], 0.3, 1);
             quiver(X(:,1),X(:,2),X(:,3),X(:,4),'color',[1 1 0])
             xlabel('q1');
-            xlabel('q2');
+            ylabel('q2');
         end
-        
+
         function plotControllerSensitivityField(obj)
             % Plot vector field inv(D)*B
             finity = 0.02;
             q1_range = 0:finity:pi;
             q2_range = -pi:2*finity:pi;
             [X1,X2] = meshgrid(q1_range,q2_range);
-            
+
             R = zeros(size(X1));
 
             % Dinv * B
@@ -438,18 +453,18 @@ classdef acrobot < handle
                                     m1, m2, X2(i,j));
                     P = obj.calc_P(obj.g, obj.leg_length, obj.com(1), obj.com(2), ...
                                     m1, m2, X1(i,j), X2(i,j));
-                    
+
                     temp1 = D \ obj.B;
                     temp2 = D \ -P;
-                    
+
                     t2_hat = temp2 / norm(temp2);
                     a1 = dot(temp1, t2_hat) * t2_hat;
                     R(i,j) = norm(temp1 - a1);
                 end
             end
-            
+
             surf(X1, X2, R, 'EdgeColor', 'none');
-            
+
             hold on;
             plot(q1_range, -2 * q1_range + 2 * pi,'color','cyan');
             plot(q1_range, -2 * q1_range, 'color','cyan');
@@ -482,7 +497,7 @@ classdef acrobot < handle
             rc1dot = simplify(jacobian(rc1,q) * qdot);
             rc2dot = simplify(jacobian(rc2,q) * qdot);
             renddot = simplify(jacobian(rend,q));
-            
+
             % Kinetic and Potential Energy
             T1 = 0.5 * m1 * (rc1dot' * rc1dot);
             T2 = 0.5 * m2 * (rc2dot' * rc2dot);
@@ -528,7 +543,7 @@ classdef acrobot < handle
             rHe = rH + e;
             rc2e = rc2 + e;
             rende = rend + e;
-            
+
             rc1edot = simplify(jacobian(rc1e, qe) * qedot);
             rc2edot = simplify(jacobian(rc2e, qe) * qedot);
 

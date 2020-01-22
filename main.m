@@ -1,7 +1,7 @@
 close all;
 robot = acrobot.acrobot_control();
-figure;
-robot.plotHolonomicCurve();
+% figure;
+% robot.plotHolonomicCurve();
 robot.show_plot = 1;
 
 %% Simulate
@@ -32,5 +32,13 @@ while (t < tmax)
         robot.x = robot.x + dxdt * tstep;
         robot.show(t);
         t = t + tstep;
+    end
+    
+    if (robot.x(2) > pi || robot.x(2) < -pi)
+        fprintf("Robot Ran into itself\n");
+        break;
+    elseif (robot.x(1) < 0 || robot.x(1) > pi)
+        fprintf("Robot has fallen\n");
+        break;
     end
 end
