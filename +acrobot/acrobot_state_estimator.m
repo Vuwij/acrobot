@@ -22,9 +22,10 @@ classdef acrobot_state_estimator < matlab.System
         prev_dist_to_floor = 0.0;
         state= [0;0;0;0];
         prev_yaw = 0.0;
-        dir = true;
+        imu_ground = true;
         entered = false;
         wrapped_around = false;
+        cycleCount = 0;
     end
 
     methods
@@ -39,25 +40,39 @@ classdef acrobot_state_estimator < matlab.System
         %% Common functions
         function setupImpl(obj)
             % Perform one-time calculations, such as computing constants
+            obj.imuf = imufilter('SampleRate',100);
+            obj.imuf.GyroscopeNoise          = 7.6154e-7;
+            obj.imuf.AccelerometerNoise      = 0.0015398;
+            obj.imuf.GyroscopeDriftNoise     = 3.0462e-12;
+            obj.imuf.LinearAccelerationNoise = 0.00096236;
+            obj.imuf.InitialProcessNoise = 10*obj.imuf.InitialProcessNoise;
             
-%             obj.imuf.GyroscopeNoise          = 7.6154e-7;
-%             obj.imuf.AccelerometerNoise      = 0.0015398;
-%             obj.imuf.GyroscopeDriftNoise     = 3.0462e-12;
-%             obj.imuf.LinearAccelerationNoise = 0.00096236;
-%             obj.imuf.InitialProcessNoise = 10*obj.imuf.InitialProcessNoise;
-              obj.imuf = imufilter('SampleRate',100);
-              obj.leg_length = 0.4;
+            obj.leg_length = 0.4;
         end
 
         function state = stepImpl(obj, gyro, acc, motor_step)
+            % housekeeping
+            
+            if (obj.entered)
+                obj.cycleCount = obj.cycleCount + 1;
+                if obj.cycleCount == 10
+                    obj.entered = ~obj.entered;
+                end
+            else
+                obj.cycleCount = 0;
+            end
+            % white noise filter
+%             hpFilter = designfilt('bandpassiir', 'FilterOrder', 4, 'HalfPowerFrequency1', 30, 'HalfPowerFrequency2', 50, 'SampleRate', 100);
+            
+%             gyro = filter(hpFilter,gyro);
+%             gyro = sgolayfilt(gyro, 3, 3);
+
             % yaw
             [orient, angVelocity] = obj.imuf(acc', gyro');
             zyx = eulerd(orient,'ZYX','frame');
             zyx = deg2rad(zyx);
             % motor angle
             qm = pi  + motor_step / (obj.steps_per_rotation/ 2* pi);
-            
-            
             yaw = wrapToPi(zyx(1));
             delta_yaw = yaw - obj.prev_yaw;
             if abs(delta_yaw) >= (2* pi - 0.2)
@@ -69,7 +84,7 @@ classdef acrobot_state_estimator < matlab.System
             if(obj.wrapped_around)
                     temp_yaw = yaw - pi/2;
             end
-            if(obj.dir)
+            if(obj.imu_ground)
                 % imu leg on the ground
                 q1 = temp_yaw ;
                 q1_dot = -1*angVelocity(2);
@@ -87,18 +102,16 @@ classdef acrobot_state_estimator < matlab.System
                     q1 = -q2 + temp_yaw;
                 end
             end
-
+            
+            % check collision
             rH = obj.leg_length * [cos(q1); sin(q1)];
             rc2 = rH + obj.leg_length * [cos(q1+q2); sin(q1+q2)];
             dist_to_floor = rc2(2);
             delta_dist = dist_to_floor - obj.prev_dist_to_floor;
             obj.prev_dist_to_floor = dist_to_floor;
-            fprintf('%.4f\n', delta_dist);  
             if  abs(dist_to_floor) < 0.01 && delta_dist<0
                 if (~obj.entered)
-                    fprintf("here");
-                    obj.dir = ~obj.dir;
-                    fprintf('%.4f', dist_to_floor);  
+                    obj.imu_ground = ~obj.imu_ground;
                     obj.entered = true;
                 end
             end
