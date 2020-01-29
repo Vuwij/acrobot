@@ -1,7 +1,6 @@
 %% Arduino Rotary Encoder input
 clear; clc;
-a = arduino('COM4','Nano3','Libraries','RotaryEncoder');
-% a = arduino('COM3', 'Libraries','RotaryEncoder');
+a = arduino('/dev/ttyUSB0','Nano3','Libraries','RotaryEncoder');
 %% Count Encoder
 clear encoder
 encoder = rotaryEncoder(a,'D2','D3');
