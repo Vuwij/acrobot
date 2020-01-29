@@ -22,9 +22,10 @@ classdef acrobot_state_estimator < matlab.System
         prev_dist_to_floor = 0.0;
         state= [0;0;0;0];
         prev_yaw = 0.0;
-        dir = true;
+        imu_ground = true;
         entered = false;
         wrapped_around = false;
+        cycleCount = 0;
     end
 
     methods
@@ -50,35 +51,44 @@ classdef acrobot_state_estimator < matlab.System
         end
 
         function state = stepImpl(obj, gyro, acc, motor_step)
+            % housekeeping
+            if (obj.entered)
+                obj.cycleCount = obj.cycleCount + 1;
+                if obj.cycleCount == 10
+                    obj.entered = ~obj.entered;
+                end
+            else
+                obj.cycleCount = 0;
+            end
+            
             % yaw
             [orient, angVelocity] = obj.imuf(acc', gyro');
             zyx = eulerd(orient,'ZYX','frame');
             zyx = deg2rad(zyx);
-            % motor angle
-            qm = pi  + motor_step / (obj.steps_per_rotation/ 2* pi);
-            
-            
             yaw = wrapToPi(zyx(1));
             delta_yaw = yaw - obj.prev_yaw;
             if abs(delta_yaw) >= (2* pi - 0.2)
                 obj.wrapped_around = ~obj.wrapped_around;
             end
             obj.prev_yaw = yaw;
-          
             temp_yaw = pi/2 + yaw;
             if(obj.wrapped_around)
                     temp_yaw = yaw - pi/2;
             end
-            if(obj.dir)
+            
+            % motor angle
+            qm = pi  + motor_step / (obj.steps_per_rotation/ 2* pi);
+
+            if(obj.imu_ground)
                 % imu leg on the ground
                 q1 = temp_yaw ;
                 q1_dot = -1*angVelocity(2);
                 q2 = qm - pi;
                 q2_dot = (q2 - obj.state(2))/obj.sample_time;
-                fprintf("imu on ground\n");
+%                 fprintf("imu on ground\n");
             else
                 % imu leg in the air             
-                fprintf("imu in air\n");
+%                 fprintf("imu in air\n");
                 q1_dot = -1*angVelocity(2);
                 q2 = pi - qm;
                 q1 = pi - q2 + (temp_yaw);
@@ -87,29 +97,27 @@ classdef acrobot_state_estimator < matlab.System
                     q1 = -q2 + temp_yaw;
                 end
             end
-
+            
+            %check collision
             rH = obj.leg_length * [cos(q1); sin(q1)];
             rc2 = rH + obj.leg_length * [cos(q1+q2); sin(q1+q2)];
             dist_to_floor = rc2(2);
             delta_dist = dist_to_floor - obj.prev_dist_to_floor;
-            obj.prev_dist_to_floor = dist_to_floor;
-            fprintf('%.4f\n', delta_dist);  
+            obj.prev_dist_to_floor = dist_to_floor; 
             if  abs(dist_to_floor) < 0.01 && delta_dist<0
                 if (~obj.entered)
-                    fprintf("here");
-                    obj.dir = ~obj.dir;
-                    fprintf('%.4f', dist_to_floor);  
+                    obj.imu_ground = ~obj.imu_ground;
                     obj.entered = true;
                 end
             end
             
-            state = [q1;q2;q1_dot;q2_dot];
+            state = [q1;q2;q1_dot;q2_dot;obj.imu_ground];
             obj.state = state;
             return;
         end
         
         function s1 = getOutputSizeImpl(~)
-            s1 = [4,1];
+            s1 = [5,1];
         end
         
         function d1 = getOutputDataTypeImpl(~)
