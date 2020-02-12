@@ -27,15 +27,13 @@ classdef acrobot_control < acrobot.acrobot
     methods
         function obj = acrobot_control()
             obj = obj@acrobot.acrobot();
+        end
         
+        function reset(obj)
             % Start on the cycle
-            X = obj.getFallingCurve([obj.qm; obj.w], 0.2, -1);
-            obj.x = X(10,:)';
-
-            % Original Starting point
-            
-            % Straight up
-
+%             X = obj.getFallingCurve([obj.qm; obj.w], 0.2, -1);
+%             obj.x = X(10,:)';
+            obj.x = [pi/2;0;-pi/20;-pi/8];
         end
         
         function mass = lmass(obj, num)
@@ -77,19 +75,11 @@ classdef acrobot_control < acrobot.acrobot
             rc2 = rH + obj.leg_length * [cos(q1+q2); sin(q1+q2)];
             dist = rc2(2);
             
-            obj.x = x;
-
-            direction = 0;
+            direction = -1;
             isterminal = 1;
         end
         
-        function dxdt = autostep(obj, t, x)
-            dxdt = obj.step(t, x);
-        end
-        
-        function dxdt = step(obj, ~, x)
-            obj.tau = obj.getTau(x);
-            
+        function dxdt = step(obj, ~, x, tau)
             q = [x(1); x(2)];
             qdot = [x(3); x(4)];
             
@@ -98,7 +88,7 @@ classdef acrobot_control < acrobot.acrobot
             C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
             P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
 
-            obj.tau_q = D \ obj.tau;
+            obj.tau_q = D \ tau;
             obj.tau_g = D \ (-C * qdot - P);
             qddot_new = obj.tau_g + obj.tau_q;
             dxdt = [qdot; qddot_new];
@@ -195,6 +185,10 @@ classdef acrobot_control < acrobot.acrobot
             else
                 obj.x = [qp; qp_dot];
             end
+
+            
+            % Increase Step Count
+            obj.step_count = obj.step_count + 1;
             
             % Change heel location
             rH = obj.leg_length * [cos(q1); sin(q1)];                       % Hip position
@@ -257,7 +251,6 @@ classdef acrobot_control < acrobot.acrobot
             ylabel('Tau N*m');
             xlabel('Time (s)');
 
-%            text(-0.8,0.5,sprintf('time: %f', t)); % Display current time
             drawnow;
         end
     end

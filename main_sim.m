@@ -10,11 +10,9 @@ tstep = 0.005;  % Simulation time step
 t = 0;
 
 % Simulate robot falling on the ground
+close all;
 fig = figure;
 set(fig, 'Position',  [100, 100, 1500, 700]);
-
-% Collision point on the floor
-search_for_collision_threshold = 0.05;
 options = odeset('Events',@(t,x)robot.dist_to_floor(t,x), 'RelTol', 1e-9, 'AbsTol', 1e-9);
 
 % Simulate Robot Walking
@@ -22,12 +20,19 @@ while (t < tmax)
     
     % Calculate the value for tau at the point
     tau = robot.getTau(robot.x);
+    tau = [0;0];
     
     % Search for foot placement when close to floor
-    [t_anim,x_anim,te,xe, ie] = ode45(@(t, x) robot.step(t, x, tau), [t t+tstep], robot.x, options);
-
+    t_next = floor((t + tstep + 1e-9)/tstep)*tstep;
+    [t_anim, x_anim, te, xe, ie] = ode45(@(t, x) robot.step(t, x, tau), [t t_next], robot.x, options);
+    
     if (ie)
         robot.impact_foot(xe);
+        t = te;
+    else
+        robot.x = x_anim(end,:)';
+        t = t_next;
     end
+    
     robot.show(t);
 end

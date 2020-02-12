@@ -19,6 +19,7 @@ classdef acrobot < handle
         calc_D;
         calc_C;
         calc_P;
+        calc_EE;
         
         calc_J;
         calc_De;
@@ -52,7 +53,7 @@ classdef acrobot < handle
         g = 9.81;
         
         % Mechanical Parameters
-        leg_length = 0.348;
+        leg_length = 0.335;
         foot_radius = 0.0075;
 
         % Curve Parameters
@@ -506,6 +507,7 @@ classdef acrobot < handle
             U2 = m2 * g * rc2(2);
             U = U1 + U2;
             L = simplify(T - U);
+            EE = T + U;
             dLdq = jacobian(L,q)';
             dLdqdot = jacobian(L,qdot)';
             ddtdLdqdot = jacobian(dLdqdot,q) * qdot + jacobian(dLdqdot,qdot) * qddot;
@@ -577,6 +579,7 @@ classdef acrobot < handle
             obj.calc_De = matlabFunction(De);
             obj.calc_E = matlabFunction(E);
             obj.calc_dUde = matlabFunction(dUde);
+            obj.calc_EE = matlabFunction(EE);
         end
     end
 end
