@@ -17,10 +17,11 @@ mu_vth = 0.001;
 
 % Plane Parameters
 height_plane = 0.025;
-plane_x = 25;
-plane_y = 3;
+plane_x = 1;
+plane_y = 0.5;
 
 %% Foot parameters
+leg_length = 0.335;
 foot_radius = 0.0075;
 line_depth_to_reference_frame = 0.05;
 
@@ -30,3 +31,5 @@ steps_per_rotation = 2797;
 
 %% IMU parameters
 imu_sample_rate = 100;
+gyro_noise = 0.001;
+acc_noise = 0.01;

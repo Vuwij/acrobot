@@ -6,15 +6,17 @@
     <xacro:property name="MOTOR_VELOCITY" value="1.8"/>
     <xacro:property name="PI" value="3.1415928"/>
 
+    <xacro:property name="MAXIMUM_ANGLE" value="${11*PI/12}"/>
+
     <link name="base_link" />
 
     <link name="leg1">
         <inertial>
-            <mass value="256.815e-3"/>
-            <origin rpy="0 0 0" xyz="89.16e-3 0 0"/>
-            <inertia ixx="6.16e-5" ixy="0.0" ixz="0.0"
-                     iyy="3.46e-3" iyz="0.0"
-                     izz="3.48e-3"/>
+            <mass value="436.312e-3"/>
+            <origin rpy="0 0 0" xyz="44.3396e-3 0 0"/>
+            <inertia ixx="3.60e-4" ixy="0.0" ixz="0.0"
+                     iyy="4.16e-3" iyz="0.0"
+                     izz="3.90e-3"/>
         </inertial>
         <visual name="visual">
             <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -29,11 +31,11 @@
 
     <link name="leg2">
         <inertial>
-            <mass value="166.44e-3"/>
-            <origin rpy="0 0 0" xyz="-183.44e-3 0 0"/>
-            <inertia ixx="1.94e-4" ixy="0" ixz="0"
-                     iyy="2.17e-3" iyz="0"
-                     izz="2.34e-3"/>
+            <mass value="194.587e-3"/>
+            <origin rpy="0 0 0" xyz="-105.604e-3 0 0"/>
+            <inertia ixx="2.25e-4" ixy="0" ixz="0"
+                     iyy="2.53e-3" iyz="0"
+                     izz="2.33e-3"/>
         </inertial>
         <visual name="visual">
             <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -58,7 +60,7 @@
         <origin rpy="0 0 0" xyz="0 0 0"/>
         <axis xyz="0 1 0"/>
         <dynamics damping="${JOINT_DAMPING}" friction="${JOINT_FRICTION}" />
-        <limit effort="${MOTOR_TORQUE}" lower="-${PI*98/100}" upper="${PI*98/100}" velocity="${MOTOR_VELOCITY}"/>
+        <limit effort="${MOTOR_TORQUE}" lower="-${MAXIMUM_ANGLE}" upper="${MAXIMUM_ANGLE}" velocity="${MOTOR_VELOCITY}"/>
     </joint>
 
 </robot>

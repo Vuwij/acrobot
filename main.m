@@ -1,6 +1,6 @@
 %% Connection to the robot
 clear; clc;close all;
-a = arduino('/dev/ttyUSB0','Nano3','Libraries',{'RotaryEncoder', 'I2C'});
+a = arduino('COM4','Nano3','Libraries',{'RotaryEncoder', 'I2C'});
 encoder = rotaryEncoder(a,'D2','D3');
 imu = mpu6050(a);
 
@@ -17,16 +17,22 @@ fig = figure;
 set(fig, 'Position',  [100, 100, 1500, 700]);
 
 % Simulate Robot Walking
+tic;
 while (1)
+    t = toc;
+    acc = imu.readAcceleration;
+    gyro = imu.readAngularVelocity;
+    motor_step = encoder.readCount;
     
     % Get Robot State (Fix this line)
-    state = estimator.stepImpl(obj, gyro, acc, motor_step);
-    
+    state = estimator.stepImplPublic(gyro', acc', motor_step);
+
     % Update the robot state with the estimated state (Might want to tune
     % it so that it takes a percentage of the measured vs a percentage of
     % the projected state. Can use a complementary filter for now but can
     % upgrade to kalman filter sometime in the future
     robot.x = state;
+    robot.x
     
     % Make a step and calculate tau
     tau = robot.getTau(robot.x);
@@ -40,6 +46,9 @@ while (1)
         robot.impact_foot(robot.x);
     end
     
+    % Display the robot
+    robot.show(t);
+
     % Wait for the rate to finish
     waitfor(rate);
 end
