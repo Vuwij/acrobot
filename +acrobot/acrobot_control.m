@@ -25,7 +25,10 @@ classdef acrobot_control < acrobot.acrobot
     methods
         function obj = acrobot_control()
             obj = obj@acrobot.acrobot();
+            obj.reset();
+        end
         
+        function reset(obj)
             % Start on the limit cycle
             q1 = pi/2;
             q1dot = -pi;
@@ -91,12 +94,8 @@ classdef acrobot_control < acrobot.acrobot
             isterminal = 1;
         end
         
-        function dxdt = autostep(obj, t, x)
-            dxdt = obj.step(t, x);
-        end
-        
-        function dxdt = step(obj, ~, x)
-            obj.tau = obj.getTau(x);
+        function dxdt = step(obj, ~, x, tau)
+            obj.tau = tau;
             
             q = [x(1); x(2)];
             qdot = [x(3); x(4)];
@@ -165,12 +164,13 @@ classdef acrobot_control < acrobot.acrobot
             qp = T * q + [-pi; 0];
             qp_dot = [T zeros(2,2)] * (delta_qedot * q_dot);
             
-            % Symmetrical landing
-%             qp_dot = [q2_dot; q1_dot];
-            
-            % Update the X term
-            obj.x = [qp; qp_dot];
-            obj.x(1:2) = wrapTo2Pi(obj.x(1:2));
+            % Collision with floor?
+            rend_dot = obj.calc_J(obj.leg_length, obj.leg_length, qp(1), qp(2)) * qp_dot;
+            if (rend_dot(2) < 0)
+                obj.x = [qp; -qp_dot];
+            else
+                obj.x = [qp; qp_dot];
+            end
             
             % Change heel location
             rH = obj.leg_length * [cos(q1); sin(q1)];                       % Hip position
@@ -232,7 +232,6 @@ classdef acrobot_control < acrobot.acrobot
             ylabel('Tau N*m');
             xlabel('Time (s)');
 
-%            text(-0.8,0.5,sprintf('time: %f', t)); % Display current time
             drawnow;
         end
     end

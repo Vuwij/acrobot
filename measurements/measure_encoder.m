@@ -1,10 +1,11 @@
 %% Arduino Rotary Encoder input
 clear; clc;
 a = arduino('/dev/ttyUSB0','Nano3','Libraries','RotaryEncoder');
-
 %% Count Encoder
 clear encoder
 encoder = rotaryEncoder(a,'D2','D3');
+
+writeDigitalPin(a, 'D5', 1);
 
 % Forward
 writeDigitalPin(a, 'D6', 1);
@@ -32,11 +33,11 @@ end
 writePWMDutyCycle(a,'D5',0.0);
 
 cycles = 9;
-pulses_per_revolution = abs(count) / cycles;
+count_per_revolution = abs(count) / cycles;
 
 %% Measure speed
 clear encoder
-ppr = double(uint32(pulses_per_revolution / 4)); % for quadrature
+ppr = double(uint32(count_per_revolution / 4)); % for quadrature
 encoder = rotaryEncoder(a,'D2','D3', ppr);
 
 writePWMDutyCycle(a,'D5',0.5);
