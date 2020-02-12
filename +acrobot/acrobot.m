@@ -53,9 +53,6 @@ classdef acrobot < handle
         beta = pi/8;
         vwscale = 1;
         impact_velocity = 3.0*pi; % To be computed using energy considerations
-        
-        % Debugging
-        show_plot = 0;
     end
     
     methods

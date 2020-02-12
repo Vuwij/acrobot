@@ -1,7 +1,6 @@
 close all;
 robot = acrobot.acrobot_control();
-figure;
-robot.plotHolonomicCurve();
+% robot.plotHolonomicCurve();
 robot.show_plot = 1;
 
 %% Simulate
