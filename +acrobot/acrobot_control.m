@@ -21,7 +21,6 @@ classdef acrobot_control < acrobot.acrobot
         
         % Plots
         tau_limit = 1;
-        step_count = 0;
     end
     
     methods
@@ -31,31 +30,9 @@ classdef acrobot_control < acrobot.acrobot
         
         function reset(obj)
             % Start on the cycle
-%             X = obj.getFallingCurve([obj.qm; obj.w], 0.2, -1);
-%             obj.x = X(10,:)';
-            obj.x = [pi/2;0;-pi/20;-pi/8];
-        end
-        
-        function mass = lmass(obj, num)
-            if rem(obj.step_count,2) == 1
-                if num == 2
-                    num = 1;
-                else
-                    num = 2;
-                end
-            end
-            mass = obj.mass(num);
-        end
-        
-        function com = lcom(obj, num)
-            if rem(obj.step_count,2) == 1
-                if num == 2
-                    num = 1;
-                else
-                    num = 2;
-                end
-            end
-            com = obj.com(num);
+            X = obj.getFallingCurve([obj.c1.qm; obj.c1.w], 0.1, -1);
+            obj.x = X(end,:)';
+%             obj.x = [pi/2;0;0;0];
         end
         
         function Kp = Kp(obj)
@@ -84,7 +61,7 @@ classdef acrobot_control < acrobot.acrobot
             qdot = [x(3); x(4)];
             
             % Robotics Equation Parameters
-            D = obj.calc_D(obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q(2));
+            D = obj.calc_D(obj.linertia(1), obj.linertia(1), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q(2));
             C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
             P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
 
@@ -96,8 +73,8 @@ classdef acrobot_control < acrobot.acrobot
         
         % Return positive if left, negative if right
         function final_dist = getDistToCurve(obj, q)
-            xy1 = stream2(obj.BX, obj.BY, obj.BU, obj.BV, q(1), q(2));
-            xy2 = stream2(obj.BX, obj.BY, -obj.BU, -obj.BV, q(1), q(2));
+            xy1 = stream2(obj.lcurve.BX, obj.lcurve.BY, obj.lcurve.BU, obj.lcurve.BV, q(1), q(2));
+            xy2 = stream2(obj.lcurve.BX, obj.lcurve.BY, -obj.lcurve.BU, -obj.lcurve.BV, q(1), q(2));
 %             plot(xy1{1}(:,1), xy1{1}(:,2));
 %             hold on;
 %             plot(xy2{1}(:,1), xy2{1}(:,2));
@@ -105,7 +82,7 @@ classdef acrobot_control < acrobot.acrobot
             
             left_pts = xy1{1}';
             right_pts = xy2{1}';
-            pts = fnval(obj.g_func, obj.g_func.breaks);
+            pts = fnval(obj.lcurve.g_func, obj.lcurve.g_func.breaks);
 
             % Inefficient 2D loop (will make more efficient)
             min_val = 10000;
@@ -142,7 +119,7 @@ classdef acrobot_control < acrobot.acrobot
             qdot = [x(3); x(4)];
             
             % Robotics Equation Parameters
-            D = obj.calc_D(obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q(2));
+            D = obj.calc_D(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q(2));
             C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
             P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
             
@@ -166,7 +143,7 @@ classdef acrobot_control < acrobot.acrobot
             q = [q1; q2];
             q_dot = [q1_dot; q2_dot];
 
-            De = obj.calc_De(obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q1, q2);
+            De = obj.calc_De(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q1, q2);
             E = obj.calc_E(obj.leg_length, obj.leg_length, q1, q2);
             dUde = obj.calc_dUde(obj.leg_length, q1);
             last_term = [eye(2); dUde];
@@ -203,7 +180,7 @@ classdef acrobot_control < acrobot.acrobot
         function show(obj, t)
 
             % Plot Robot
-            subplot(2,2,1)
+            subplot(2,3,1)
             
             hold off;
             Xslope_plot = linspace(-10,10,100);
@@ -233,11 +210,27 @@ classdef acrobot_control < acrobot.acrobot
             r2.Color = 'black';
 
             % Plotting the subplot field
-            subplot(2,2,[2,4]);
             if ~obj.q_field_plotted
-                plotHolonomicCurve(obj);
-                obj.q_field_plotted = 1;
+                step_count = obj.step_count;
+
+                subplot(2,3,[2,5]);
+                obj.step_count = 0;
+                plotHolonomicCurve(obj, obj.c1);
                 hold on;
+                
+                subplot(2,3,[3,6]);
+                obj.step_count = 1;
+                plotHolonomicCurve(obj, obj.c2);
+                hold on;
+                
+                obj.q_field_plotted = 1;
+                obj.step_count = step_count;
+            end
+            
+            if (rem(obj.step_count,2) == 0)
+                subplot(2,3,[2,5]);
+            else
+                subplot(2,3,[3,6]);
             end
             
             plot(q1(1), q2(1), '.', 'markersize',10,'color',[0 0 0]);
@@ -245,7 +238,7 @@ classdef acrobot_control < acrobot.acrobot
             quiver(q1(1), q2(1), obj.tau_q(1) * 0.001, obj.tau_q(2) * 0.001);
 
             % Plotting tau
-            subplot(2,2,3);
+            subplot(2,3,4);
             hold on;
             plot(t, obj.tau, '.', 'markersize',3,'color','m');
             ylabel('Tau N*m');
