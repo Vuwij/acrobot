@@ -22,11 +22,11 @@ while (t < tmax)
     
     % Test
     tau = [0;0];
-%     if (t < 0.3)
-%         tau = [0;0.01];
-%     else
-%         tau = [0;-0.065];
-%     end
+    if (t < 0.15)
+        tau = [0;0.00];
+    else
+        tau = [0;-0.5];
+    end
     
     % Search for foot placement when close to floor
     t_next = floor((t + tstep + 1e-9)/tstep)*tstep;

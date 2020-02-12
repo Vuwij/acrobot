@@ -5,7 +5,6 @@ classdef acrobot_control < acrobot.acrobot
         
         q_field_plotted = 0;
         tau = 0;
-        holo_point;
         tau_q;
         tau_g;
         e = 0;
@@ -32,17 +31,14 @@ classdef acrobot_control < acrobot.acrobot
             % Start on the cycle
             X = obj.getFallingCurve([obj.c1.qm; obj.c1.w], 0.1, -1);
             obj.x = X(end,:)';
-%             obj.x = [pi/2;0;0;0];
         end
         
         function Kp = Kp(obj)
             Kp = (1/obj.gamma)^2;
-%            Kp = -obj.poles(1) * -obj.poles(2);
         end
         
         function Kd = Kd(obj)
             Kd = 2/obj.gamma;
-%            Kd = -obj.poles(1) + -obj.poles(2);
         end
         
         function [dist, isterminal, direction] = dist_to_floor(obj, t, x)
@@ -71,49 +67,6 @@ classdef acrobot_control < acrobot.acrobot
             dxdt = [qdot; qddot_new];
         end
         
-        % Return positive if left, negative if right
-        function final_dist = getDistToCurve(obj, q)
-            xy1 = stream2(obj.lcurve.BX, obj.lcurve.BY, obj.lcurve.BU, obj.lcurve.BV, q(1), q(2));
-            xy2 = stream2(obj.lcurve.BX, obj.lcurve.BY, -obj.lcurve.BU, -obj.lcurve.BV, q(1), q(2));
-%             plot(xy1{1}(:,1), xy1{1}(:,2));
-%             hold on;
-%             plot(xy2{1}(:,1), xy2{1}(:,2));
-%             fnplt(obj.g_func);
-            
-            left_pts = xy1{1}';
-            right_pts = xy2{1}';
-            pts = fnval(obj.lcurve.g_func, obj.lcurve.g_func.breaks);
-
-            % Inefficient 2D loop (will make more efficient)
-            min_val = 10000;
-            final_dist = 0;
-            dist = 0;
-            for i = 1:length(left_pts)
-                [val, idx] = min(vecnorm(pts - left_pts(:,i),2));
-                if (val < min_val)
-                    final_dist = dist;
-                    obj.holo_point = pts(:,idx);
-                    min_val = val;
-                end
-                if (i ~= 1)
-                    dist = dist + norm(left_pts(:,i) - left_pts(:,i-1));
-                end
-            end
-            dist = 0;
-            for i = 1:length(right_pts)
-                [val, idx] = min(vecnorm(pts - right_pts(:,i),2));
-                if (val < min_val)
-                    final_dist = dist;
-                    obj.holo_point = pts(:,idx);
-                    min_val = val;
-                end
-                if (i ~= 1)
-                    dist = dist - norm(right_pts(:,i) - right_pts(:,i-1));
-                end
-            end           
-            
-        end
-        
         function tau = getTau(obj, x)
             q = [x(1); x(2)];
             qdot = [x(3); x(4)];
@@ -123,13 +76,11 @@ classdef acrobot_control < acrobot.acrobot
             C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
             P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
             
-            tau_g = D \ (-C * qdot - P);
-            dir = D \ obj.B;
-            dir_norm = dir / norm(dir);
-            resist = dot(tau_g, dir_norm) / norm(dir);
             
-            dist = obj.getDistToCurve(q);
-            obj.tau = [0;resist + obj.Kp * dist];
+            % Existing Force
+            tau_g = D \ (-C * qdot - P);
+            
+            obj.tau = [0;0];
             obj.tau = max(min(obj.tau_limit, obj.tau), -obj.tau_limit);
             tau = obj.tau;
         end
@@ -162,7 +113,6 @@ classdef acrobot_control < acrobot.acrobot
             else
                 obj.x = [qp; qp_dot];
             end
-
             
             % Increase Step Count
             obj.step_count = obj.step_count + 1;
@@ -172,9 +122,6 @@ classdef acrobot_control < acrobot.acrobot
             step_diff = rH + obj.leg_length * [cos(q1+q2); sin(q1+q2)];     % Swing foot position
             obj.pheel(1) = obj.pheel(1) + step_diff(1);
             
-            % Recalculate the holonomic cruve
-            obj.calcHolonomicCurve();
-            obj.q_field_plotted = 0;
         end
         
         function show(obj, t)
@@ -234,7 +181,6 @@ classdef acrobot_control < acrobot.acrobot
             end
             
             plot(q1(1), q2(1), '.', 'markersize',10,'color',[0 0 0]);
-            plot(obj.holo_point(1), obj.holo_point(2), 'x', 'markersize',10,'color',[0 0 1]);
             quiver(q1(1), q2(1), obj.tau_q(1) * 0.001, obj.tau_q(2) * 0.001);
 
             % Plotting tau

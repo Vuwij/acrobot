@@ -3,48 +3,27 @@ classdef curve < handle
     %   Parameters for a single curve
     
     properties
-        % VHC parameters
-        BX;
-        BY;
-        BU;
-        BV;
         
-        % Output curves properties
-        delta_qsdot;
-        sigma;
-        theta_f;
-        theta_start;
-        theta_end;
+        % Curve Parameters (Can vary with alternating foot)
+        beta = pi/8;                % Angle which to hit the ground
+        energy_loss = 1;            % Energy lost from hitting the ground
+        impact_velocity = 2.5*pi;   % Velocity to hit the ground
         
-        % Curve parameters
-        qm;
-        qp;
+        % Computed Curve parameters
+        qm; % q1-q2 angle pre-impact
+        qp; % q1-q2 angle post-impact
         w;
         v;
         
-        g_func;
+        f_func;         % No Torque function for falling function
+        r_func;         % No function for rising function with constant tau
+        
+        tau_const = 0;  % Constant tau for it to reach the starting to the end point
     end
     
     methods
         function obj = curve()
             %
-        end
-        
-        function plotQField(obj)
-            q1_range = 0:0.05:pi;
-            
-%             quiver(obj.BX,obj.BY,obj.BU,obj.BV) %orbits
-            streamslice(obj.BX,obj.BY,obj.BU,obj.BV,'color','cyan') %orbits
-            
-            hold on;
-
-            % Plot impact surfaces S+, S-
-            plot(q1_range, -2 * q1_range + 2 * pi,'color','cyan');
-            plot(q1_range, -2 * q1_range, 'color','cyan');
-            xlim([0, pi]);
-            ylim([-pi, pi]);
-            
-            hold off;
         end
     end
 end
