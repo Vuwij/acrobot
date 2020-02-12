@@ -55,10 +55,6 @@ classdef acrobot_control < acrobot.acrobot
 
             direction = 0;
             isterminal = 1;
-            
-            if obj.show_plot
-                obj.show(t);
-            end
         end
         
         function dxdt = step(obj, x, tau)
