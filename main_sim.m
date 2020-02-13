@@ -21,12 +21,15 @@ while (t < tmax)
     tau = robot.getTau(robot.x);
     
     % Test
-    tau = [0;0];
-    if (t < 0.15)
-        tau = [0;0.00];
-    else
-        tau = [0;-0.5];
-    end
+%     tau = [0;0.00];
+% 
+%     if (robot.step_count == 0)
+%         tau = [0;0.00];
+%     elseif (mod(robot.step_count,2) == 1)
+%         tau = [0;robot.c2.tau_const];
+%     else
+%         tau = [0;robot.c1.tau_const];
+%     end
     
     % Search for foot placement when close to floor
     t_next = floor((t + tstep + 1e-9)/tstep)*tstep;

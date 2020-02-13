@@ -29,9 +29,6 @@ classdef acrobot < handle
         % VHC Parameters
         B = [0; 1];
         
-        % Curves
-        c1 = acrobot.curve();
-        c2 = acrobot.curve();
     end
     properties
         % Physical Parameters
@@ -42,6 +39,10 @@ classdef acrobot < handle
         foot_radius = 0.0075;
 
         step_count = 0;
+        
+        % Curves
+        c1 = acrobot.curve();
+        c2 = acrobot.curve();
     end
     
     methods
@@ -54,7 +55,10 @@ classdef acrobot < handle
                 obj.com(i) = norm(obj.robot.Bodies{i}.CenterOfMass(1));
                 obj.inertia(i) = obj.robot.Bodies{i}.Inertia(2);
             end
-
+            
+            obj.c1 = acrobot.curve();
+            obj.c2 = acrobot.curve();
+            
             % Create Robot Equation handles
             obj.solveRoboticsEquation();
             
@@ -145,15 +149,20 @@ classdef acrobot < handle
             obj.c2.f_func = cscvn(X(:,1:2)');
             
             % Search for rising curve with const tau
+            fall_duration = 0.6;
             obj.step_count = 0;
-            obj.c1.tau_const = obj.getBestConstTau(obj.c1.qp, obj.c1.qm, obj.c1.v);
-            X = obj.getFallingCurve([obj.c1.qp; obj.c1.v], 0.3, 1, [0; obj.c1.tau_const]);
+            obj.c1.tau_const = obj.getBestConstTau(obj.c1.qp, obj.c1.qm, obj.c1.v, fall_duration);
+            X = obj.getFallingCurve([obj.c1.qp; obj.c1.v], fall_duration, 1, [0; obj.c1.tau_const]);
             obj.c1.r_func = cscvn(X(:,1:2)');
             
             obj.step_count = 1;
-            obj.c2.tau_const = obj.getBestConstTau(obj.c2.qp, obj.c2.qm, obj.c2.v);
-            X = obj.getFallingCurve([obj.c2.qp; obj.c2.v], 0.3, 1, [0; obj.c2.tau_const]);
+            obj.c2.tau_const = obj.getBestConstTau(obj.c2.qp, obj.c2.qm, obj.c2.v, fall_duration);
+            X = obj.getFallingCurve([obj.c2.qp; obj.c2.v], fall_duration, 1, [0; obj.c2.tau_const]);
             obj.c2.r_func = cscvn(X(:,1:2)');
+            
+            % Map the VHC to q1 and q2
+            obj.getQFieldFunction(obj.c1);
+            obj.getQFieldFunction(obj.c2);
             
             % Set back to original
             obj.step_count = 0;
@@ -199,12 +208,13 @@ classdef acrobot < handle
             end
         end
         
-        function tau_best = getBestConstTau(obj, qp, qm, v)
+        function tau_best = getBestConstTau(obj, qp, qm, v, dur)
             tau_best = 0;
             closest_distance = 100000;
             
-            for tau = -0.5
-                X = obj.getFallingCurve([qp; v], 0.4, 1, [0; tau]);
+            for tau = -1.0:0.005:0.0
+                X = obj.getFallingCurve([qp; v], dur, 1, [0; tau]);
+%                 plot(X(:,1),X(:,2));
                 for i = 1:length(X)
                     dist = norm(X(i,1:2) - qm');
                     if (dist < closest_distance)
@@ -212,13 +222,12 @@ classdef acrobot < handle
                         tau_best = tau;
                     end
                 end
-%                 quiver(X(:,1),X(:,2),X(:,3),X(:,4),'color',[0 1 0])
-                hold on;
+%                 hold on;
             end
             
 %             plot(qp(1), qp(2),'o', 'MarkerSize',5,'color','k');
 %             plot(qm(1), qm(2),'o', 'MarkerSize',5,'color','k');
-            
+%             hold off;
         end
         
         function plotHolonomicCurve(obj, curve)
@@ -231,7 +240,11 @@ classdef acrobot < handle
             plot(curve.qp(1), curve.qp(2),'o', 'MarkerSize',5,'color','k');
             plot(curve.qm(1), curve.qm(2),'o', 'MarkerSize',5,'color','k');
             
+            quiver(curve.qp(1), curve.qp(2), curve.v(1), curve.v(2), 'LineWidth', 2, 'MaxHeadSize', 0.4);
+            quiver(curve.qm(1), curve.qm(2), curve.w(1), curve.w(2), 'LineWidth', 2, 'MaxHeadSize', 0.4);
+            
             fnplt(curve.f_func);
+            fnplt(curve.r_func);
             
             title('Plot of sigma(theta)')
             xlabel('q1')
@@ -240,7 +253,82 @@ classdef acrobot < handle
             xlim([0, pi])
             hold off;
         end
+        
+        function getQFieldFunction(obj, curve)
+            q1_range = 0:0.05:pi;
+            q2_range = -pi:0.05:pi;
+            [BX,BY] = meshgrid(q1_range,q2_range);
+            
+            BU = zeros(size(BX));
+            BV = zeros(size(BY));
+            
+            % Dinv * B
+            m1 = obj.lmass(1);
+            m2 = obj.lmass(2);
+            for i=1:size(BX,1)
+                for j=1:size(BY,2)
+                    temp = obj.calc_D(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), ...
+                                    m1, m2, BY(i,j)) \ obj.B;
+                    BU(i,j) = temp(1);
+                    BV(i,j) = temp(2);
+                end
+            end
+            
+            % Create the bivariate tensor product spline from x,y points to
+            % the x axis
+            % https://www.mathworks.com/help/curvefit/examples/bivariate-tensor-product-splines.html
+            
+            [xx, yy] = ndgrid(q1_range,q2_range);
+            X_Map = zeros(size(xx,1), size(xx,2));
+            for i=1:size(xx,1)
+                for j=1:size(yy,2)
+                    xy1 = stream2(BX, BY, BU, BV, xx(i,j), yy(i,j));
+                    xy2 = stream2(BX, BY, -BU, -BV, xx(i,j), yy(i,j));
+                    
+                    [v1, idx1] = min(abs(xy1{1}(:,2)));
+                    [v2, idx2] = min(abs(xy2{1}(:,2)));
+                    
+                    if (v1 < v2)
+                        X_Map(i,j) = xy1{1}(idx1,1);
+                    else
+                        X_Map(i,j) = xy2{1}(idx2,1);
+                    end
+                end
+            end
+            
+            mesh(q1_range, q2_range, X_Map.');
+            
+            curve.knotsy = augknt(-pi:pi/5:pi,curve.ky);
+            curve.knotsx = augknt(0:pi/5:pi,curve.kx);
+            curve.sp = spap2(curve.knotsy,curve.ky,q2_range,X_Map);
+            curve.sp2 = spap2(curve.knotsx,curve.kx,q1_range,curve.sp.coefs.');
+            
+%             xv = 0:pi/20:pi; yv = -pi:2*pi/20:pi;
+%             values = spcol(curve.knotsx,curve.kx,xv)*curve.sp2.coefs'*spcol(curve.knotsy,curve.ky,yv).';
 
+            % Create the inverse function from x axis to the curve points
+            % x -> (q1, q2)
+            x2q = zeros(size(curve.r_func.breaks,2), 3);
+
+            for i = 1:size(curve.r_func.breaks,2)
+                v = ppval(curve.r_func,curve.r_func.breaks(i));
+                
+                xy1 = stream2(BX, BY, BU, BV, v(1), v(2));
+                xy2 = stream2(BX, BY, -BU, -BV, v(1), v(2));
+                
+                [v1, idx1] = min(abs(xy1{1}(:,2)));
+                [v2, idx2] = min(abs(xy2{1}(:,2)));
+
+                if (v1 < v2)
+                    x2q(i,:) = [xy1{1}(idx1,1) v'];
+                else
+                    x2q(i,:) = [xy2{1}(idx2,1) v'];
+                end
+            end
+            
+            curve.sp3 = spline(x2q(:,1), x2q(:,2:3)');
+        end
+        
         function plotQField(obj)
             q1_range = 0:0.05:pi;
             q2_range = -pi:0.05:pi;
@@ -325,6 +413,12 @@ classdef acrobot < handle
                 dxdt = [X(s, 3:4)'; qddot_new];
                 s = s + 1;
                 X(s,:) = X(s-1,:) + (dir * dxdt * tstep)';
+                
+                % Collisions
+                if (X(s,2) < -X(s,1)*2)
+                    X(s:end,:) = [];
+                    break
+                end
             end
         end
 

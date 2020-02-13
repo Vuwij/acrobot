@@ -3,6 +3,7 @@ classdef acrobot_control < acrobot.acrobot
     properties(Access = protected)
         pheel = [0; 0];      % Position of the heel
         
+        holo_point = [0;0];
         q_field_plotted = 0;
         tau = 0;
         tau_q;
@@ -31,6 +32,7 @@ classdef acrobot_control < acrobot.acrobot
             % Start on the cycle
             X = obj.getFallingCurve([obj.c1.qm; obj.c1.w], 0.1, -1);
             obj.x = X(end,:)';
+            X = [1.7671; 2.7489; -1.0573; 0.7951];
         end
         
         function Kp = Kp(obj)
@@ -76,11 +78,46 @@ classdef acrobot_control < acrobot.acrobot
             C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
             P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
             
+            qddot = D \ (-C * qdot - P); 
             
-            % Existing Force
-            tau_g = D \ (-C * qdot - P);
+            % Desired angles
+            sp2d = fnder(obj.lcurve.sp2, 1);
+            sp3d = fnder(obj.lcurve.sp3, 1);
             
-            obj.tau = [0;0];
+            xf = @(q1,q2) fnval( spmak({obj.lcurve.knotsx,obj.lcurve.knotsy},obj.lcurve.sp2.coefs.'), {q1,q2} );
+            xfd = @(q1,q2) fnval( spmak({obj.lcurve.knotsx,obj.lcurve.knotsy},sp2d.coefs.'), {q1,q2} );
+
+            gf = @(q1, q2) fnval(obj.lcurve.sp3, xf(q1, q2));
+            gfd = @(q1, q2) fnval(sp3d, xfd(q1, q2));
+            
+            
+            
+            qd = gf(q(1),q(2));
+            qd_dot = gf(q(1),q(2));
+            
+            obj.holo_point = qd;
+
+            
+%             gf = @(q1) ppval(obj.lcurve.r_func,q1);
+%             gfd = @(q1) ppval(fnder(obj.lcurve.r_func,1),q1);
+%             gfdd = @(q1) ppval(fnder(obj.lcurve.r_func,2),q1);
+            
+%             qd = [q(1); gf(q(1))];
+%             qd_dot = [qdot(1); gfd(q(1)) * qdot(1)];
+%             qd_ddot = [qddot(1); gfd(q(1)) * qddot(1) + gfdd(q(1)) * qdot(1)^2];
+            
+            % PD Control
+            qs = qd - q;
+            qs_dot = qd_dot - qdot;
+%            qs_ddot = qd_ddot - qddot;
+
+%             a = (obj.Kp * qs(2) + obj.Kd * qs_dot(2) + qs_ddot(2)); % Acceleration of q2
+            a = (obj.Kp * qs(2) + obj.Kd * qs_dot(2));
+            
+            test = -gfd(q(1), q(2));
+            obj.tau = [0; inv([-test(2) 1] * inv(D) * obj.B) * a];
+            obj.tau(1) = 0;
+            
             obj.tau = max(min(obj.tau_limit, obj.tau), -obj.tau_limit);
             tau = obj.tau;
         end
@@ -181,6 +218,8 @@ classdef acrobot_control < acrobot.acrobot
             end
             
             plot(q1(1), q2(1), '.', 'markersize',10,'color',[0 0 0]);
+            plot(obj.holo_point(1), obj.holo_point(2), '.', 'markersize',10,'color',[0 1 0]);
+
             quiver(q1(1), q2(1), obj.tau_q(1) * 0.001, obj.tau_q(2) * 0.001);
 
             % Plotting tau
