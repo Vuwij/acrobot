@@ -352,7 +352,7 @@ classdef acrobot < handle
             end   
             
 %             quiver(obj.BX,obj.BY,obj.BU,obj.BV) %orbits
-            streamslice(BX,BY,BU,BV,'color','cyan'); %orbits
+            streamslice(BX,BY,BU,BV,'color','cyan') %orbits
             
             hold on;
 
@@ -451,6 +451,7 @@ classdef acrobot < handle
             % Dinv * B
             m1 = obj.lmass(1);
             m2 = obj.lmass(2);
+            obj.calc_P
             for i=1:size(X2,1)
                 for j=1:size(X2,2)
                     D = obj.calc_D(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), ...

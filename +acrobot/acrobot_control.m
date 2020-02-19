@@ -3,10 +3,11 @@ classdef acrobot_control < acrobot.acrobot
     properties(Access = protected)
         pheel = [0; 0];      % Position of the heel
         
+        holo_point = [0;0];
         q_field_plotted = 0;
-        tau = [0; 0];
-        tau_q = [0; 0];
-        tau_g = [0; 0];
+        tau = 0;
+        tau_q;
+        tau_g;
     end
     properties
         x = zeros(4,1);     % Current x state space
@@ -187,9 +188,21 @@ classdef acrobot_control < acrobot.acrobot
             
         end
         
-        function plotRobot(obj)
-            subplot(2,3,1);
+        function show(obj, t)
+
+            % Plot Robot
+            subplot(2,3,1)
             
+            hold off;
+            Xslope_plot = linspace(-10,10,100);
+            Yslope_plot = 0 * Xslope_plot;
+            plot(Xslope_plot,Yslope_plot)
+
+            axis_vec = [-0.6 0.8 -0.5 0.9];
+            axis equal
+            axis(axis_vec);
+
+            % Heel of stance foot
             q1 = obj.x(1);
             q2 = obj.x(2);
             
@@ -198,23 +211,15 @@ classdef acrobot_control < acrobot.acrobot
             rc2 = rH + obj.lcom(2) * [cos(q1+q2); sin(q1+q2)];
             pH2 = rH + obj.leg_length * [cos(q1+q2); sin(q1+q2)];
             
-            hold off;
-            plot(rc1(1), rc1(2), '.', 'markersize',20,'color','b');     % Stance leg mass
             hold on;
+            plot(rc1(1), rc1(2), '.', 'markersize',20,'color','b');     % Stance leg mass
             plot(rc2(1), rc2(2), '.', 'markersize',20,'color','b');     % Swing leg mass
-            r1 = line([obj.pheel(1);rH(1)],[obj.pheel(2),rH(2)]);       % heel1 to hip
-            r2 = line([rH(1),pH2(1)],[rH(2),pH2(2)] );                  % hip to heel2
+            r1 = line([obj.pheel(1);rH(1)],[obj.pheel(2),rH(2)]);   % heel1 to hip
+            r2 = line([rH(1),pH2(1)],[rH(2),pH2(2)] );              % hip to heel2
 
             r1.Color = 'blue';
             r2.Color = 'black';
-            
-            grid on;
-            axis equal;
-            ylim([-0.5, 1]);
-            xlim([-0.5, 2]);
-        end
-        
-        function plotFields(obj)
+
             % Plotting the subplot field
             if ~obj.q_field_plotted
                 step_count = obj.step_count;
@@ -243,9 +248,8 @@ classdef acrobot_control < acrobot.acrobot
             plot(obj.holo_point(1), obj.holo_point(2), '.', 'markersize',10,'color',[0 1 0]);
 
             quiver(q1(1), q2(1), obj.tau_q(1) * 0.001, obj.tau_q(2) * 0.001);
-        end
-        
-        function plotTau(obj, t)
+
+            % Plotting tau
             subplot(2,3,4);
             hold on;
             plot(t, obj.tau(2), '+', 'markersize',5,'color','m');
@@ -253,17 +257,6 @@ classdef acrobot_control < acrobot.acrobot
             xlabel('Time (s)');
             ylim([-obj.tau_limit - 0.1 obj.tau_limit + 0.1]);
             grid on;
-        end
-        
-        function show(obj, t)
-            % Plot Robot
-            obj.plotRobot();
-            
-            % Plot q1,q2 field
-            obj.plotFields();
-
-            % Plotting tau
-            obj.plotTau(t);
 
             drawnow;
         end

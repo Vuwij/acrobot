@@ -1,12 +1,11 @@
 %% General parameters
 density = 1000;
 foot_density = 2000;
-g = 9.81;
 
 %% Contact/friction parameters
 % Contract
 contact_stiffness = 1e4;
-contact_damping = 1e3;
+contact_damping = 1e2;
 
 % Friction
 mu_k = 1.0;
