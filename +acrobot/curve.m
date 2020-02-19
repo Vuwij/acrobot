@@ -16,7 +16,8 @@ classdef curve < handle
         v;  % Postimpact vector
         
         f_func;         % No Torque function for falling function
-        r_func;         % No function for rising function with constant tau
+        r_func;         % Function for rising function with constant tau
+        g_func;         % Function g_func(q2) = q1
         
         tau_const = 0;  % Constant tau for it to reach the starting to the end point
         

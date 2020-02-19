@@ -18,18 +18,16 @@ options = odeset('Events',@(t,x)robot.dist_to_floor(t,x), 'RelTol', 1e-9, 'AbsTo
 while (t < tmax)
     
     % Calculate the value for tau at the point
-    tau = robot.getTau(robot.x);
+    tau = robot.getTau1(robot.x);
     
     % Test
-%     tau = [0;0.00];
-% 
-%     if (robot.step_count == 0)
-%         tau = [0;0.00];
-%     elseif (mod(robot.step_count,2) == 1)
-%         tau = [0;robot.c2.tau_const];
-%     else
-%         tau = [0;robot.c1.tau_const];
-%     end
+    if (robot.step_count == 0)
+        tau = [0;0.00];
+    end
+    
+    if (robot.x(2) > 2.5)
+        tau = [0;robot.lcurve.tau_const];
+    end
     
     % Search for foot placement when close to floor
     t_next = floor((t + tstep + 1e-9)/tstep)*tstep;

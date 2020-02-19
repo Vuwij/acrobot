@@ -8,7 +8,6 @@ classdef acrobot_control < acrobot.acrobot
         tau = 0;
         tau_q;
         tau_g;
-        e = 0;
     end
     properties
         x = zeros(4,1);     % Current x state space
@@ -69,6 +68,38 @@ classdef acrobot_control < acrobot.acrobot
             dxdt = [qdot; qddot_new];
         end
         
+        function tau = getTau1(obj, x)
+            q = [x(1); x(2)];
+            qdot = [x(3); x(4)];
+            
+            % Robotics Equation Parameters
+            D = obj.calc_D(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q(2));
+            C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
+            P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
+            
+            qddot = D \ (-C * qdot - P); 
+            
+            phi = @(q2) ppval(obj.lcurve.g_func,q2);
+            phi_dot = @(q2) ppval(fnder(obj.lcurve.g_func,1),q2);
+            phi_ddot = @(q2) ppval(fnder(obj.lcurve.g_func,2),q2);
+            
+            qd = [phi(q(2)); q(2)];
+            qd_dot = [phi_dot(q(2)) * qdot(2); qdot(2)];
+            qd_ddot = [phi_dot(q(2)) * qddot(2) + phi_ddot(q(2)) * qdot(2)^2; qddot(2)];
+
+            
+            % PD Control
+            e = qd(1) - q(1);
+            e_dot = qd_dot(1) - qdot(1);
+            
+            part1 = [1 -phi_dot(q(2))] * inv(D) * obj.B;
+            part2 = -obj.Kp * e - obj.Kp * e_dot + qd_ddot(1) * qdot(2)^2 + [1 -phi_dot(q(2))] * inv(D) * (C * qdot + P);
+            obj.tau = [0; inv(part1) * part2];
+
+            obj.tau = max(min(obj.tau_limit, obj.tau), -obj.tau_limit);
+            tau = obj.tau;
+        end
+        
         function tau = getTau(obj, x)
             q = [x(1); x(2)];
             qdot = [x(3); x(4)];
@@ -82,40 +113,36 @@ classdef acrobot_control < acrobot.acrobot
             
             % Desired angles
             sp2d = fnder(obj.lcurve.sp2, 1);
+            sp2dd = fnder(obj.lcurve.sp2, 2);
             sp3d = fnder(obj.lcurve.sp3, 1);
+            sp3dd = fnder(obj.lcurve.sp3, 2);
             
             xf = @(q1,q2) fnval( spmak({obj.lcurve.knotsx,obj.lcurve.knotsy},obj.lcurve.sp2.coefs.'), {q1,q2} );
             xfd = @(q1,q2) fnval( spmak({obj.lcurve.knotsx,obj.lcurve.knotsy},sp2d.coefs.'), {q1,q2} );
-
+            xfdd = @(q1,q2) fnval( spmak({obj.lcurve.knotsx,obj.lcurve.knotsy},sp2dd.coefs.'), {q1,q2} );
+            
             gf = @(q1, q2) fnval(obj.lcurve.sp3, xf(q1, q2));
             gfd = @(q1, q2) fnval(sp3d, xfd(q1, q2));
-            
+            gfdd = @(q1, q2) fnval(sp3dd, xfdd(q1, q2));
             
             
             qd = gf(q(1),q(2));
-            qd_dot = gf(q(1),q(2));
+            qd_dot = gfd(qdot(1),qdot(2));
+            qd_ddot = gfd(qddot(1),qddot(2)) + gfdd(qdot(1)^2, qdot(2)^2);
+            
             
             obj.holo_point = qd;
-
-            
-%             gf = @(q1) ppval(obj.lcurve.r_func,q1);
-%             gfd = @(q1) ppval(fnder(obj.lcurve.r_func,1),q1);
-%             gfdd = @(q1) ppval(fnder(obj.lcurve.r_func,2),q1);
-            
-%             qd = [q(1); gf(q(1))];
-%             qd_dot = [qdot(1); gfd(q(1)) * qdot(1)];
-%             qd_ddot = [qddot(1); gfd(q(1)) * qddot(1) + gfdd(q(1)) * qdot(1)^2];
             
             % PD Control
             qs = qd - q;
             qs_dot = qd_dot - qdot;
-%            qs_ddot = qd_ddot - qddot;
+            qs_ddot = qd_ddot - qddot;
 
-%             a = (obj.Kp * qs(2) + obj.Kd * qs_dot(2) + qs_ddot(2)); % Acceleration of q2
-            a = (obj.Kp * qs(2) + obj.Kd * qs_dot(2));
+%            a = (obj.Kp * qs(2) + obj.Kd * qs_dot(2) + qs_ddot(2)); % Acceleration of q2
+            a = (obj.Kp * qs(2));% + obj.Kd * qs_dot(2));
             
             test = -gfd(q(1), q(2));
-            obj.tau = [0; inv([-test(2) 1] * inv(D) * obj.B) * a];
+            obj.tau = [0; inv([test(2) 1] * inv(D) * obj.B) * a + obj.lcurve.tau_const];
             obj.tau(1) = 0;
             
             obj.tau = max(min(obj.tau_limit, obj.tau), -obj.tau_limit);
@@ -225,9 +252,11 @@ classdef acrobot_control < acrobot.acrobot
             % Plotting tau
             subplot(2,3,4);
             hold on;
-            plot(t, obj.tau, '.', 'markersize',3,'color','m');
+            plot(t, obj.tau(2), '+', 'markersize',5,'color','m');
             ylabel('Tau N*m');
             xlabel('Time (s)');
+            ylim([-obj.tau_limit - 0.1 obj.tau_limit + 0.1]);
+            grid on;
 
             drawnow;
         end

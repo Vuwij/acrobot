@@ -154,12 +154,14 @@ classdef acrobot < handle
             obj.c1.tau_const = obj.getBestConstTau(obj.c1.qp, obj.c1.qm, obj.c1.v, fall_duration);
             X = obj.getFallingCurve([obj.c1.qp; obj.c1.v], fall_duration, 1, [0; obj.c1.tau_const]);
             obj.c1.r_func = cscvn(X(:,1:2)');
+            obj.c1.g_func = spline(X(:,2), X(:,1));
             
             obj.step_count = 1;
             obj.c2.tau_const = obj.getBestConstTau(obj.c2.qp, obj.c2.qm, obj.c2.v, fall_duration);
             X = obj.getFallingCurve([obj.c2.qp; obj.c2.v], fall_duration, 1, [0; obj.c2.tau_const]);
             obj.c2.r_func = cscvn(X(:,1:2)');
-            
+            obj.c2.g_func = spline(X(:,2), X(:,1));
+
             % Map the VHC to q1 and q2
             obj.getQFieldFunction(obj.c1);
             obj.getQFieldFunction(obj.c2);
@@ -296,7 +298,7 @@ classdef acrobot < handle
                 end
             end
             
-            mesh(q1_range, q2_range, X_Map.');
+%            mesh(q1_range, q2_range, X_Map.');
             
             curve.knotsy = augknt(-pi:pi/5:pi,curve.ky);
             curve.knotsx = augknt(0:pi/5:pi,curve.kx);
