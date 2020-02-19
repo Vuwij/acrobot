@@ -31,13 +31,14 @@ classdef acrobot_walker < acrobot.acrobot_control & matlab.System
         %% Common functions
         function setupImpl(obj)
             % Perform one-time calculations, such as computing constants
+            obj.tau_q = [0;0];
+            obj.tau = [0;0];
         end
 
         function tau = stepImpl(obj,state)
-            % Implement algorithm. Calculate y as a function of input u and
-            % discrete states.
-            tau = obj.getTau(state);
-            tau = tau(2);
+            obj.x = state;
+            obj.show(0);
+            tau = 0;
         end
         
         function s1 = getOutputSizeImpl(~)
