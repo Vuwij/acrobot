@@ -33,10 +33,9 @@ while (1)
         encoder.resetCount(last_motor_step);
         motor_step = last_motor_step;
     end
-    last_motor_step = motor_step
+    last_motor_step = motor_step;
     
     % Get Robot State (Fix this line)
-    gyro
     state = estimator.stepImplPublic(gyro', acc', motor_step);
     
     % Update the robot state with the estimated state (Might want to tune
