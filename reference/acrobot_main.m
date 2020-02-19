@@ -43,7 +43,7 @@ Kd = 2/gamma;
 %Initial conditions
 q_dot_0 = ppval(fnder(sigma,1),0)*7.2295; %Values when on the limit cycle
 x0 = [(pi+beta)/2 - 0.05; pi-beta; q_dot_0(1)-1; q_dot_0(2)+1];  %Currently set to start off the configuration manifold
-
+x0 = [pi/2; 0; 0; -pi/2];
 
 %% Vectors to hold final results 
 xtot = zeros(size(tspan,2),size(x0,1)); %Holds overall solution with multiple steps

@@ -1,27 +1,51 @@
 close all;
-
 robot = acrobot.acrobot_control();
-robot.show_plot = 1;
+
+%% Simulate
+robot.reset();
 
 tmax = 6;       % Max simulation time
 tstep = 0.005;  % Simulation time step
 t = 0;
 
 % Simulate robot falling on the ground
+close all;
 fig = figure;
 set(fig, 'Position',  [100, 100, 1500, 700]);
+options = odeset('Events',@(t,x)robot.dist_to_floor(t,x), 'RelTol', 1e-9, 'AbsTol', 1e-9);
 
 % Simulate Robot Walking
 while (t < tmax)
     
-    % Make a step
-    tau = robot.getTau(robot.x);
-    dxdt = robot.step(robot.x, tau);
-    robot.x = robot.x + dxdt * tstep;
+    % Calculate the value for tau at the point
+    tau = robot.getTau1(robot.x);
     
-    % Alternate foot
-    if (robot.dist_to_floor(t,robot.x) < 0)
-        robot.impact_foot(robot.x);
+    % Test
+    if (robot.step_count == 0)
+        tau = [0;0.00];
     end
-    t = t + tstep;
+    
+    if (robot.x(2) > 2.5)
+        tau = [0;robot.lcurve.tau_const];
+    end
+    
+    % Search for foot placement when close to floor
+    t_next = floor((t + tstep + 1e-9)/tstep)*tstep;
+    [t_anim, x_anim, te, xe, ie] = ode45(@(t, x) robot.step(t, x, tau), [t t_next], robot.x, options);
+    
+    if (ie)
+        robot.impact_foot(xe);
+        t = te;
+    else
+        robot.x = x_anim(end,:)';
+        t = t_next;
+    end
+    
+    % End Conditions
+    if (robot.x(2) > pi || robot.x(2) < -pi)
+        disp("Robot Impacted With Itself");
+        break
+    end
+    
+    robot.show(t);
 end

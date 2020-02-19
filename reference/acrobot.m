@@ -42,8 +42,8 @@ term2 = (-Kp*e - Kd*e_dot + g_d_prime_val*q1dot^2 + [-g_prime_val 1]*inv(D)*(-b1
 
 Tau_star = term1*term2;
 
-Tau = Tau_star;
-% Tau = 0; %no controller
+Tau = Tau_star
+Tau = 0; %no controller
 
 q_ddot = D\(B*Tau) + D\b1; 
 
