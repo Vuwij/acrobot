@@ -188,7 +188,7 @@ classdef acrobot_control < acrobot.acrobot
         end
         
         function plotRobot(obj)
-            subplot(2,3,1);
+%            subplot(2,3,1);
             
             q1 = obj.x(1);
             q2 = obj.x(2);
