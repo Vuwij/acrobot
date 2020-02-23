@@ -50,6 +50,17 @@ while (1)
     % robot.x = robot.x + dxdt * tstep; % Do not update robot state for now
     
     % TODO: send the tau to the actual robot (Miguel)
+    pwm = robot.getPWM([0;0], [0;0])
+    
+    if (pwm < 0)
+        writeDigitalPin(a, 'D6', 1);
+        writeDigitalPin(a, 'D7', 0);
+    else
+        writeDigitalPin(a, 'D6', 0);
+        writeDigitalPin(a, 'D7', 1);
+    end
+    writePWMDutyCycle(a,'D9',min(1, abs(pwm)+0.4));
+    
     
     % Alternate foot
 %     if (robot.dist_to_floor(t,robot.x) < 0)
