@@ -7,6 +7,7 @@ classdef acrobot_control < acrobot.acrobot
         tau = [0; 0];
         tau_q = [0; 0];
         tau_g = [0; 0];
+        holo_point = [0; 0];
     end
     properties
         x = zeros(4,1);     % Current x state space
@@ -30,7 +31,11 @@ classdef acrobot_control < acrobot.acrobot
             % Start on the cycle
             X = obj.getFallingCurve([obj.c1.qm; obj.c1.w], 0.1, -1);
             obj.x = X(end,:)';
-            X = [1.7671; 2.7489; -1.0573; 0.7951];
+            % X = [1.7671; 2.7489; -1.0573; 0.7951];
+            X = [pi/2; 0; 0; -0.01];
+            obj.x = X;
+            obj.tau = [0; 0];
+            obj.holo_point = [0; 0];
         end
         
         function Kp = Kp(obj)
@@ -67,7 +72,34 @@ classdef acrobot_control < acrobot.acrobot
             dxdt = [qdot; qddot_new];
         end
         
-        function tau = getTau1(obj, x)
+        function [qd, qd_dot] = getQdesired(obj, x)
+            q = [x(1); x(2)];
+            qdot = [x(3); x(4)];
+            
+            % Robotics Equation Parameters
+            D = obj.calc_D(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q(2));
+            C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
+            P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
+                        
+            phi = @(q2) ppval(obj.lcurve.g_func,q2);
+            phi_dot = @(q2) ppval(fnder(obj.lcurve.g_func,1),q2);
+            
+            qd = [phi(q(2)); q(2)];
+            qd_dot = [phi_dot(q(2)) * qdot(2); qdot(2)];            
+        end
+        
+        function pwm = getPWM(obj, qd, qd_dot)
+            q = [obj.x(1); obj.x(2)];
+            qdot = [obj.x(3); obj.x(4)];
+            
+            e = qd(2) - q(2)
+            e_dot = qd_dot(2) - qdot(2)
+            pwm = -obj.Kp * e + obj.Kd * e_dot;
+            
+            pwm = min(1,max(-1,pwm));
+        end
+        
+        function [tau, qd] = getTau1(obj, x)
             q = [x(1); x(2)];
             qdot = [x(3); x(4)];
             
@@ -92,7 +124,7 @@ classdef acrobot_control < acrobot.acrobot
             e_dot = qd_dot(1) - qdot(1);
             
             part1 = [1 -phi_dot(q(2))] * inv(D) * obj.B;
-            part2 = -obj.Kp * e - obj.Kp * e_dot + qd_ddot(1) * qdot(2)^2 + [1 -phi_dot(q(2))] * inv(D) * (C * qdot + P);
+            part2 = -obj.Kp * e - obj.Kd * e_dot + qd_ddot(1) * qdot(2)^2 + [1 -phi_dot(q(2))] * inv(D) * (C * qdot + P);
             obj.tau = [0; inv(part1) * part2];
 
             obj.tau = max(min(obj.tau_limit, obj.tau), -obj.tau_limit);
@@ -124,16 +156,34 @@ classdef acrobot_control < acrobot.acrobot
             gfd = @(q1, q2) fnval(sp3d, xfd(q1, q2));
             gfdd = @(q1, q2) fnval(sp3dd, xfdd(q1, q2));
             
+            xv = 0:pi/100:pi; yv = -pi:2*pi/100:pi;
+            
+            U = zeros(length(xv), length(yv));
+            D = zeros(length(xv), length(yv));
+            for i = 1:length(xv)
+                for j = 1:length(yv)
+                    U(i,j) = xf(xv(i), yv(j));
+                    D(i,j) = xfd(xv(i), yv(j));
+                end
+            end
+            figure;
+            mesh(xv, yv, U)
+            figure;
+            mesh(xv, yv, D)
+
             
             qd = gf(q(1),q(2));
             qd_dot = gfd(qdot(1),qdot(2));
             qd_ddot = gfd(qddot(1),qddot(2)) + gfdd(qdot(1)^2, qdot(2)^2);
-            
-            
+                        
             obj.holo_point = qd;
             
             % PD Control
-            qs = qd - q;
+            dist = qd - q;
+            ang1 = atan2(dist(2), dist(1));
+            ang2 = atan2(qd_dot(2), qd_dot(1));
+            qs = abs(dist) * sign(ang1 - ang2);
+            
             qs_dot = qd_dot - qdot;
             qs_ddot = qd_ddot - qddot;
 
@@ -141,7 +191,7 @@ classdef acrobot_control < acrobot.acrobot
             a = (obj.Kp * qs(2));% + obj.Kd * qs_dot(2));
             
             test = -gfd(q(1), q(2));
-            obj.tau = [0; inv([test(2) 1] * inv(D) * obj.B) * a + obj.lcurve.tau_const];
+            obj.tau = [0; inv([test(2) 1] * inv(D) * obj.B) * a];
             obj.tau(1) = 0;
             
             obj.tau = max(min(obj.tau_limit, obj.tau), -obj.tau_limit);
@@ -239,10 +289,13 @@ classdef acrobot_control < acrobot.acrobot
                 subplot(2,3,[3,6]);
             end
             
+            q1 = obj.x(1);
+            q2 = obj.x(2);
+            
             plot(q1(1), q2(1), '.', 'markersize',10,'color',[0 0 0]);
             plot(obj.holo_point(1), obj.holo_point(2), '.', 'markersize',10,'color',[0 1 0]);
 
-            quiver(q1(1), q2(1), obj.tau_q(1) * 0.001, obj.tau_q(2) * 0.001);
+            quiver(q1(1), q2(1), obj.tau_q(1) * 0.0005, obj.tau_q(2) * 0.0005);
         end
         
         function plotTau(obj, t)
