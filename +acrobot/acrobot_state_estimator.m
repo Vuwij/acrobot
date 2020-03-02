@@ -86,7 +86,7 @@ classdef acrobot_state_estimator < matlab.System
             end
             
             % q1 & q1_dot
-            [yaw, pitch, roll] = quat2angle(pos1');
+            roll = pos1(2);
             q1 = roll + pi/2;
             q1_dot = (q1 - obj.state(1))/obj.sample_time;
             
@@ -110,50 +110,7 @@ classdef acrobot_state_estimator < matlab.System
                 obj.timeout = ~obj.timeout;
                 obj.imu_default = ~obj.imu_default;
             end
-            % Yaw
-%             [orient, ~] = obj.imuf.step(acc1', gyro1');
-%             zyx = deg2rad(eulerd(orient,'ZYX','frame'));
-%             yaw = wrapToPi(zyx(3));
-%             
-%             
-% 
-%             if(obj.imu_ground)
-%                 q1 = yaw + pi/2;
-%                 q2 = qm - pi;
-%             else
-%                 % Calculate phi
-%                 if zyx(1) > pi/2 || zyx(1) < -pi/2
-%                     phi = -yaw;
-%                 else
-%                     if (yaw < 0)
-%                         phi = pi + yaw;
-%                     else
-%                         phi = -pi + yaw;
-%                     end
-%                 end
-%                 
-%                 q2 = -(qm - pi);
-%                 q1 = pi/2 + phi - q2;
-%             end
-%             
-%             
-% 
-%             if(abs(q1_dot) > obj.max_velocity_change)
-%                 q1_dot = obj.state(3);
-%             end
-%             if(abs(q2_dot) > obj.max_velocity_change)
-%                 q2_dot = obj.state(4);
-%             end
-%             
-%             rH = obj.leg_length * [cos(q1); sin(q1)];
-%             rc2 = rH + obj.leg_length * [cos(q1+q2); sin(q1+q2)];
-%             dist_to_floor = rc2(2);
-%             delta_dist = dist_to_floor - obj.prev_dist_to_floor;
-%             obj.prev_dist_to_floor = dist_to_floor;
-%             if dist_to_floor < 0 && delta_dist < 0
-%                 obj.imu_ground = ~obj.imu_ground;
-%             end
-%             
+   
             state = [q1;q2;0;0];
             imu_default = obj.imu_default;
             obj.state = state;

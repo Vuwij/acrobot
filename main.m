@@ -10,8 +10,11 @@ rate = rateControl(1/tstep);
 %% Device Connection
 
 clear a imu encoder;
-a = arduino('/dev/ttyUSB0','Nano3','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C'});
-imu = mpu6050(a,'SampleRate',50,'SamplesPerRead',1,'OutputFormat','matrix');
+% a = arduino('/dev/ttyUSB0','Nano3','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
+a = arduino('COM5','Mega2560','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
+
+BNO055Sensor = addon(a,'Adafruit/BNO055','I2CAddress','0x28');
+% BNO055Sensor2 = addon(a,'Adafruit/BNO055','I2CAddress','0x29');
 encoder = rotaryEncoder(a, 'D2','D3', steps_per_rotation);
 
 %% Main loop
@@ -23,9 +26,24 @@ estimator.sample_time = tstep;
 estimator.setupImplPublic();
 encoder.resetCount();
 
-[acc, gyro, ts, overrun] = imu.read();
 last_motor_step = encoder.readCount();
 test = 0;
+
+% Calibration for sensor, probably need to calibrate them separately
+tic;
+while (toc < 240)
+    [status,timestamp] = readCalibrationStatus(BNO055Sensor); 
+    status
+    if strcmpi(status.Accelerometer,'full') && strcmpi(status.System,'full') && strcmpi(status.Gyroscope,'full')
+        break; %Accelerometer is calibrated proceed further
+    end
+    pause(1);
+end
+
+% [acc, gyro, ts, overrun] = imu.read();
+[acc1,timestamp] = readAcceleration(BNO055Sensor);
+[gyro1,timestamp] = readAngularVelocity(BNO055Sensor);
+[pos1, timestamp] = readOrientation(BNO055Sensor);
 while (1)
     tic;
     motor_step = encoder.readCount();
@@ -36,14 +54,14 @@ while (1)
     last_motor_step = motor_step;
     
     % Get Robot State (Fix this line)
-    state = estimator.stepImplPublic(gyro', acc', motor_step);
+    state = estimator.stepImplPublic(pos1, gyro1, acc1, pos1, gyro1, acc1, motor_step);
     
     % Update the robot state with the estimated state (Might want to tune
     % it so that it takes a percentage of the measured vs a percentage of
     % the projected state. Can use a complementary filter for now but can
     % upgrade to kalman filter sometime in the future
     robot.x = state;
-    
+%     robot.x
     % Make a step and calculate tau
 %    tau = robot.getTau(robot.x);
 %    dxdt = robot.step(robot.x, tau); 
@@ -60,6 +78,8 @@ while (1)
     robot.plotRobot();
     
     % Read next step
-    [acc, gyro, ts, overrun] = imu.read();
+    [acc1,timestamp] = readAcceleration(BNO055Sensor);
+    [gyro1,timestamp] = readAngularVelocity(BNO055Sensor);
+    [pos1, timestamp] = readOrientation(BNO055Sensor);
     waitfor(rate);
 end
