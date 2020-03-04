@@ -26,10 +26,11 @@ classdef curve < handle
         ky = 4;
         knotsx;
         knotsy;
-        sp;  % Function from q1, q2 to curve
-        sp2; % Function from q1, q2 to x axis
         
-        
+        sp2;    % Function from q1, q2 to x axis
+        sp2_dx;
+        sp2_dy;
+
         sp3; % Function from x axis to the r_func
     end
     

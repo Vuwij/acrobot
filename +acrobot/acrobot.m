@@ -282,6 +282,8 @@ classdef acrobot < handle
             
             [xx, yy] = ndgrid(q1_range,q2_range);
             X_Map = zeros(size(xx,1), size(xx,2));
+            DX_Map = zeros(size(xx,1), size(xx,2));
+            DY_Map = zeros(size(xx,1), size(xx,2));
             for i=1:size(xx,1)
                 for j=1:size(yy,2)
                     xy1 = stream2(BX, BY, BU, BV, xx(i,j), yy(i,j));
@@ -297,13 +299,19 @@ classdef acrobot < handle
                     end
                 end
             end
+            [DX_Map, DY_Map] = gradient(X_Map);
             
 %            mesh(q1_range, q2_range, X_Map.');
             
             curve.knotsy = augknt(-pi:pi/5:pi,curve.ky);
             curve.knotsx = augknt(0:pi/5:pi,curve.kx);
-            curve.sp = spap2(curve.knotsy,curve.ky,q2_range,X_Map);
-            curve.sp2 = spap2(curve.knotsx,curve.kx,q1_range,curve.sp.coefs.');
+            sp = spap2(curve.knotsy,curve.ky,q2_range,X_Map);
+            curve.sp2 = spap2(curve.knotsx,curve.kx,q1_range,sp.coefs.');
+            
+            sp = spap2(curve.knotsy,curve.ky,q2_range,DX_Map);
+            curve.sp2_dx = spap2(curve.knotsx,curve.kx,q1_range,sp.coefs.');
+            sp = spap2(curve.knotsy,curve.ky,q2_range,DY_Map);
+            curve.sp2_dy = spap2(curve.knotsx,curve.kx,q1_range,sp.coefs.');
             
 %             xv = 0:pi/20:pi; yv = -pi:2*pi/20:pi;
 %             values = spcol(curve.knotsx,curve.kx,xv)*curve.sp2.coefs'*spcol(curve.knotsy,curve.ky,yv).';
