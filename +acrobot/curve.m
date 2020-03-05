@@ -18,6 +18,7 @@ classdef curve < handle
         f_func;         % No Torque function for falling function
         r_func;         % Function for rising function with constant tau
         g_func;         % Function g_func(q2) = q1
+        v_func;         % Function of velocity desired as compared to 
         
         tau_const = 0;  % Constant tau for it to reach the starting to the end point
         

@@ -14,7 +14,7 @@ classdef acrobot_control < acrobot.acrobot
         x = zeros(4,1);     % Current x state space
         
         % Controller parameters
-        gamma = 0.10;
+        gamma = 0.05;
         poles = [-20 -20];
         L = 0.9;
         K = 0.9;
@@ -30,11 +30,10 @@ classdef acrobot_control < acrobot.acrobot
         
         function reset(obj)
             % Start on the cycle
-            X = obj.getFallingCurve([obj.c1.qm; obj.c1.w], 0.1, -1);
-            obj.x = X(end,:)';
+%             X = obj.getFallingCurve([obj.c1.qm; obj.c1.w], 0.1, -1, [0; 0]);
+%             obj.x = X(end,:)';
             % X = [1.7671; 2.7489; -1.0573; 0.7951];
-            X = [pi/2; 0; 0; -0.01];
-            obj.x = X;
+            obj.x = [pi/2-0.2; 0; 0; -0.1];
             obj.tau = [0; 0];
             obj.holo_point = [0; 0];
             obj.holo_point_dt = [0; 0];
@@ -90,17 +89,6 @@ classdef acrobot_control < acrobot.acrobot
             qd_dot = [phi_dot(q(2)) * qdot(2); qdot(2)];            
         end
         
-        function pwm = getPWM(obj, qd, qd_dot)
-            q = [obj.x(1); obj.x(2)];
-            qdot = [obj.x(3); obj.x(4)];
-            
-            e = qd(2) - q(2)
-            e_dot = qd_dot(2) - qdot(2)
-            pwm = -obj.Kp * e + obj.Kd * e_dot;
-            
-            pwm = min(1,max(-1,pwm));
-        end
-        
         function [tau, qd] = getTau1(obj, x)
             q = [x(1); x(2)];
             qdot = [x(3); x(4)];
@@ -154,26 +142,11 @@ classdef acrobot_control < acrobot.acrobot
             
             gf = @(q1, q2) fnval(obj.lcurve.sp3, xf(q1, q2));
             gfd = @(q1, q2, q1_dot, q2_dot) fnval(sp3d, xf(q1, q2)) * (xfdx(q1, q2) * q1_dot + xfdy(q1, q2) * q2_dot);
-%             gfdd = @(q1, q2) fnval(sp3dd, xfdd(q1, q2));
-            
-%             xv = 0:pi/100:pi; yv = -pi:2*pi/100:pi;
-%             
-%             UU = zeros(length(xv), length(yv));
-%             DD = zeros(length(xv), length(yv));
-%             for i = 1:length(xv)
-%                 for j = 1:length(yv)
-%                     UU(i,j) = xf(xv(i), yv(j));
-%                     DD(i,j) = xfd(xv(i), yv(j));
-%                 end
-%             end
-%             figure;
-%             mesh(xv, yv, UU)
-%             figure;
-%             mesh(xv, yv, DD)
+
             qd = gf(q(1),q(2));
             qd_dot = gfd(q(1), q(2), qdot(1),qdot(2));
-            qdot
-            qd_dot
+            qg_dot = fnval(obj.lcurve.v_func, qd(2));
+
 %             qd_ddot = gfd(qddot(1),qddot(2)) + gfdd(qdot(1)^2, qdot(2)^2);
                         
             obj.holo_point = qd;
@@ -181,16 +154,15 @@ classdef acrobot_control < acrobot.acrobot
             
             % PD Control
             dist = qd - q;
-            ang1 = atan2(dist(2), dist(1));
-            ang2 = atan2(qd_dot(2), qd_dot(1));
-            qs = abs(dist) * sign(ang1 - ang2);
-            
-            qs_dot = qd_dot - qdot;
+            temp1 = dist + qd_dot;
+            qs = -sign(temp1(1)) * norm(dist);
+            qs_dot = -norm((qg_dot - qd_dot));
 %             qs_ddot = qd_ddot - qddot;
 
 %            a = (obj.Kp * qs(2) + obj.Kd * qs_dot(2) + qs_ddot(2)); % Acceleration of q2
-            a = (obj.Kp * qs(2));% + obj.Kd * qs_dot(2));
-            
+            a = (obj.Kp * qs); % + (obj.Kd*0.2 * qs_dot);
+%            a = obj.Kd * qs_dot;
+
             obj.tau = [0; inv([-qd_dot(2) 1] * inv(D) * obj.B) * a];
             obj.tau(1) = 0;
             

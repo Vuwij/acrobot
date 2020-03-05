@@ -23,10 +23,6 @@ while (t < tmax)
 %         tau = [0;0.0];
 %     end
     
-    if (robot.x(2) > 2.5)
-        tau = [0;robot.lcurve.tau_const];
-    end
-    
     % Search for foot placement when close to floor
     t_next = floor((t + tstep + 1e-9)/tstep)*tstep;
     [t_anim, x_anim, te, xe, ie] = ode45(@(t, x) robot.step(t, x, tau), [t t_next], robot.x, options);
