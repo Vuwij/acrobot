@@ -40,6 +40,10 @@ classdef acrobot < handle
 
         step_count = 0;
         
+        % Energy Loss
+        energy_loss = 0.9;            % Ratio Energy Loss from hitting the ground
+        fall_duration = 1.8;           % Max Fall duration
+        
         % Curves
         c1 = acrobot.curve();
         c2 = acrobot.curve();
@@ -67,8 +71,8 @@ classdef acrobot < handle
         end
         
         function mass = lmass(obj, num)
-            if rem(obj.step_count,2) == 1
-                if num == 2
+            if rem(obj.step_count,2) == 0
+                if num == 1
                     num = 1;
                 else
                     num = 2;
@@ -78,8 +82,8 @@ classdef acrobot < handle
         end
         
         function com = lcom(obj, num)
-            if rem(obj.step_count,2) == 1
-                if num == 2
+            if rem(obj.step_count,2) == 0
+                if num == 1
                     num = 1;
                 else
                     num = 2;
@@ -89,8 +93,8 @@ classdef acrobot < handle
         end
         
         function inertia = linertia(obj, num)
-            if rem(obj.step_count,2) == 1
-                if num == 2
+            if rem(obj.step_count,2) == 0
+                if num == 1
                     num = 1;
                 else
                     num = 2;
@@ -100,7 +104,7 @@ classdef acrobot < handle
         end
         
         function curve = lcurve(obj)
-            if rem(obj.step_count,2) == 1
+            if rem(obj.step_count,2) == 0
                 curve = obj.c1;
             else
                 curve = obj.c2;
@@ -136,7 +140,7 @@ classdef acrobot < handle
             obj.c1.w = w;
             obj.c2.v = v;
             obj.step_count = 1;
-            [v, w] = obj.getImpactVelocities(obj.c1.qm, obj.c2.qp, obj.c2.impact_velocity);
+            [v, w] = obj.getImpactVelocities(obj.c2.qm, obj.c1.qp, obj.c2.impact_velocity);
             obj.c2.w = w;
             obj.c1.v = v;
             
@@ -149,24 +153,33 @@ classdef acrobot < handle
             obj.c2.f_func = cscvn(X(:,1:2)');
             
             % Search for rising curve with const tau
-            fall_duration = 0.6;
             obj.step_count = 0;
-            obj.c1.tau_const = obj.getBestConstTau(obj.c1.qp, obj.c1.qm, obj.c1.v, fall_duration);
-            X = obj.getFallingCurve([obj.c1.qp; obj.c1.v], fall_duration, 1, [0; obj.c1.tau_const]);
+            obj.c1.tau_const = obj.getBestConstTau(obj.c1.qp, obj.c1.qm, obj.c1.v, obj.fall_duration);
+            X = obj.getFallingCurve([obj.c1.qp; obj.c1.v], obj.fall_duration, 1, [0; obj.c1.tau_const]);
+            X_ext = [...
+                X(15,1:2) + [0 1] 0 0; ...
+                X(15:end,:); ...
+                X(end,1:2) + [0 -1] 0 0 ...
+            ];
+            obj.c1.g_func = spline(X_ext(:,2), X_ext(:,1));
             obj.c1.r_func = cscvn(X(:,1:2)');
-            obj.c1.g_func = spline(X(:,2), X(:,1));
             obj.c1.v_func = spline(X(:,2), X(:,3:4)');
             
             obj.step_count = 1;
-            obj.c2.tau_const = obj.getBestConstTau(obj.c2.qp, obj.c2.qm, obj.c2.v, fall_duration);
-            X = obj.getFallingCurve([obj.c2.qp; obj.c2.v], fall_duration, 1, [0; obj.c2.tau_const]);
+            obj.c2.tau_const = obj.getBestConstTau(obj.c2.qp, obj.c2.qm, obj.c2.v, obj.fall_duration);
+            X = obj.getFallingCurve([obj.c2.qp; obj.c2.v], obj.fall_duration, 1, [0; obj.c2.tau_const]);
+            X_ext = [...
+                X(15,1:2) + [0 1] 0 0; ...
+                X(15:end,:); ...
+                X(end,1:2) + [0 -1] 0 0 ...
+            ];
+            obj.c2.g_func = spline(X_ext(:,2), X_ext(:,1));
             obj.c2.r_func = cscvn(X(:,1:2)');
-            obj.c2.g_func = spline(X(:,2), X(:,1));
             obj.c2.v_func = spline(X(:,2), X(:,3:4)');
 
             % Map the VHC to q1 and q2
-            obj.getQFieldFunction(obj.c1);
-            obj.getQFieldFunction(obj.c2);
+%             obj.getQFieldFunction(obj.c1);
+%             obj.getQFieldFunction(obj.c2);
             
             % Set back to original
             obj.step_count = 0;
@@ -180,11 +193,10 @@ classdef acrobot < handle
             P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), ...
                             obj.lmass(1), obj.lmass(2), qm(1), qm(2));
             J = obj.calc_J(obj.leg_length,obj.leg_length, qm(1), qm(2));
-
+            
             min_angle = 2*pi;
             for angle = -pi:0.001:0 % Search for the angle of impact with the most natural fall
-                wt = [cos(angle); sin(angle)] * impact_velocity;
-                qdot = J \ wt;
+                qdot = [cos(angle); sin(angle)] * impact_velocity;
 
                 C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), qm(2), qdot(1), qdot(2));
                 qddt = D \ (-C * qdot - P);
@@ -206,9 +218,9 @@ classdef acrobot < handle
             qp_dot = [T zeros(2,2)] * (delta_qedot * w);
             rend_dot = obj.calc_J(obj.leg_length, obj.leg_length, qp(1), qp(2)) * qp_dot;
             if (rend_dot(2) < 0)
-                v = -qp_dot;
+                v = -qp_dot * obj.energy_loss;
             else
-                v = qp_dot;
+                v = qp_dot * obj.energy_loss;
             end
         end
         
@@ -216,7 +228,7 @@ classdef acrobot < handle
             tau_best = 0;
             closest_distance = 100000;
             
-            for tau = -1.0:0.005:0.0
+            for tau = -0.35:0.001:0.0
                 X = obj.getFallingCurve([qp; v], dur, 1, [0; tau]);
 %                 plot(X(:,1),X(:,2));
                 for i = 1:length(X)
@@ -234,6 +246,12 @@ classdef acrobot < handle
 %             hold off;
         end
         
+        function fnplti(~, fnct)
+            X = -pi:0.01:pi;
+            Y = fnval(fnct, X);
+            plot(Y, X, 'LineWidth',2);
+        end
+        
         function plotHolonomicCurve(obj, curve)
             obj.plotQField();
             hold on;
@@ -248,9 +266,9 @@ classdef acrobot < handle
             quiver(curve.qm(1), curve.qm(2), curve.w(1), curve.w(2), 'LineWidth', 2, 'MaxHeadSize', 0.4);
             
             fnplt(curve.f_func);
-            fnplt(curve.r_func);
+            obj.fnplti(curve.g_func);
             
-            title('Plot of sigma(theta)')
+            title(strcat('Plot of sigma(theta) Tau: ', num2str(curve.tau_const)))
             xlabel('q1')
             ylabel('q2')
             axis equal

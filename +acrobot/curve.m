@@ -5,9 +5,8 @@ classdef curve < handle
     properties
         
         % Curve Parameters (Can vary with alternating foot)
-        beta = pi/8;                % Angle which to hit the ground
-        energy_loss = 1;            % Energy lost from hitting the ground
-        impact_velocity = 3.0*pi;   % Velocity to hit the ground
+        beta = pi/5.8;             % Angle which to hit the ground
+        impact_velocity = 21.0;    % In terms of q1 q2 norm
         
         % Computed Curve parameters
         qm; % q1-q2 angle pre-impact
