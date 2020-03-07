@@ -172,7 +172,7 @@ classdef acrobot_control < acrobot.acrobot
             T = [1 1; 0 -1]; % Relabelling
             
             qp = wrapTo2Pi(T * q + [-pi; 0]);
-            qp_dot = [T zeros(2,2)] * (delta_qedot * q_dot) * obj.energy_loss;
+            qp_dot = [T zeros(2,2)] * (delta_qedot * q_dot) * obj.lcurve.energy_loss;
             
             % Collision with floor?
             rend_dot = obj.calc_J(obj.leg_length, obj.leg_length, qp(1), qp(2)) * qp_dot;

@@ -6,8 +6,9 @@ classdef curve < handle
         
         % Curve Parameters (Can vary with alternating foot)
         beta = pi/5.8;             % Angle which to hit the ground
-        impact_velocity = 21.0;    % In terms of q1 q2 norm
+        impact_velocity = 0.0;    % In terms of q1 q2 norm
         w_ang_diff = 0.0;
+        energy_loss = 1.0;
         
         % Computed Curve parameters
         qm; % q1-q2 angle pre-impact
@@ -36,10 +37,11 @@ classdef curve < handle
     end
     
     methods
-        function obj = curve(beta, impact_velocity, w_ang_diff)
+        function obj = curve(beta, impact_velocity, w_ang_diff, energy_loss)
             obj.beta = beta;
             obj.impact_velocity = impact_velocity;
             obj.w_ang_diff = w_ang_diff;
+            obj.energy_loss = energy_loss;
         end
     end
 end

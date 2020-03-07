@@ -19,9 +19,9 @@ while (t < tmax)
     tau = robot.getTau1(robot.x);
     
     % Test
-    if (robot.step_count == 1)
-        tau = [0;-0.35];
-    end
+%     if (robot.step_count == 1)
+%         tau = [0;-0.35];
+%     end
     
     % Search for foot placement when close to floor
     t_next = floor((t + tstep + 1e-9)/tstep)*tstep;
@@ -36,7 +36,7 @@ while (t < tmax)
     end
     
     % End Conditions
-    if (robot.x(2) > pi || robot.x(2) < -pi)
+    if (robot.x(2) > pi || robot.x(2) < -pi || robot.x(1) > pi || robot.x(1) < 0)
         disp("Robot Impacted With Itself");
         break
     end

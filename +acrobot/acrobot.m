@@ -41,14 +41,13 @@ classdef acrobot < handle
         step_count = 0;
         
         % Energy Loss
-        energy_loss = 0.9;              % Ratio Energy Loss from hitting the ground
         fall_duration = 1.8;            % Max Fall duration
         
         tau_limit = 0.35;
         
         % Curves
-        c1 = acrobot.curve(pi/5.4, 15.8, -0.088); % First Step
-        c2 = acrobot.curve(pi/6.8, 21.0, 0); % Second Step
+        c1 = acrobot.curve(pi/4.4, 16.2, -0.128, 0.6); % First Step
+        c2 = acrobot.curve(pi/6.8, 23.0, -0.08016, 1.0); % Second Step
     end
     
     methods
@@ -223,7 +222,7 @@ classdef acrobot < handle
             delta_F = -(E/De*E')\E*last_term;
             delta_qedot = De\E'*delta_F + last_term;
             T = [1 1; 0 -1]; % Relabelling
-            qp_dot = [T zeros(2,2)] * (delta_qedot * w) * obj.energy_loss;
+            qp_dot = [T zeros(2,2)] * (delta_qedot * w) * obj.lcurve.energy_loss;
             rend_dot = obj.calc_J(obj.leg_length, obj.leg_length, qp(1), qp(2)) * qp_dot;
             if (rend_dot(2) < 0)
                 v = -qp_dot;
@@ -236,7 +235,7 @@ classdef acrobot < handle
             tau_best = 0;
             closest_distance = 100000;
             
-            for tau = -obj.tau_limit:0.002:obj.tau_limit
+            for tau = -obj.tau_limit:0.001:obj.tau_limit
                 X = obj.getFallingCurve([qp; v], dur, 1, [0; tau]);
 %                 plot(X(:,1),X(:,2));
                 for i = 1:length(X)
@@ -453,7 +452,7 @@ classdef acrobot < handle
                 X(s,:) = X(s-1,:) + (dir * dxdt * tstep)';
                 
                 % Collisions
-                if (X(s,2) < -X(s,1)*2)
+                if (X(s,2) < -X(s,1)*2 || X(s,1) > pi || X(s,1) < 0 || abs(X(s,2)) > pi)
                     X(s:end,:) = [];
                     break
                 end
