@@ -41,12 +41,14 @@ classdef acrobot < handle
         step_count = 0;
         
         % Energy Loss
-        energy_loss = 0.9;            % Ratio Energy Loss from hitting the ground
-        fall_duration = 1.8;           % Max Fall duration
+        energy_loss = 0.9;              % Ratio Energy Loss from hitting the ground
+        fall_duration = 1.8;            % Max Fall duration
+        
+        tau_limit = 0.35;
         
         % Curves
-        c1 = acrobot.curve();
-        c2 = acrobot.curve();
+        c1 = acrobot.curve(pi/5.4, 15.8, -0.088); % First Step
+        c2 = acrobot.curve(pi/6.8, 21.0, 0); % Second Step
     end
     
     methods
@@ -60,9 +62,6 @@ classdef acrobot < handle
                 obj.inertia(i) = obj.robot.Bodies{i}.Inertia(2);
             end
             
-            obj.c1 = acrobot.curve();
-            obj.c2 = acrobot.curve();
-            
             % Create Robot Equation handles
             obj.solveRoboticsEquation();
             
@@ -71,8 +70,8 @@ classdef acrobot < handle
         end
         
         function mass = lmass(obj, num)
-            if rem(obj.step_count,2) == 0
-                if num == 1
+            if rem(obj.step_count,2) == 1
+                if num == 2
                     num = 1;
                 else
                     num = 2;
@@ -82,8 +81,8 @@ classdef acrobot < handle
         end
         
         function com = lcom(obj, num)
-            if rem(obj.step_count,2) == 0
-                if num == 1
+            if rem(obj.step_count,2) == 1
+                if num == 2
                     num = 1;
                 else
                     num = 2;
@@ -93,8 +92,8 @@ classdef acrobot < handle
         end
         
         function inertia = linertia(obj, num)
-            if rem(obj.step_count,2) == 0
-                if num == 1
+            if rem(obj.step_count,2) == 1
+                if num == 2
                     num = 1;
                 else
                     num = 2;
@@ -105,6 +104,14 @@ classdef acrobot < handle
         
         function curve = lcurve(obj)
             if rem(obj.step_count,2) == 0
+                curve = obj.c1;
+            else
+                curve = obj.c2;
+            end
+        end
+        
+        function curve = l2curve(obj)
+            if rem(obj.step_count,2) == 1
                 curve = obj.c1;
             else
                 curve = obj.c2;
@@ -157,8 +164,8 @@ classdef acrobot < handle
             obj.c1.tau_const = obj.getBestConstTau(obj.c1.qp, obj.c1.qm, obj.c1.v, obj.fall_duration);
             X = obj.getFallingCurve([obj.c1.qp; obj.c1.v], obj.fall_duration, 1, [0; obj.c1.tau_const]);
             X_ext = [...
-                X(15,1:2) + [0 1] 0 0; ...
-                X(15:end,:); ...
+                X(20,1:2) + [0 1] 0 0; ...
+                X(20:end,:); ...
                 X(end,1:2) + [0 -1] 0 0 ...
             ];
             obj.c1.g_func = spline(X_ext(:,2), X_ext(:,1));
@@ -169,8 +176,8 @@ classdef acrobot < handle
             obj.c2.tau_const = obj.getBestConstTau(obj.c2.qp, obj.c2.qm, obj.c2.v, obj.fall_duration);
             X = obj.getFallingCurve([obj.c2.qp; obj.c2.v], obj.fall_duration, 1, [0; obj.c2.tau_const]);
             X_ext = [...
-                X(15,1:2) + [0 1] 0 0; ...
-                X(15:end,:); ...
+                X(20,1:2) + [0 1] 0 0; ...
+                X(20:end,:); ...
                 X(end,1:2) + [0 -1] 0 0 ...
             ];
             obj.c2.g_func = spline(X_ext(:,2), X_ext(:,1));
@@ -205,6 +212,7 @@ classdef acrobot < handle
                     min_angle = abs(angdiff(atan2(qddt(2), qddt(1)),angle));
                 end
             end
+            w = rot2(obj.lcurve.w_ang_diff) * w;
             
             % Post impact calculations
             De = obj.calc_De(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), qm(1), qm(2));
@@ -215,12 +223,12 @@ classdef acrobot < handle
             delta_F = -(E/De*E')\E*last_term;
             delta_qedot = De\E'*delta_F + last_term;
             T = [1 1; 0 -1]; % Relabelling
-            qp_dot = [T zeros(2,2)] * (delta_qedot * w);
+            qp_dot = [T zeros(2,2)] * (delta_qedot * w) * obj.energy_loss;
             rend_dot = obj.calc_J(obj.leg_length, obj.leg_length, qp(1), qp(2)) * qp_dot;
             if (rend_dot(2) < 0)
-                v = -qp_dot * obj.energy_loss;
+                v = -qp_dot;
             else
-                v = qp_dot * obj.energy_loss;
+                v = qp_dot;
             end
         end
         
@@ -228,7 +236,7 @@ classdef acrobot < handle
             tau_best = 0;
             closest_distance = 100000;
             
-            for tau = -0.35:0.001:0.0
+            for tau = -obj.tau_limit:0.002:obj.tau_limit
                 X = obj.getFallingCurve([qp; v], dur, 1, [0; tau]);
 %                 plot(X(:,1),X(:,2));
                 for i = 1:length(X)

@@ -20,7 +20,7 @@ while (t < tmax)
     
     % Test
     if (robot.step_count == 1)
-        tau = [0;-0.30];
+        tau = [0;-0.35];
     end
     
     % Search for foot placement when close to floor

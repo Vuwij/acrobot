@@ -14,10 +14,8 @@ classdef acrobot_control < acrobot.acrobot
         x = zeros(4,1);     % Current x state space
         
         % Controller parameters
-        gamma = 0.2;
+        gamma = 0.1;
         
-        % Plots
-        tau_limit = 0.30;
     end
     
     methods
@@ -29,8 +27,7 @@ classdef acrobot_control < acrobot.acrobot
             % Start on the cycle
             X = obj.getFallingCurve([obj.c1.qm; obj.c1.w], 0.1, -1, [0; 0]);
             obj.x = X(end,:)';
-            % X = [1.7671; 2.7489; -1.0573; 0.7951];
-%            obj.x = [pi/2; 0; 0; 0];
+            obj.x = [pi/2; 0; 0; 0];
             obj.tau = [0; 0];
             obj.holo_point = [0; 0];
             obj.holo_point_dt = [0; 0];
@@ -184,9 +181,12 @@ classdef acrobot_control < acrobot.acrobot
             else
                 obj.x = [qp; qp_dot];
             end
-            disp(strcat("Impact Velocity: Q: ", num2str(norm(q_dot)), " D: ", num2str(norm(obj.lcurve.w))));
-            disp(strcat("Impact Angle Error: ", num2str(angdiff(atan2(obj.lcurve.w(2), obj.lcurve.w(1)), atan2(q_dot(2), q_dot(1))))));
             
+            disp(strcat("Impact Velocity Pre: Q: ", num2str(norm(q_dot)), " D: ", num2str(norm(obj.lcurve.w))));
+            disp(strcat("Impact Velocity Post: Q: ", num2str(norm(qp_dot)), " D: ", num2str(norm(obj.l2curve.v))));
+            disp(strcat("Impact Angle Error Pre: ", num2str(angdiff(atan2(obj.lcurve.w(2), obj.lcurve.w(1)), atan2(q_dot(2), q_dot(1))))));
+            disp(strcat("Impact Angle Error Post: ", num2str(angdiff(atan2(obj.lcurve.v(2), obj.lcurve.v(1)), atan2(qp_dot(2), qp_dot(1))))));
+
             % Increase Step Count
             obj.step_count = obj.step_count + 1;
             
@@ -231,12 +231,12 @@ classdef acrobot_control < acrobot.acrobot
 
                 subplot(2,3,[2,5]);
                 obj.step_count = 0;
-                plotHolonomicCurve(obj, obj.lcurve);
+                plotHolonomicCurve(obj, obj.c1);
                 hold on;
                 
                 subplot(2,3,[3,6]);
                 obj.step_count = 1;
-                plotHolonomicCurve(obj, obj.lcurve);
+                plotHolonomicCurve(obj, obj.c2);
                 hold on;
                 
                 obj.q_field_plotted = 1;
