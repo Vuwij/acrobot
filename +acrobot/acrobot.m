@@ -47,7 +47,7 @@ classdef acrobot < handle
         
         % Curves
         c1 = acrobot.curve(pi/4.4, 16.2, -0.128, 0.6); % First Step
-        c2 = acrobot.curve(pi/6.8, 23.0, -0.08016, 1.0); % Second Step
+        c2 = acrobot.curve(pi/4.0, 20.4, -0.1167, 0.6); % Second Step
     end
     
     methods
