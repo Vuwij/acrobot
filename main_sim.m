@@ -14,14 +14,12 @@ options = odeset('Events',@(t,x)robot.dist_to_floor(t,x), 'RelTol', 1e-9, 'AbsTo
 
 % Simulate Robot Walking
 while (t < tmax)
+    tic;
     
     % Calculate the value for tau at the point
-    tau = robot.getTau1(robot.x);
+    tau = robot.getTau(robot.x);
     
-    % Test
-%     if (robot.step_count == 1)
-%         tau = [0;-0.35];
-%     end
+    t1 = toc;
     
     % Search for foot placement when close to floor
     t_next = floor((t + tstep + 1e-9)/tstep)*tstep;
@@ -41,5 +39,11 @@ while (t < tmax)
         break
     end
     
+    t2 = toc;
+    
     robot.show(t);
+    
+    t3 = toc;
+    
+    disp(strcat("Get Tau Time: ", num2str(t1), " Step Time: ", num2str(t2), " Display Time: ", num2str(t3)));
 end

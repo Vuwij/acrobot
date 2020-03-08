@@ -42,10 +42,10 @@ classdef acrobot < handle
         
         % Energy Loss
         fall_duration = 1.8;            % Max Fall duration
-        
         tau_limit = 0.35;
         
         % Curves
+        top_clip = 40;
         c1 = acrobot.curve(pi/4.4, 16.2, -0.128, 0.6); % First Step
         c2 = acrobot.curve(pi/4.0, 20.4, -0.1167, 0.6); % Second Step
     end
@@ -150,42 +150,28 @@ classdef acrobot < handle
             obj.c2.w = w;
             obj.c1.v = v;
             
-            % Find falling curves
-            obj.step_count = 0;
-            X = obj.getFallingCurve([obj.c1.qm; obj.c1.w], 0.3, -1);
-            obj.c1.f_func = cscvn(X(:,1:2)');
-            obj.step_count = 1;
-            X = obj.getFallingCurve([obj.c2.qm; obj.c2.w], 0.3, -1);
-            obj.c2.f_func = cscvn(X(:,1:2)');
-            
             % Search for rising curve with const tau
             obj.step_count = 0;
             obj.c1.tau_const = obj.getBestConstTau(obj.c1.qp, obj.c1.qm, obj.c1.v, obj.fall_duration);
             X = obj.getFallingCurve([obj.c1.qp; obj.c1.v], obj.fall_duration, 1, [0; obj.c1.tau_const]);
             X_ext = [...
-                X(20,1:2) + [0 1] 0 0; ...
-                X(20:end,:); ...
+                X(obj.top_clip:end,:); ...
                 X(end,1:2) + [0 -1] 0 0 ...
             ];
-            obj.c1.g_func = spline(X_ext(:,2), X_ext(:,1));
-            obj.c1.r_func = cscvn(X(:,1:2)');
-            obj.c1.v_func = spline(X(:,2), X(:,3:4)');
+            obj.c1.phi = spline(X_ext(:,2), X_ext(:,1));
+            obj.c1.phi_dot = fnder(obj.c1.phi,1);
+            obj.c1.phi_ddot = fnder(obj.c1.phi,2);
             
             obj.step_count = 1;
             obj.c2.tau_const = obj.getBestConstTau(obj.c2.qp, obj.c2.qm, obj.c2.v, obj.fall_duration);
             X = obj.getFallingCurve([obj.c2.qp; obj.c2.v], obj.fall_duration, 1, [0; obj.c2.tau_const]);
             X_ext = [...
-                X(20,1:2) + [0 1] 0 0; ...
-                X(20:end,:); ...
+                X(obj.top_clip:end,:); ...
                 X(end,1:2) + [0 -1] 0 0 ...
             ];
-            obj.c2.g_func = spline(X_ext(:,2), X_ext(:,1));
-            obj.c2.r_func = cscvn(X(:,1:2)');
-            obj.c2.v_func = spline(X(:,2), X(:,3:4)');
-
-            % Map the VHC to q1 and q2
-%             obj.getQFieldFunction(obj.c1);
-%             obj.getQFieldFunction(obj.c2);
+            obj.c2.phi = spline(X_ext(:,2), X_ext(:,1));
+            obj.c2.phi_dot = fnder(obj.c2.phi,1);
+            obj.c2.phi_ddot = fnder(obj.c2.phi,2);
             
             % Set back to original
             obj.step_count = 0;
@@ -272,8 +258,7 @@ classdef acrobot < handle
             quiver(curve.qp(1), curve.qp(2), curve.v(1), curve.v(2), 'LineWidth', 2, 'MaxHeadSize', 0.4);
             quiver(curve.qm(1), curve.qm(2), curve.w(1), curve.w(2), 'LineWidth', 2, 'MaxHeadSize', 0.4);
             
-            fnplt(curve.f_func);
-            obj.fnplti(curve.g_func);
+            obj.fnplti(curve.phi);
             
             title(strcat('Plot of sigma(theta) Tau: ', num2str(curve.tau_const)))
             xlabel('q1')
@@ -281,89 +266,6 @@ classdef acrobot < handle
             axis equal
             xlim([0, pi])
             hold off;
-        end
-        
-        function getQFieldFunction(obj, curve)
-            q1_range = 0:0.05:pi;
-            q2_range = -pi:0.05:pi;
-            [BX,BY] = meshgrid(q1_range,q2_range);
-            
-            BU = zeros(size(BX));
-            BV = zeros(size(BY));
-            
-            % Dinv * B
-            m1 = obj.lmass(1);
-            m2 = obj.lmass(2);
-            for i=1:size(BX,1)
-                for j=1:size(BY,2)
-                    temp = obj.calc_D(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), ...
-                                    m1, m2, BY(i,j)) \ obj.B;
-                    BU(i,j) = temp(1);
-                    BV(i,j) = temp(2);
-                end
-            end
-            
-            % Create the bivariate tensor product spline from x,y points to
-            % the x axis
-            % https://www.mathworks.com/help/curvefit/examples/bivariate-tensor-product-splines.html
-            
-            [xx, yy] = ndgrid(q1_range,q2_range);
-            X_Map = zeros(size(xx,1), size(xx,2));
-            DX_Map = zeros(size(xx,1), size(xx,2));
-            DY_Map = zeros(size(xx,1), size(xx,2));
-            for i=1:size(xx,1)
-                for j=1:size(yy,2)
-                    xy1 = stream2(BX, BY, BU, BV, xx(i,j), yy(i,j));
-                    xy2 = stream2(BX, BY, -BU, -BV, xx(i,j), yy(i,j));
-                    
-                    [v1, idx1] = min(abs(xy1{1}(:,2)));
-                    [v2, idx2] = min(abs(xy2{1}(:,2)));
-                    
-                    if (v1 < v2)
-                        X_Map(i,j) = xy1{1}(idx1,1);
-                    else
-                        X_Map(i,j) = xy2{1}(idx2,1);
-                    end
-                end
-            end
-            [DX_Map, DY_Map] = gradient(X_Map);
-            
-%            mesh(q1_range, q2_range, X_Map.');
-            
-            curve.knotsy = augknt(-pi:pi/5:pi,curve.ky);
-            curve.knotsx = augknt(0:pi/5:pi,curve.kx);
-            sp = spap2(curve.knotsy,curve.ky,q2_range,X_Map);
-            curve.sp2 = spap2(curve.knotsx,curve.kx,q1_range,sp.coefs.');
-            
-            sp = spap2(curve.knotsy,curve.ky,q2_range,DX_Map);
-            curve.sp2_dx = spap2(curve.knotsx,curve.kx,q1_range,sp.coefs.');
-            sp = spap2(curve.knotsy,curve.ky,q2_range,DY_Map);
-            curve.sp2_dy = spap2(curve.knotsx,curve.kx,q1_range,sp.coefs.');
-            
-%             xv = 0:pi/20:pi; yv = -pi:2*pi/20:pi;
-%             values = spcol(curve.knotsx,curve.kx,xv)*curve.sp2.coefs'*spcol(curve.knotsy,curve.ky,yv).';
-
-            % Create the inverse function from x axis to the curve points
-            % x -> (q1, q2)
-            x2q = zeros(size(curve.r_func.breaks,2), 3);
-
-            for i = 1:size(curve.r_func.breaks,2)
-                v = ppval(curve.r_func,curve.r_func.breaks(i));
-                
-                xy1 = stream2(BX, BY, BU, BV, v(1), v(2));
-                xy2 = stream2(BX, BY, -BU, -BV, v(1), v(2));
-                
-                [v1, idx1] = min(abs(xy1{1}(:,2)));
-                [v2, idx2] = min(abs(xy2{1}(:,2)));
-
-                if (v1 < v2)
-                    x2q(i,:) = [xy1{1}(idx1,1) v'];
-                else
-                    x2q(i,:) = [xy2{1}(idx2,1) v'];
-                end
-            end
-            
-            curve.sp3 = spline(x2q(:,1), x2q(:,2:3)');
         end
         
         function plotQField(obj)
@@ -462,14 +364,14 @@ classdef acrobot < handle
         function plotFallingCurve(obj, curve)
             % Basically perform a fall in reverse, TODO, use ODE
             X = obj.getFallingCurve([curve.qm; curve.w], 0.3, -1);
-            quiver(X(:,1),X(:,2),X(:,3),X(:,4),'color',[0 1 0])
+            quiver(X(:,1),X(:,2),X(:,3),X(:,4),'color',[0 1 0], 'markersize',1)
             xlabel('q1');
             ylabel('q2');
 
             hold on;
 
             X = obj.getFallingCurve([curve.qp; curve.v], 0.3, 1);
-            quiver(X(:,1),X(:,2),X(:,3),X(:,4),'color',[1 1 0])
+            quiver(X(:,1),X(:,2),X(:,3),X(:,4),'color',[1 1 0], 'markersize',1)
             xlabel('q1');
             ylabel('q2');
         end
