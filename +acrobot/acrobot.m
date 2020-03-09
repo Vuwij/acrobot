@@ -197,7 +197,10 @@ classdef acrobot < handle
                     min_angle = abs(angdiff(atan2(qddt(2), qddt(1)),angle));
                 end
             end
-            w = rot2(obj.lcurve.w_ang_diff) * w;
+            eul = [obj.lcurve.w_ang_diff 0 0]
+            rotMatrix = eul2rotm(eul)
+            rotMatrix2D = rotMatrix(1:2,1:2)
+            w = rotMatrix2D*w;
             
             % Post impact calculations
             De = obj.calc_De(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), qm(1), qm(2));
