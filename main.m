@@ -10,11 +10,11 @@ rate = rateControl(1/tstep);
 %% Device Connection
 
 clear a imu encoder;
-a = arduino('COM3','Nano3','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
+a = arduino('COM4','Nano3','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
 % a = arduino('COM5','Mega2560','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
 pause(10);
-BNO055Sensor = addon(a,'Adafruit/BNO055','I2CAddress','0x28');
-% BNO055Sensor2 = addon(a,'Adafruit/BNO055');
+BNO1  = i2cdev(a,'0x28');
+BNO2 = i2cdev(a, '0x29');
 encoder = rotaryEncoder(a, 'D2','D3', steps_per_rotation);
 
 %% Main loop
@@ -29,21 +29,10 @@ encoder.resetCount();
 last_motor_step = encoder.readCount();
 test = 0;
 
-% Calibration for sensor, probably need to calibrate them separately
-tic;
-while (toc < 240)
-    [status,timestamp] = readCalibrationStatus(BNO055Sensor); 
-    status
-    if strcmpi(status.Accelerometer,'full') && strcmpi(status.System,'full') && strcmpi(status.Gyroscope,'full')
-        break; %Accelerometer is calibrated proceed further
-    end
-    pause(1);
-end
+% read pitch position, we only care about this
+[acc1, gyro1, pos1] = read_data(BNO1);
+[acc2, gyro2, pos2] = read_data(BNO2);
 
-% [acc, gyro, ts, overrun] = imu.read();
-[acc1,timestamp] = readAcceleration(BNO055Sensor);
-[gyro1,timestamp] = readAngularVelocity(BNO055Sensor);
-[pos1, timestamp] = readOrientation(BNO055Sensor);
 while (1)
     tic;
     motor_step = encoder.readCount();
@@ -54,7 +43,7 @@ while (1)
     last_motor_step = motor_step;
     
     % Get Robot State (Fix this line)
-    state = estimator.stepImplPublic(pos1, gyro1, acc1, pos1, gyro1, acc1, motor_step);
+    state = estimator.stepImplPublic(pos1, gyro1, acc1, pos2, gyro2, acc2, motor_step);
     
     % Update the robot state with the estimated state (Might want to tune
     % it so that it takes a percentage of the measured vs a percentage of
@@ -78,8 +67,39 @@ while (1)
     robot.plotRobot();
     
     % Read next step
-    [acc1,timestamp] = readAcceleration(BNO055Sensor);
-    [gyro1,timestamp] = readAngularVelocity(BNO055Sensor);
-    [pos1, timestamp] = readOrientation(BNO055Sensor);
+    [acc1, gyro1, pos1] = read_data(BNO1);
+    [acc2, gyro2, pos2] = read_data(BNO2);
     waitfor(rate);
 end
+
+
+%%
+function [acc, gyro, pos] = read_data(BNO)
+    x = double(readRegister(BNO,hex2dec('8'),'int16')) / 100.0;
+    y = double(readRegister(BNO,hex2dec('A'),'int16')) / 100.0;
+    z = double(readRegister(BNO,hex2dec('C'),'int16')) / 100.0;
+    acc = [x y z];
+    x = double(readRegister(BNO,hex2dec('14'),'int16')) / 16.0;
+    y = double(readRegister(BNO,hex2dec('16'),'int16')) / 16.0;
+    z = double(readRegister(BNO,hex2dec('18'),'int16')) / 16.0;
+    t_gyro = [x y z];
+    gyro = convangvel(t_gyro, 'deg/s' ,'rad/s');
+    
+    deg_pitch = double(readRegister(BNO,hex2dec('1E'),'int16')) / 16.0; % Reads bits 15:8 from register 23
+    rad_pitch = deg2rad(deg_pitch);   
+    pos = [0 rad_pitch 0];
+end
+% function acc = read_acc(BNO)
+%     x = double(readRegister(BNO,hex2dec('8'),'int16')) / 100.0;
+%     y = double(readRegister(BNO,hex2dec('A'),'int16')) / 100.0;
+%     z = double(readRegister(BNO,hex2dec('C'),'int16')) / 100.0;
+%     acc = [x y z];
+% end
+% 
+% function gyro = read_gyro(BNO)
+%     x = double(readRegister(BNO,hex2dec('14'),'int16')) / 16.0;
+%     y = double(readRegister(BNO,hex2dec('16'),'int16')) / 16.0;
+%     z = double(readRegister(BNO,hex2dec('18'),'int16')) / 16.0;
+%     t_gyro = [x y z];
+%     gyro = convangvel(t_gyro, 'deg/s' ,'rad/s');
+% end

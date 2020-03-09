@@ -80,10 +80,10 @@ classdef acrobot_state_estimator < matlab.System
             yThreshold = 0.02;
             zThreshold = 0.03;
             
-            if(~obj.timeout && abs(acc2(1)) > xThreshold && abs(acc2(2)) > yThreshold && abs(acc2(3)) > zThreshold)
-                obj.imu_default = ~obj.imu_default;
-                obj.timeout = ~obj.timeout;
-            end
+%             if(~obj.timeout && abs(acc2(1)) > xThreshold && abs(acc2(2)) > yThreshold && abs(acc2(3)) > zThreshold)
+%                 obj.imu_default = ~obj.imu_default;
+%                 obj.timeout = ~obj.timeout;
+%             end
             
             % q1 & q1_dot
             roll = pos1(2);
@@ -106,12 +106,12 @@ classdef acrobot_state_estimator < matlab.System
             dist_to_floor = rc2(2);
             delta_dist = dist_to_floor - obj.prev_dist_to_floor;
             obj.prev_dist_to_floor = dist_to_floor;
-            if ~obj.timeout && dist_to_floor < 0 && delta_dist < 0
+            if ~obj.timeout && dist_to_floor < 0.04 && delta_dist < 0
                 obj.timeout = ~obj.timeout;
                 obj.imu_default = ~obj.imu_default;
             end
    
-            state = [q1;q2;0;0];
+            state = [q1;q2;q1_dot;q2_dot];
             imu_default = obj.imu_default;
             obj.state = state;
         end
