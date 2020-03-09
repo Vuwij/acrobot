@@ -13,7 +13,7 @@
     <link name="leg1">
         <inertial>
             <mass value="460.566e-3"/>
-            <origin rpy="0 0 0" xyz="30.8842e-3 0.0259 0.3"/>
+            <origin rpy="0 0 0" xyz="30.8842e-3 0 0"/>
             <inertia ixx="3.451e-4" ixy="0.0" ixz="0.0"
                      iyy="2.565e-3" iyz="0.0"
                      izz="2.308e-3"/>
@@ -51,7 +51,7 @@
     <joint name="base_link" type="fixed">
         <parent link="base_link"/>
         <child link="leg1"/>
-        <origin rpy="0 ${PI/2} 0" xyz="0 0 0.390"/>
+        <origin rpy="0 ${PI/2} 0" xyz="0 0 0.360"/>
     </joint>
 
     <joint name="joint" type="revolute">

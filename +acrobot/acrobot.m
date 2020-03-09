@@ -197,8 +197,7 @@ classdef acrobot < handle
                     min_angle = abs(angdiff(atan2(qddt(2), qddt(1)),angle));
                 end
             end
-            eul = [obj.lcurve.w_ang_diff 0 0]
-            rotMatrix = eul2rotm(eul)
+            rotMatrix = eul2rotm([obj.lcurve.w_ang_diff 0 0])
             rotMatrix2D = rotMatrix(1:2,1:2)
             w = rotMatrix2D*w;
             
