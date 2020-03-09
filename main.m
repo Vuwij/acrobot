@@ -10,11 +10,11 @@ rate = rateControl(1/tstep);
 %% Device Connection
 
 clear a imu encoder;
-% a = arduino('/dev/ttyUSB0','Nano3','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
-a = arduino('COM5','Mega2560','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
-
+a = arduino('COM3','Nano3','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
+% a = arduino('COM5','Mega2560','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
+pause(10);
 BNO055Sensor = addon(a,'Adafruit/BNO055','I2CAddress','0x28');
-% BNO055Sensor2 = addon(a,'Adafruit/BNO055','I2CAddress','0x29');
+% BNO055Sensor2 = addon(a,'Adafruit/BNO055');
 encoder = rotaryEncoder(a, 'D2','D3', steps_per_rotation);
 
 %% Main loop

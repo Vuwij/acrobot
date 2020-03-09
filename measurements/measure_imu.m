@@ -1,9 +1,8 @@
 %% Arduino Rotary Encoder input
 clear; clc;
-a = arduino('COM5','Mega2560','Libraries',{'Adafruit/BNO055', 'I2C'});
-% dev = i2cdev(a,'0x28')
-BNO055Sensor = addon(a,'Adafruit/BNO055');
-% % BNO055Sensor2 = addon(a,'Adafruit/BNO055','I2CAddress','0x29');
+a = arduino('COM4','Nano3','Libraries',{'Adafruit/BNO055', 'I2C'});
+BNO055Sensor = addon(a,'Adafruit/BNO055', 'I2CAddress', '0x28');
+BNO055Sensor2 = addon(a,'Adafruit/BNO055','I2CAddress','0x29');
 % 
 % 
 % 
