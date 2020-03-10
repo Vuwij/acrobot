@@ -48,12 +48,14 @@ classdef acrobot_state_estimator < matlab.System
         function [state, imu_default] = stepImplPublic(obj, pos1, gyro1, acc1, pos2, gyro2, acc2, motor_step)
             if (obj.timeout)        
                 obj.cycleCount = obj.cycleCount + 1;
-                if obj.cycleCount == 10
+                if obj.cycleCount == 100
                     obj.timeout = ~obj.timeout;
                 end
             else
                 obj.cycleCount = 0;
             end
+            gyro2
+            acc2
             % Motor Angle
             qm = pi - motor_step / (obj.steps_per_rotation/ (2 * pi));
             
@@ -77,13 +79,13 @@ classdef acrobot_state_estimator < matlab.System
             % Shock dection here
             % Threshold 
             xThreshold = 0.01;
-            yThreshold = 0.02;
-            zThreshold = 0.03;
+            yThreshold = 3.8;
+            zThreshold = 9.5;
             
-%             if(~obj.timeout && abs(acc2(1)) > xThreshold && abs(acc2(2)) > yThreshold && abs(acc2(3)) > zThreshold)
-%                 obj.imu_default = ~obj.imu_default;
-%                 obj.timeout = ~obj.timeout;
-%             end
+            if(~obj.timeout && abs(acc2(2)) > yThreshold && abs(acc2(3)) > zThreshold)
+                obj.imu_default = ~obj.imu_default;
+                obj.timeout = ~obj.timeout;
+            end
             
             % q1 & q1_dot
             roll = pos1(2);

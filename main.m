@@ -10,7 +10,7 @@ rate = rateControl(1/tstep);
 %% Device Connection
 
 clear a imu encoder;
-a = arduino('COM4','Nano3','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
+a = arduino('COM5','Nano3','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
 % a = arduino('COM5','Mega2560','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
 pause(10);
 BNO1  = i2cdev(a,'0x28');
@@ -33,6 +33,7 @@ test = 0;
 [acc1, gyro1, pos1] = read_data(BNO1);
 [acc2, gyro2, pos2] = read_data(BNO2);
 
+
 while (1)
     tic;
     motor_step = encoder.readCount();
@@ -41,16 +42,15 @@ while (1)
         motor_step = last_motor_step;
     end
     last_motor_step = motor_step;
-    
-    % Get Robot State (Fix this line)
-    state = estimator.stepImplPublic(pos1, gyro1, acc1, pos2, gyro2, acc2, motor_step);
+    % Get Robot State 
+    % gyro2 and acc2 might need to be negated
+    state = estimator.stepImplPublic(pos1, gyro1, acc1, -pos2, gyro2, acc2, motor_step);
     
     % Update the robot state with the estimated state (Might want to tune
     % it so that it takes a percentage of the measured vs a percentage of
     % the projected state. Can use a complementary filter for now but can
     % upgrade to kalman filter sometime in the future
     robot.x = state;
-%     robot.x
     % Make a step and calculate tau
 %    tau = robot.getTau(robot.x);
 %    dxdt = robot.step(robot.x, tau); 
@@ -89,17 +89,3 @@ function [acc, gyro, pos] = read_data(BNO)
     rad_pitch = deg2rad(deg_pitch);   
     pos = [0 rad_pitch 0];
 end
-% function acc = read_acc(BNO)
-%     x = double(readRegister(BNO,hex2dec('8'),'int16')) / 100.0;
-%     y = double(readRegister(BNO,hex2dec('A'),'int16')) / 100.0;
-%     z = double(readRegister(BNO,hex2dec('C'),'int16')) / 100.0;
-%     acc = [x y z];
-% end
-% 
-% function gyro = read_gyro(BNO)
-%     x = double(readRegister(BNO,hex2dec('14'),'int16')) / 16.0;
-%     y = double(readRegister(BNO,hex2dec('16'),'int16')) / 16.0;
-%     z = double(readRegister(BNO,hex2dec('18'),'int16')) / 16.0;
-%     t_gyro = [x y z];
-%     gyro = convangvel(t_gyro, 'deg/s' ,'rad/s');
-% end
