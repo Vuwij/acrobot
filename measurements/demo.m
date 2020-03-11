@@ -26,7 +26,7 @@ try
 
         waitfor(rate);
     end
-    
+
 catch ex
     disp(ex)
     writePWMDutyCycle(a,'D9',0);

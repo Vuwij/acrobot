@@ -11,18 +11,16 @@ classdef acrobot_state_estimator < matlab.System
     end
 
     properties(DiscreteState)
-      
+        
         
     end
 
     % Pre-computed constants
     properties(Access = private)
-        imuf = imufilter('SampleRate',100, 'ReferenceFrame', 'ENU');
         leg_length = 0.335;
-        prev_dist_to_floor = 0.0;
         state = [0;0;0;0];
-        imu_ground = true;
-        collision_timeout = 0;
+        cycleCount = 0;
+        timeout = false;
         max_velocity_change = 10;
         
     end
@@ -38,45 +36,26 @@ classdef acrobot_state_estimator < matlab.System
     methods(Access = public)
         function setupImplPublic(obj)
             % Perform one-time calculations, such as computing constants
-            
-            obj.imuf = imufilter('SampleRate',1/obj.sample_time, 'ReferenceFrame', 'ENU');
-            obj.imuf.GyroscopeNoise          = 0.001;
-            obj.imuf.AccelerometerNoise      = 0.01;
         end
         
-        function [state, on_ground] = stepImplPublic(obj, gyro, acc, motor_step)
-                        
-            % Yaw
-            [orient, ~] = obj.imuf.step(acc', gyro');
-            zyx = deg2rad(eulerd(orient,'ZYX','frame'));
-            yaw = wrapToPi(zyx(3));
-
-            
-            % Motor Angle9
+        function [state, collision] = stepImplPublic(obj, step, pos, acc, motor_step)
+            % Motor Angle
             qm = pi - motor_step / (obj.steps_per_rotation/ (2 * pi));
-
-            if(obj.imu_ground)
-                q1 = yaw + pi/2;
-                q2 = qm - pi;
-            else
-                % Calculate phi
-                if zyx(1) > pi/2 || zyx(1) < -pi/2
-                    phi = -yaw;
-                else
-                    if (yaw < 0)
-                        phi = pi + yaw;
-                    else
-                        phi = -pi + yaw;
-                    end
-                end
-                
-                q2 = -(qm - pi);
-                q1 = pi/2 + phi - q2;
+            
+            % gyro1 and acc1 are always on the ground
+            if (mod(step, 2) == 1)
+                qm = 2*pi - qm;
             end
             
+            % q1 & q1_dot
+            roll = pos(2);
+            q1 = roll + pi/2;
             q1_dot = (q1 - obj.state(1))/obj.sample_time;
+            
+            % q2 & q2_dot
+            q2 = qm - pi;
             q2_dot = (q2 - obj.state(2))/obj.sample_time;
-
+            
             if(abs(q1_dot) > obj.max_velocity_change)
                 q1_dot = obj.state(3);
             end
@@ -87,14 +66,13 @@ classdef acrobot_state_estimator < matlab.System
             rH = obj.leg_length * [cos(q1); sin(q1)];
             rc2 = rH + obj.leg_length * [cos(q1+q2); sin(q1+q2)];
             dist_to_floor = rc2(2);
-            delta_dist = dist_to_floor - obj.prev_dist_to_floor;
-            obj.prev_dist_to_floor = dist_to_floor;
-            if dist_to_floor < 0 && delta_dist < 0
-                obj.imu_ground = ~obj.imu_ground;
+            if dist_to_floor < 0
+                collision = 1;
+            else
+                collision = 0;
             end
-            
+   
             state = [q1;q2;q1_dot;q2_dot];
-            on_ground = obj.imu_ground;
             obj.state = state;
         end
     end
@@ -105,8 +83,8 @@ classdef acrobot_state_estimator < matlab.System
             obj.setupImplPublic();
         end
 
-        function [state, on_ground] = stepImpl(obj, gyro, acc, motor_step)
-            [state, on_ground] = obj.stepImplPublic(gyro, acc, motor_step);
+        function [state, collision] = stepImpl(obj, step, pos, acc, motor_step)
+            [state, collision] = obj.stepImplPublic(step, pos, acc, motor_step);
         end
         
         function [s1, s2] = getOutputSizeImpl(~)
@@ -135,3 +113,4 @@ classdef acrobot_state_estimator < matlab.System
         end
     end 
 end
+
