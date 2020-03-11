@@ -18,7 +18,6 @@ classdef acrobot_state_estimator < matlab.System
     % Pre-computed constants
     properties(Access = private)
         imu_default = true
-        imuf = imufilter('SampleRate',100, 'ReferenceFrame', 'ENU');
         leg_length = 0.335;
         prev_dist_to_floor = 0.0;
         state = [0;0;0;0];
@@ -39,10 +38,6 @@ classdef acrobot_state_estimator < matlab.System
     methods(Access = public)
         function setupImplPublic(obj)
             % Perform one-time calculations, such as computing constants
-            
-            obj.imuf = imufilter('SampleRate',1/obj.sample_time, 'ReferenceFrame', 'ENU');
-            obj.imuf.GyroscopeNoise          = 0.001;
-            obj.imuf.AccelerometerNoise      = 0.01;
         end
         
         function [state, imu_default] = stepImplPublic(obj, pos1, gyro1, acc1, pos2, gyro2, acc2, motor_step)
@@ -54,8 +49,6 @@ classdef acrobot_state_estimator < matlab.System
             else
                 obj.cycleCount = 0;
             end
-            gyro2
-            acc2
             % Motor Angle
             qm = pi - motor_step / (obj.steps_per_rotation/ (2 * pi));
             
@@ -82,10 +75,10 @@ classdef acrobot_state_estimator < matlab.System
             yThreshold = 3.8;
             zThreshold = 9.5;
             
-            if(~obj.timeout && abs(acc2(2)) > yThreshold && abs(acc2(3)) > zThreshold)
-                obj.imu_default = ~obj.imu_default;
-                obj.timeout = ~obj.timeout;
-            end
+%             if(~obj.timeout && abs(acc2(2)) > yThreshold && abs(acc2(3)) > zThreshold)
+%                 obj.imu_default = ~obj.imu_default;
+%                 obj.timeout = ~obj.timeout;
+%             end
             
             % q1 & q1_dot
             roll = pos1(2);

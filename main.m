@@ -7,16 +7,26 @@ estimator = acrobot.acrobot_state_estimator();
 
 tstep = 0.1;  % Time step
 rate = rateControl(1/tstep);
+
+eul = [pi 0 0];
+rotmXYZ = eul2rotm(eul, 'XYZ');
 %% Device Connection
 
 clear a imu encoder;
-a = arduino('COM5','Nano3','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
+a = arduino('COM3','Nano3','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
 % a = arduino('COM5','Mega2560','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
-pause(10);
+pause(5);
 BNO1  = i2cdev(a,'0x28');
 BNO2 = i2cdev(a, '0x29');
 encoder = rotaryEncoder(a, 'D2','D3', steps_per_rotation);
 
+writeRegister(BNO2,hex2dec('3D'),hex2dec('00'),'uint8');
+pause(1);
+writeRegister(BNO2,hex2dec('42'),hex2dec('03'),'uint8');
+% a1 = readRegister(BNO2,hex2dec('42'),'uint8');
+pause(1);
+writeRegister(BNO1,hex2dec('3D'),hex2dec('08'),'uint8');
+writeRegister(BNO2,hex2dec('3D'),hex2dec('08'),'uint8');
 %% Main loop
 close all;
 fig = figure;
@@ -32,7 +42,8 @@ test = 0;
 % read pitch position, we only care about this
 [acc1, gyro1, pos1] = read_data(BNO1);
 [acc2, gyro2, pos2] = read_data(BNO2);
-
+acc2 = (rotmXYZ*acc2')';
+gyro2 = (rotmXYZ * gyro2')';
 
 while (1)
     tic;
@@ -44,7 +55,7 @@ while (1)
     last_motor_step = motor_step;
     % Get Robot State 
     % gyro2 and acc2 might need to be negated
-    state = estimator.stepImplPublic(pos1, gyro1, acc1, -pos2, gyro2, acc2, motor_step);
+    state = estimator.stepImplPublic(pos1, gyro1, acc1, pos2, gyro2, acc2, motor_step);
     
     % Update the robot state with the estimated state (Might want to tune
     % it so that it takes a percentage of the measured vs a percentage of
@@ -69,6 +80,8 @@ while (1)
     % Read next step
     [acc1, gyro1, pos1] = read_data(BNO1);
     [acc2, gyro2, pos2] = read_data(BNO2);
+    acc2 = (rotmXYZ*acc2')';
+    gyro2 = (rotmXYZ * gyro2')';
     waitfor(rate);
 end
 
