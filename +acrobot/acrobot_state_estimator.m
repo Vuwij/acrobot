@@ -17,9 +17,7 @@ classdef acrobot_state_estimator < matlab.System
 
     % Pre-computed constants
     properties(Access = private)
-        imu_default = true
         leg_length = 0.335;
-        prev_dist_to_floor = 0.0;
         state = [0;0;0;0];
         cycleCount = 0;
         timeout = false;
@@ -40,48 +38,17 @@ classdef acrobot_state_estimator < matlab.System
             % Perform one-time calculations, such as computing constants
         end
         
-        function [state, imu_default] = stepImplPublic(obj, pos1, gyro1, acc1, pos2, gyro2, acc2, motor_step)
-            if (obj.timeout)        
-                obj.cycleCount = obj.cycleCount + 1;
-                if obj.cycleCount == 100
-                    obj.timeout = ~obj.timeout;
-                end
-            else
-                obj.cycleCount = 0;
-            end
+        function [state, collision] = stepImplPublic(obj, step, pos, acc, motor_step)
             % Motor Angle
             qm = pi - motor_step / (obj.steps_per_rotation/ (2 * pi));
             
             % gyro1 and acc1 are always on the ground
-            if (~obj.imu_default)
-                % Swap gyro1 and gyro2
-                t_gyro1 = gyro1;
-                gyro1 = gyro2;
-                gyro2 = t_gyro1;
-                
-                t_acc1 = acc1;
-                acc1 = acc2;
-                acc2 = t_acc1;
-                
-                t_pos1 = pos1;
-                pos1 = pos2;
-                pos2 = t_pos1;
-                
+            if (mod(step, 2) == 1)
                 qm = 2*pi - qm;
             end
-            % Shock dection here
-            % Threshold 
-            xThreshold = 0.01;
-            yThreshold = 3.8;
-            zThreshold = 9.5;
-            
-%             if(~obj.timeout && abs(acc2(2)) > yThreshold && abs(acc2(3)) > zThreshold)
-%                 obj.imu_default = ~obj.imu_default;
-%                 obj.timeout = ~obj.timeout;
-%             end
             
             % q1 & q1_dot
-            roll = pos1(2);
+            roll = pos(2);
             q1 = roll + pi/2;
             q1_dot = (q1 - obj.state(1))/obj.sample_time;
             
@@ -99,15 +66,13 @@ classdef acrobot_state_estimator < matlab.System
             rH = obj.leg_length * [cos(q1); sin(q1)];
             rc2 = rH + obj.leg_length * [cos(q1+q2); sin(q1+q2)];
             dist_to_floor = rc2(2);
-            delta_dist = dist_to_floor - obj.prev_dist_to_floor;
-            obj.prev_dist_to_floor = dist_to_floor;
-            if ~obj.timeout && dist_to_floor < 0.04 && delta_dist < 0
-                obj.timeout = ~obj.timeout;
-                obj.imu_default = ~obj.imu_default;
+            if dist_to_floor < 0
+                collision = 1;
+            else
+                collision = 0;
             end
    
             state = [q1;q2;q1_dot;q2_dot];
-            imu_default = obj.imu_default;
             obj.state = state;
         end
     end
@@ -118,8 +83,8 @@ classdef acrobot_state_estimator < matlab.System
             obj.setupImplPublic();
         end
 
-        function [state, imu_default] = stepImpl(obj, pos1, gyro1, acc1, pos2, gyro2, acc2, motor_step)
-            [state, imu_default] = obj.stepImplPublic(pos1, gyro1, acc1, pos2, gyro2, acc2, motor_step);
+        function [state, collision] = stepImpl(obj, step, pos, acc, motor_step)
+            [state, collision] = obj.stepImplPublic(step, pos, acc, motor_step);
         end
         
         function [s1, s2] = getOutputSizeImpl(~)

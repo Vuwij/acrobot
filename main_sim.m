@@ -1,7 +1,6 @@
 close all;
-robot = acrobot.acrobot_control();
 
-%% Simulate
+robot = acrobot.acrobot_control();
 robot.reset();
 
 tmax = 6;       % Max simulation time
@@ -9,25 +8,18 @@ tstep = 0.005;  % Simulation time step
 t = 0;
 
 % Simulate robot falling on the ground
-close all;
 fig = figure;
 set(fig, 'Position',  [100, 100, 1500, 700]);
 options = odeset('Events',@(t,x)robot.dist_to_floor(t,x), 'RelTol', 1e-9, 'AbsTol', 1e-9);
 
 % Simulate Robot Walking
 while (t < tmax)
+    tic;
     
     % Calculate the value for tau at the point
-    tau = robot.getTau1(robot.x);
+    tau = robot.getTau(robot.x);
     
-    % Test
-    if (robot.step_count == 0)
-        tau = [0;0.00];
-    end
-    
-    if (robot.x(2) > 2.5)
-        tau = [0;robot.lcurve.tau_const];
-    end
+    t1 = toc;
     
     % Search for foot placement when close to floor
     t_next = floor((t + tstep + 1e-9)/tstep)*tstep;
@@ -42,10 +34,16 @@ while (t < tmax)
     end
     
     % End Conditions
-    if (robot.x(2) > pi || robot.x(2) < -pi)
+    if (robot.x(2) > pi || robot.x(2) < -pi || robot.x(1) > pi || robot.x(1) < 0)
         disp("Robot Impacted With Itself");
         break
     end
     
+    t2 = toc;
+    
     robot.show(t);
+    
+    t3 = toc;
+    
+    disp(strcat("Get Tau Time: ", num2str(t1), " Step Time: ", num2str(t2), " Display Time: ", num2str(t3)));
 end

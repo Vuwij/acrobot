@@ -7,18 +7,15 @@ classdef acrobot_control < acrobot.acrobot
         tau = [0; 0];
         tau_q = [0; 0];
         tau_g = [0; 0];
+        holo_point = [0; 0];
+        holo_point_dt = [0; 0];
     end
     properties
         x = zeros(4,1);     % Current x state space
         
         % Controller parameters
-        gamma = 0.05;
-        poles = [-20 -20];
-        L = 0.9;
-        K = 0.9;
+        gamma = 0.1;
         
-        % Plots
-        tau_limit = 1;
     end
     
     methods
@@ -28,9 +25,12 @@ classdef acrobot_control < acrobot.acrobot
         
         function reset(obj)
             % Start on the cycle
-            X = obj.getFallingCurve([obj.c1.qm; obj.c1.w], 0.1, -1);
+            X = obj.getFallingCurve([obj.c1.qm; obj.c1.w], 0.1, -1, [0; 0]);
             obj.x = X(end,:)';
-            X = [1.7671; 2.7489; -1.0573; 0.7951];
+            obj.x = [pi/2; 0; 0; 0];
+            obj.tau = [0; 0];
+            obj.holo_point = [0; 0];
+            obj.holo_point_dt = [0; 0];
         end
         
         function Kp = Kp(obj)
@@ -67,38 +67,6 @@ classdef acrobot_control < acrobot.acrobot
             dxdt = [qdot; qddot_new];
         end
         
-        function tau = getTau1(obj, x)
-            q = [x(1); x(2)];
-            qdot = [x(3); x(4)];
-            
-            % Robotics Equation Parameters
-            D = obj.calc_D(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q(2));
-            C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
-            P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
-            
-            qddot = D \ (-C * qdot - P); 
-            
-            phi = @(q2) ppval(obj.lcurve.g_func,q2);
-            phi_dot = @(q2) ppval(fnder(obj.lcurve.g_func,1),q2);
-            phi_ddot = @(q2) ppval(fnder(obj.lcurve.g_func,2),q2);
-            
-            qd = [phi(q(2)); q(2)];
-            qd_dot = [phi_dot(q(2)) * qdot(2); qdot(2)];
-            qd_ddot = [phi_dot(q(2)) * qddot(2) + phi_ddot(q(2)) * qdot(2)^2; qddot(2)];
-
-            
-            % PD Control
-            e = qd(1) - q(1);
-            e_dot = qd_dot(1) - qdot(1);
-            
-            part1 = [1 -phi_dot(q(2))] * inv(D) * obj.B;
-            part2 = -obj.Kp * e - obj.Kp * e_dot + qd_ddot(1) * qdot(2)^2 + [1 -phi_dot(q(2))] * inv(D) * (C * qdot + P);
-            obj.tau = [0; inv(part1) * part2];
-
-            obj.tau = max(min(obj.tau_limit, obj.tau), -obj.tau_limit);
-            tau = obj.tau;
-        end
-        
         function tau = getTau(obj, x)
             q = [x(1); x(2)];
             qdot = [x(3); x(4)];
@@ -107,43 +75,21 @@ classdef acrobot_control < acrobot.acrobot
             D = obj.calc_D(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q(2));
             C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
             P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
+                        
+            phi = @(q2) ppval(obj.lcurve.phi,q2);
+            phi_dot = @(q2) ppval(obj.lcurve.phi_dot,q2);
+            phi_ddot = @(q2) ppval(obj.lcurve.phi_ddot,q2);
             
-            qddot = D \ (-C * qdot - P); 
-            
-            % Desired angles
-            sp2d = fnder(obj.lcurve.sp2, 1);
-            sp2dd = fnder(obj.lcurve.sp2, 2);
-            sp3d = fnder(obj.lcurve.sp3, 1);
-            sp3dd = fnder(obj.lcurve.sp3, 2);
-            
-            xf = @(q1,q2) fnval( spmak({obj.lcurve.knotsx,obj.lcurve.knotsy},obj.lcurve.sp2.coefs.'), {q1,q2} );
-            xfd = @(q1,q2) fnval( spmak({obj.lcurve.knotsx,obj.lcurve.knotsy},sp2d.coefs.'), {q1,q2} );
-            xfdd = @(q1,q2) fnval( spmak({obj.lcurve.knotsx,obj.lcurve.knotsy},sp2dd.coefs.'), {q1,q2} );
-            
-            gf = @(q1, q2) fnval(obj.lcurve.sp3, xf(q1, q2));
-            gfd = @(q1, q2) fnval(sp3d, xfd(q1, q2));
-            gfdd = @(q1, q2) fnval(sp3dd, xfdd(q1, q2));
-            
-            
-            qd = gf(q(1),q(2));
-            qd_dot = gfd(qdot(1),qdot(2));
-            qd_ddot = gfd(qddot(1),qddot(2)) + gfdd(qdot(1)^2, qdot(2)^2);
-            
-            
-            obj.holo_point = qd;
+            obj.holo_point = [phi(q(2)); q(2)];
             
             % PD Control
-            qs = qd - q;
-            qs_dot = qd_dot - qdot;
-            qs_ddot = qd_ddot - qddot;
+            e = q(1) - phi(q(2));
+            e_dot = qdot(1) - phi_dot(q(2)) * qdot(2);
+            
+            part1 = [1 -phi_dot(q(2))] * inv(D) * obj.B;
+            part2 = -obj.Kp * e - obj.Kd * e_dot + phi_ddot(q(2)) * qdot(2)^2 + [1 -phi_dot(q(2))] * inv(D) * (C * qdot + P);
+            obj.tau = [0; inv(part1) * part2];
 
-%            a = (obj.Kp * qs(2) + obj.Kd * qs_dot(2) + qs_ddot(2)); % Acceleration of q2
-            a = (obj.Kp * qs(2));% + obj.Kd * qs_dot(2));
-            
-            test = -gfd(q(1), q(2));
-            obj.tau = [0; inv([test(2) 1] * inv(D) * obj.B) * a + obj.lcurve.tau_const];
-            obj.tau(1) = 0;
-            
             obj.tau = max(min(obj.tau_limit, obj.tau), -obj.tau_limit);
             tau = obj.tau;
         end
@@ -167,7 +113,7 @@ classdef acrobot_control < acrobot.acrobot
             T = [1 1; 0 -1]; % Relabelling
             
             qp = wrapTo2Pi(T * q + [-pi; 0]);
-            qp_dot = [T zeros(2,2)] * (delta_qedot * q_dot);
+            qp_dot = [T zeros(2,2)] * (delta_qedot * q_dot) * obj.lcurve.energy_loss;
             
             % Collision with floor?
             rend_dot = obj.calc_J(obj.leg_length, obj.leg_length, qp(1), qp(2)) * qp_dot;
@@ -177,6 +123,11 @@ classdef acrobot_control < acrobot.acrobot
                 obj.x = [qp; qp_dot];
             end
             
+            disp(strcat("Impact Velocity Pre: Q: ", num2str(norm(q_dot)), " D: ", num2str(norm(obj.lcurve.w))));
+            disp(strcat("Impact Velocity Post: Q: ", num2str(norm(qp_dot)), " D: ", num2str(norm(obj.l2curve.v))));
+            disp(strcat("Impact Angle Error Pre: ", num2str(angdiff(atan2(obj.lcurve.w(2), obj.lcurve.w(1)), atan2(q_dot(2), q_dot(1))))));
+            disp(strcat("Impact Angle Error Post: ", num2str(angdiff(atan2(obj.lcurve.v(2), obj.lcurve.v(1)), atan2(qp_dot(2), qp_dot(1))))));
+
             % Increase Step Count
             obj.step_count = obj.step_count + 1;
             
@@ -188,7 +139,7 @@ classdef acrobot_control < acrobot.acrobot
         end
         
         function plotRobot(obj)
-%            subplot(2,3,1);
+            subplot(2,3,1);
             
             q1 = obj.x(1);
             q2 = obj.x(2);
@@ -212,6 +163,7 @@ classdef acrobot_control < acrobot.acrobot
             axis equal;
             ylim([-0.5, 1]);
             xlim([-0.5, 2]);
+            title("Robot Position")
         end
         
         function plotFields(obj)
@@ -239,10 +191,12 @@ classdef acrobot_control < acrobot.acrobot
                 subplot(2,3,[3,6]);
             end
             
+            q1 = obj.x(1);
+            q2 = obj.x(2);
+            
             plot(q1(1), q2(1), '.', 'markersize',10,'color',[0 0 0]);
-            plot(obj.holo_point(1), obj.holo_point(2), '.', 'markersize',10,'color',[0 1 0]);
-
-            quiver(q1(1), q2(1), obj.tau_q(1) * 0.001, obj.tau_q(2) * 0.001);
+            plot(obj.holo_point(1), obj.holo_point(2), '.', 'markersize',5,'color',[0 1 0]);
+            quiver(q1(1), q2(1), obj.tau_q(1) * 0.0005, obj.tau_q(2) * 0.0005);
         end
         
         function plotTau(obj, t)
@@ -251,6 +205,7 @@ classdef acrobot_control < acrobot.acrobot
             plot(t, obj.tau(2), '+', 'markersize',5,'color','m');
             ylabel('Tau N*m');
             xlabel('Time (s)');
+            title("Torque over Time Plot")
             ylim([-obj.tau_limit - 0.1 obj.tau_limit + 0.1]);
             grid on;
         end
