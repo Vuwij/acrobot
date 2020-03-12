@@ -35,7 +35,7 @@ classdef acrobot < handle
         g = 9.81;
         
         % Mechanical Parameters
-        leg_length = 0.335;
+        leg_length;
         foot_radius = 0.0075;
 
         step_count = 0;

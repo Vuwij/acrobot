@@ -42,8 +42,12 @@ encoder.resetCount();
 
 last_motor_step = encoder.readCount();
 t = 0;
-duration = 1;
+duration = 200;
 ts = timeseries('acrobot_data');
+
+BN01_offset = 0;
+BN02_offset = 0;
+
 while (t < duration)
     tic
     
@@ -51,10 +55,10 @@ while (t < duration)
     motor_step = encoder.readCount();
     if mod(robot.step_count, 2) == 0
         [acc, ~, pos] = read_data(BNO2);
-        pos = -pos;
+        pos = -pos + BN02_offset;
     else
         [acc, ~, pos] = read_data(BNO1);
-%         pos(2) = wrapToPi(pos(2) + pi);
+        pos = pos + BN01_offset;
     end
 
     [robot.x, collision] = estimator.stepImplPublic(robot.step_count, pos, acc, motor_step);
