@@ -7,7 +7,7 @@ estimator = acrobot.acrobot_state_estimator();
 
 tstep = 0.05;  % Time step
 rate = rateControl(1/tstep);
-rotmXYZ = eul2rotm([pi 0 0], 'XYZ');
+rotmXYZ = eul2rotm([0 pi 0], 'XYZ');
 
 %% Device Connection
 
@@ -38,18 +38,26 @@ last_motor_step = encoder.readCount();
 
 while (1)
     tic
+    
+    % State Estimation
     motor_step = encoder.readCount();
     if mod(robot.step_count, 2) == 0
-        [acc, ~, pos] = read_data(BNO1);
-    else
         [acc, ~, pos] = read_data(BNO2);
-        acc = (rotmXYZ * acc')';
+        pos = -pos;
+    else
+        [acc, ~, pos] = read_data(BNO1);
+        pos(2) = pos(2) + pi;
     end
 
     [robot.x, collision] = estimator.stepImplPublic(robot.step_count, pos, acc, motor_step);
     if (collision)
         robot.step_count = robot.step_count + 1;
     end
+    
+    % Control Code
+    
+    % Motor Output
+    
     
     % Display the robot
 	robot.plotRobot();
