@@ -23,8 +23,10 @@ BNO2 = i2cdev(a,'0x29');
 encoder = rotaryEncoder(a, 'D2','D3', steps_per_rotation);
 
 writeRegister(BNO2,hex2dec('3D'),hex2dec('00'),'uint8');
+writeRegister(BNO1,hex2dec('3D'),hex2dec('00'),'uint8');
 pause(1);
 writeRegister(BNO2,hex2dec('42'),hex2dec('03'),'uint8');
+writeRegister(BNO1,hex2dec('42'),hex2dec('03'),'uint8');
 pause(1);
 writeRegister(BNO1,hex2dec('3D'),hex2dec('08'),'uint8');
 writeRegister(BNO2,hex2dec('3D'),hex2dec('08'),'uint8');
@@ -52,7 +54,7 @@ while (t < duration)
         pos = -pos;
     else
         [acc, ~, pos] = read_data(BNO1);
-        pos(2) = wrapToPi(pos(2) + pi);
+%         pos(2) = wrapToPi(pos(2) + pi);
     end
 
     [robot.x, collision] = estimator.stepImplPublic(robot.step_count, pos, acc, motor_step);
@@ -89,10 +91,12 @@ while (t < duration)
     waitfor(rate);
     t = t + tstep;
 end
-
 writeDigitalPin(a, 'D6', 0);
 writeDigitalPin(a, 'D7', 1);
 writePWMDutyCycle(a,'D9',0);
+
+filename = sprintf('data/tests/test_%s', datestr(now,'mm-dd-yyyy HH-MM'));
+save(filename, 'ts')
 
 %%
 function [acc, gyro, pos] = read_data(BNO)
