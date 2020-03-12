@@ -3,17 +3,21 @@
 clear; clc;close all;
 robotParameters;
 robot = acrobot.acrobot_control();
+torque_controller = acrobot.acrobot_torque_control();
 estimator = acrobot.acrobot_state_estimator();
 
 tstep = 0.05;  % Time step
 rate = rateControl(1/tstep);
-rotmXYZ = eul2rotm([pi 0 0], 'XYZ');
+rotmXYZ = eul2rotm([0 pi 0], 'XYZ');
 
 %% Device Connection
 
 clear a imu encoder;
 a = arduino('/dev/ttyUSB0','Nano3','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
-pause(5);
+writeDigitalPin(a, 'D6', 0);
+writeDigitalPin(a, 'D7', 1);
+writePWMDutyCycle(a,'D9',0);
+pause(2);
 BNO1 = i2cdev(a,'0x28');
 BNO2 = i2cdev(a,'0x29');
 encoder = rotaryEncoder(a, 'D2','D3', steps_per_rotation);
@@ -35,15 +39,20 @@ estimator.setupImplPublic();
 encoder.resetCount();
 
 last_motor_step = encoder.readCount();
-
-while (1)
+t = 0;
+duration = 1;
+ts = timeseries('acrobot_data');
+while (t < duration)
     tic
+    
+    % State Estimation
     motor_step = encoder.readCount();
     if mod(robot.step_count, 2) == 0
-        [acc, ~, pos] = read_data(BNO1);
-    else
         [acc, ~, pos] = read_data(BNO2);
-        acc = (rotmXYZ * acc')';
+        pos = -pos;
+    else
+        [acc, ~, pos] = read_data(BNO1);
+        pos(2) = wrapToPi(pos(2) + pi);
     end
 
     [robot.x, collision] = estimator.stepImplPublic(robot.step_count, pos, acc, motor_step);
@@ -51,15 +60,39 @@ while (1)
         robot.step_count = robot.step_count + 1;
     end
     
+    % Control Code
+    tau = robot.getTau(robot.x);
+    pwm = torque_controller.getPWM(tau(2));
+    
+    % End Conditions
+    if (robot.x(2) > pi || robot.x(2) < -pi || robot.x(1) > pi || robot.x(1) < 0)
+        disp("Robot Impacted With Itself");
+        break
+    end
+    
+    % Motor Output
+    if (pwm < 0)
+        writeDigitalPin(a, 'D6', 1);
+        writeDigitalPin(a, 'D7', 0);
+    else
+        writeDigitalPin(a, 'D6', 0);
+        writeDigitalPin(a, 'D7', 1);
+    end
+%    writePWMDutyCycle(a,'D9',abs(pwm));
+    
     % Display the robot
-	robot.plotRobot();
-
+    ts = ts.addsample('Data',robot.x,'Time',t);
+    robot.show(t);
     toc
 
     % Read next step
     waitfor(rate);
+    t = t + tstep;
 end
 
+writeDigitalPin(a, 'D6', 0);
+writeDigitalPin(a, 'D7', 1);
+writePWMDutyCycle(a,'D9',0);
 
 %%
 function [acc, gyro, pos] = read_data(BNO)
