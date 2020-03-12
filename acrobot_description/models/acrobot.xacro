@@ -12,11 +12,11 @@
 
     <link name="leg1">
         <inertial>
-            <mass value="436.312e-3"/>
-            <origin rpy="0 0 0" xyz="44.3396e-3 0 0"/>
-            <inertia ixx="3.60e-4" ixy="0.0" ixz="0.0"
-                     iyy="4.16e-3" iyz="0.0"
-                     izz="3.90e-3"/>
+            <mass value="460.566e-3"/>
+            <origin rpy="0 0 0" xyz="30.4146e-3 0 0"/>
+            <inertia ixx="3.451e-4" ixy="0.0" ixz="0.0"
+                     iyy="2.45e-3" iyz="0.0"
+                     izz="2.19e-3"/>
         </inertial>
         <visual name="visual">
             <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -31,11 +31,11 @@
 
     <link name="leg2">
         <inertial>
-            <mass value="194.587e-3"/>
-            <origin rpy="0 0 0" xyz="-105.604e-3 0 0"/>
-            <inertia ixx="2.25e-4" ixy="0" ixz="0"
-                     iyy="2.53e-3" iyz="0"
-                     izz="2.33e-3"/>
+            <mass value="226.876e-3"/>
+            <origin rpy="0 0 0" xyz="-87.519e-3 0 0"/>
+            <inertia ixx="2.89e-4" ixy="0" ixz="0"
+                     iyy="1.66e-3" iyz="0"
+                     izz="1.41e-3"/>
         </inertial>
         <visual name="visual">
             <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -51,7 +51,7 @@
     <joint name="base_link" type="fixed">
         <parent link="base_link"/>
         <child link="leg1"/>
-        <origin rpy="0 ${PI/2} 0" xyz="0 0 0.354"/>
+        <origin rpy="0 ${PI/2} 0" xyz="0 0 0.348"/>
     </joint>
 
     <joint name="joint" type="revolute">

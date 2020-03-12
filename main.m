@@ -50,7 +50,7 @@ BN02_offset = 0;
 
 while (t < duration)
     tic
-    
+
     % State Estimation
     motor_step = encoder.readCount();
     if mod(robot.step_count, 2) == 0
@@ -69,13 +69,13 @@ while (t < duration)
     % Control Code
     tau = robot.getTau(robot.x);
     pwm = torque_controller.getPWM(tau(2));
-    
+
     % End Conditions
     if (robot.x(2) > pi || robot.x(2) < -pi || robot.x(1) > pi || robot.x(1) < 0)
         disp("Robot Impacted With Itself");
         break
     end
-    
+
     % Motor Output
     if (pwm < 0)
         writeDigitalPin(a, 'D6', 1);
@@ -85,7 +85,7 @@ while (t < duration)
         writeDigitalPin(a, 'D7', 1);
     end
 %    writePWMDutyCycle(a,'D9',abs(pwm));
-    
+
     % Display the robot
     ts = ts.addsample('Data',robot.x,'Time',t);
     robot.show(t);

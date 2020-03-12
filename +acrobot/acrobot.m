@@ -47,13 +47,16 @@ classdef acrobot < handle
         % Curves
         top_clip = 40;
         c1 = acrobot.curve(pi/4.4, 16.2, -0.128, 0.6); % First Step
-        c2 = acrobot.curve(pi/4.0, 20.4, -0.1167, 0.6); % Second Step
+        c2 = acrobot.curve(pi/4.4, 20.4, -0.1167, 0.6); % Second Step
     end
     
     methods
         function obj = acrobot()
             obj.robot.showdetails
-            
+        
+            t = obj.robot.getTransform(obj.robot.homeConfiguration, 'base_link', 'leg1');
+            obj.leg_length = t(1,4);
+
             % Calculations
             for i = 1:2
                 obj.mass(i) = obj.robot.Bodies{i}.Mass;
@@ -197,7 +200,9 @@ classdef acrobot < handle
                     min_angle = abs(angdiff(atan2(qddt(2), qddt(1)),angle));
                 end
             end
-            w = rot2(obj.lcurve.w_ang_diff) * w;
+            rotMatrix = eul2rotm([obj.lcurve.w_ang_diff 0 0]);
+            rotMatrix2D = rotMatrix(1:2,1:2);
+            w = rotMatrix2D*w;
             
             % Post impact calculations
             De = obj.calc_De(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), qm(1), qm(2));
