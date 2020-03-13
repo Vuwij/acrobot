@@ -33,8 +33,12 @@ writeRegister(BNO2,hex2dec('3D'),hex2dec('08'),'uint8');
 
 %% Main loop
 close all;
-fig = figure;
-set(fig, 'Position',  [100, 100, 1500, 700]);
+test_state_estimation = 0;
+
+if test_state_estimation
+    fig = figure;
+    set(fig, 'Position',  [100, 100, 1500, 700]);
+end
 
 estimator.sample_time = tstep;
 estimator.setupImplPublic();
@@ -47,6 +51,7 @@ ts = timeseries('acrobot_data');
 
 BN01_offset = 0;
 BN02_offset = -(pi/2 - 0.9043);
+robot.gamma = 0.8;
 
 try
     while (t < duration)
@@ -87,8 +92,11 @@ try
             writeDigitalPin(a, 'D7', 1);
         end
         
-        writePWMDutyCycle(a,'D9',abs(pwm));
-        %robot.show(t);
+        if test_state_estimation
+            robot.show(t);
+        else
+            writePWMDutyCycle(a,'D9',abs(pwm));
+        end
         
         % Display the robot
         ts = ts.addsample('Data',robot.x,'Time',t);

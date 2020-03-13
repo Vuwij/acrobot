@@ -1,14 +1,19 @@
 robotParameters;
-robot = acrobot.acrobot_control();
+if exist('robot', 'var')
+    robot.reset();
+else
+    robot = acrobot.acrobot_control();
+end
 
-slowdown = 0.1;
+slowdown = 1.0;
 tstep = 0.05 / slowdown;  % Time step
 rate = rateControl(1/tstep);
 
 close all;
 fig = figure;
 set(fig, 'Position',  [100, 100, 1500, 700]);
-load('data/tests/test_03-12-2020 23-23.mat');
+listing = dir('data/tests/');
+load(strcat('data/tests/',listing(end).name));
 for t = ts.Time'
     robot.x = ts.getsampleusingtime(t).Data;
     tau = robot.getTau(robot.x);

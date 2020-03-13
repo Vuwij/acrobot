@@ -14,8 +14,7 @@ classdef acrobot_control < acrobot.acrobot
         x = zeros(4,1);     % Current x state space
         
         % Controller parameters
-        gamma = 0.15;
-        
+        gamma = 0.8;
     end
     
     methods
