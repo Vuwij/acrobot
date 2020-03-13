@@ -37,17 +37,18 @@ classdef acrobot < handle
         % Mechanical Parameters
         leg_length;
         foot_radius = 0.0075;
+        angle_limit = pi/15;
 
         step_count = 0;
         
         % Energy Loss
-        fall_duration = 1.8;            % Max Fall duration
+        fall_duration = 1.8;            % Max Fall duration (not desired)
         tau_limit = 0.35;
         
         % Curves
         top_clip = 40;
-        c1 = acrobot.curve(pi/4.4, 16.2, -0.128, 0.6); % First Step
-        c2 = acrobot.curve(pi/4.4, 20.4, -0.1167, 0.6); % Second Step
+        c1 = acrobot.curve(pi/9.2, 16.734, -0.055, 0.4); % First Step
+        c2 = acrobot.curve(pi/8.2, 22.9517, -0.043, 0.4); % Second Step
     end
     
     methods
@@ -55,7 +56,7 @@ classdef acrobot < handle
             obj.robot.showdetails
         
             t = obj.robot.getTransform(obj.robot.homeConfiguration, 'base_link', 'leg1');
-            obj.leg_length = t(1,4);
+            obj.leg_length = t(1,4) + obj.foot_radius;
 
             % Calculations
             for i = 1:2

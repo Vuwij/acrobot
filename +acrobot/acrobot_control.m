@@ -14,7 +14,7 @@ classdef acrobot_control < acrobot.acrobot
         x = zeros(4,1);     % Current x state space
         
         % Controller parameters
-        gamma = 0.1;
+        gamma = 0.15;
         
     end
     
@@ -31,6 +31,7 @@ classdef acrobot_control < acrobot.acrobot
             obj.tau = [0; 0];
             obj.holo_point = [0; 0];
             obj.holo_point_dt = [0; 0];
+            obj.q_field_plotted = 0;
         end
         
         function Kp = Kp(obj)
@@ -140,7 +141,7 @@ classdef acrobot_control < acrobot.acrobot
         
         function plotRobot(obj)
             subplot(2,3,1);
-            
+            cla;
             q1 = obj.x(1);
             q2 = obj.x(2);
             

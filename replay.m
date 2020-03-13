@@ -1,4 +1,3 @@
-clear; clc; close all;
 robotParameters;
 robot = acrobot.acrobot_control();
 
@@ -9,7 +8,7 @@ rate = rateControl(1/tstep);
 close all;
 fig = figure;
 set(fig, 'Position',  [100, 100, 1500, 700]);
-load('data/tests/test_03-12-2020 18-47.mat');
+load('data/tests/test_03-12-2020 23-23.mat');
 for t = ts.Time'
     robot.x = ts.getsampleusingtime(t).Data;
     tau = robot.getTau(robot.x);

@@ -31,11 +31,11 @@
 
     <link name="leg2">
         <inertial>
-            <mass value="226.876e-3"/>
-            <origin rpy="0 0 0" xyz="-87.519e-3 0 0"/>
-            <inertia ixx="2.89e-4" ixy="0" ixz="0"
-                     iyy="1.66e-3" iyz="0"
-                     izz="1.41e-3"/>
+            <mass value="109.617e-3"/>
+            <origin rpy="0 0 0" xyz="-92.3558e-3 0 0"/>
+            <inertia ixx="2.24e-4" ixy="0" ixz="0"
+                     iyy="1.60e-3" iyz="0"
+                     izz="1.38e-3"/>
         </inertial>
         <visual name="visual">
             <origin rpy="0 0 0" xyz="0 0 0"/>

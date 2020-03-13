@@ -12,7 +12,7 @@ rotmXYZ = eul2rotm([0 pi 0], 'XYZ');
 
 %% Device Connection
 
-clear a imu encoder;
+clear a imu encoder BNO1 BNO2;
 a = arduino('/dev/ttyUSB0','Nano3','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
 writeDigitalPin(a, 'D6', 0);
 writeDigitalPin(a, 'D7', 1);
@@ -39,61 +39,67 @@ set(fig, 'Position',  [100, 100, 1500, 700]);
 estimator.sample_time = tstep;
 estimator.setupImplPublic();
 encoder.resetCount();
-
+robot.reset();
 last_motor_step = encoder.readCount();
 t = 0;
-duration = 200;
+duration = 5;
 ts = timeseries('acrobot_data');
 
 BN01_offset = 0;
-BN02_offset = 0;
+BN02_offset = -(pi/2 - 0.9043);
 
-while (t < duration)
-    tic
+try
+    while (t < duration)
+        tic
 
-    % State Estimation
-    motor_step = encoder.readCount();
-    if mod(robot.step_count, 2) == 0
-        [acc, ~, pos] = read_data(BNO2);
-        pos = -pos + BN02_offset;
-    else
-        [acc, ~, pos] = read_data(BNO1);
-        pos = pos + BN01_offset;
+        % State Estimation
+        motor_step = encoder.readCount();
+        if mod(robot.step_count, 2) == 0
+            [acc, ~, pos] = read_data(BNO2);
+            pos = -pos + BN02_offset;
+        else
+            [acc, ~, pos] = read_data(BNO1);
+            pos = pos + BN01_offset;
+        end
+
+        [robot.x, collision] = estimator.stepImplPublic(robot.step_count, pos, acc, motor_step);
+        if (collision)
+            robot.step_count = robot.step_count + 1;
+        end
+
+        % Control Code
+        tau = robot.getTau(robot.x);
+        pwm = torque_controller.getPWM(tau(2));
+
+        % End Conditions
+        if (robot.x(2) > pi - robot.angle_limit || robot.x(2) < -pi + robot.angle_limit || robot.x(1) > pi || robot.x(1) < 0)
+            disp("Robot Impacted With Itself");
+            break
+        end
+
+
+        % Motor Output
+        if (pwm < 0)
+            writeDigitalPin(a, 'D6', 1);
+            writeDigitalPin(a, 'D7', 0);
+        else
+            writeDigitalPin(a, 'D6', 0);
+            writeDigitalPin(a, 'D7', 1);
+        end
+        
+        writePWMDutyCycle(a,'D9',abs(pwm));
+        %robot.show(t);
+        
+        % Display the robot
+        ts = ts.addsample('Data',robot.x,'Time',t);
+        toc
+
+        % Read next step
+        waitfor(rate);
+        t = t + tstep;
     end
-
-    [robot.x, collision] = estimator.stepImplPublic(robot.step_count, pos, acc, motor_step);
-    if (collision)
-        robot.step_count = robot.step_count + 1;
-    end
-    
-    % Control Code
-    tau = robot.getTau(robot.x);
-    pwm = torque_controller.getPWM(tau(2));
-
-    % End Conditions
-    if (robot.x(2) > pi || robot.x(2) < -pi || robot.x(1) > pi || robot.x(1) < 0)
-        disp("Robot Impacted With Itself");
-        break
-    end
-
-    % Motor Output
-    if (pwm < 0)
-        writeDigitalPin(a, 'D6', 1);
-        writeDigitalPin(a, 'D7', 0);
-    else
-        writeDigitalPin(a, 'D6', 0);
-        writeDigitalPin(a, 'D7', 1);
-    end
-%    writePWMDutyCycle(a,'D9',abs(pwm));
-
-    % Display the robot
-    ts = ts.addsample('Data',robot.x,'Time',t);
-    robot.show(t);
-    toc
-
-    % Read next step
-    waitfor(rate);
-    t = t + tstep;
+catch ex
+    disp(ex)
 end
 writeDigitalPin(a, 'D6', 0);
 writeDigitalPin(a, 'D7', 1);

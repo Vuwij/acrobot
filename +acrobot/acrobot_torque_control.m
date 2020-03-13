@@ -6,6 +6,7 @@ classdef acrobot_torque_control < matlab.System
         p1;
         p2;
         moi_motor;
+        motor_power_ratio;
     end
 
     properties(DiscreteState)
