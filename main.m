@@ -6,7 +6,7 @@ robot = acrobot.acrobot_control();
 torque_controller = acrobot.acrobot_torque_control();
 estimator = acrobot.acrobot_state_estimator();
 
-tstep = 0.05;  % Time step
+tstep = 0.035;  % Time step
 rate = rateControl(1/tstep);
 rotmXYZ = eul2rotm([0 pi 0], 'XYZ');
 
@@ -22,9 +22,12 @@ BNO1 = i2cdev(a,'0x28');
 BNO2 = i2cdev(a,'0x29');
 encoder = rotaryEncoder(a, 'D2','D3', steps_per_rotation);
 
+writeRegister(BNO2,hex2dec('3F'), hex2dec('20'),'uint8');
+pause(1);
 writeRegister(BNO2,hex2dec('3D'),hex2dec('00'),'uint8');
 writeRegister(BNO1,hex2dec('3D'),hex2dec('00'),'uint8');
 pause(1);
+
 writeRegister(BNO2,hex2dec('42'),hex2dec('03'),'uint8');
 writeRegister(BNO1,hex2dec('42'),hex2dec('03'),'uint8');
 pause(1);
@@ -44,15 +47,15 @@ estimator.sample_time = tstep;
 estimator.setupImplPublic();
 encoder.resetCount();
 robot.reset();
+robot.gamma = 2;
 last_motor_step = encoder.readCount();
 t = 0;
-duration = 5;
+duration = 20;
 ts = timeseries('acrobot_data');
 
 BN01_offset = 0;
-BN02_offset = -(pi/2 - 0.9043);
-robot.gamma = 0.8;
-
+BN02_offset = 1.1494 - pi/2;
+pwm = 0;
 try
     while (t < duration)
         tic
@@ -61,37 +64,39 @@ try
         motor_step = encoder.readCount();
         if mod(robot.step_count, 2) == 0
             [acc, ~, pos] = read_data(BNO2);
-            pos = -pos + BN02_offset;
+            pos = wrapToPi(-pos + BN02_offset);
         else
             [acc, ~, pos] = read_data(BNO1);
-            pos = pos + BN01_offset;
+            pos = wrapToPi(pos + BN01_offset);
         end
-
+        
         [robot.x, collision] = estimator.stepImplPublic(robot.step_count, pos, acc, motor_step);
         if (collision)
             robot.step_count = robot.step_count + 1;
         end
+        
 
         % Control Code
         tau = robot.getTau(robot.x);
-        pwm = torque_controller.getPWM(tau(2));
-
+        
+        
         % End Conditions
         if (robot.x(2) > pi - robot.angle_limit || robot.x(2) < -pi + robot.angle_limit || robot.x(1) > pi || robot.x(1) < 0)
-            disp("Robot Impacted With Itself");
+            disp(strcat("Robot Impacted With Itself, angles: x1: ", num2str(robot.x(1)), " x2: ", num2str(robot.x(2))));
             break
         end
 
-
+        
         % Motor Output
-        if (pwm < 0)
+        pwm_new = torque_controller.getPWM(tau(2));
+        if (pwm_new < 0 && pwm >= 0)
             writeDigitalPin(a, 'D6', 1);
             writeDigitalPin(a, 'D7', 0);
-        else
+        elseif (pwm_new > 0 && pwm <= 0)
             writeDigitalPin(a, 'D6', 0);
             writeDigitalPin(a, 'D7', 1);
         end
-        
+        pwm = pwm_new;
         if test_state_estimation
             robot.show(t);
         else
@@ -100,7 +105,8 @@ try
         
         % Display the robot
         ts = ts.addsample('Data',robot.x,'Time',t);
-        toc
+        tend = toc;
+        fprintf("Elapsed Time: %.3f\t x1: %.3f\t x2: %.3f\t tau:%.3f\t pwm: %.3f\n", tend, robot.x(1), robot.x(2), tau(2), pwm);
 
         % Read next step
         waitfor(rate);

@@ -5,8 +5,8 @@ else
     robot = acrobot.acrobot_control();
 end
 
-slowdown = 1.0;
-tstep = 0.05 / slowdown;  % Time step
+slowdown = 5.0;
+tstep = 0.07 / slowdown;  % Time step
 rate = rateControl(1/tstep);
 
 close all;

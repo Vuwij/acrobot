@@ -14,7 +14,7 @@ classdef acrobot_control < acrobot.acrobot
         x = zeros(4,1);     % Current x state space
         
         % Controller parameters
-        gamma = 0.8;
+        gamma = 0.2;
     end
     
     methods
@@ -31,6 +31,7 @@ classdef acrobot_control < acrobot.acrobot
             obj.holo_point = [0; 0];
             obj.holo_point_dt = [0; 0];
             obj.q_field_plotted = 0;
+            obj.step_count = 0;
         end
         
         function Kp = Kp(obj)
