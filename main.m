@@ -36,7 +36,7 @@ writeRegister(BNO2,hex2dec('3D'),hex2dec('08'),'uint8');
 
 %% Main loop
 close all;
-test_state_estimation = 1;
+test_state_estimation = 0;
 
 if test_state_estimation
     fig = figure;
@@ -47,14 +47,15 @@ estimator.sample_time = tstep;
 estimator.setupImplPublic();
 encoder.resetCount();
 robot.reset();
-robot.gamma = 2;
+robot.gamma = 25;
+robot.d_gain = 1.8;
 last_motor_step = encoder.readCount();
 t = 0;
 duration = 20;
 ts = timeseries('acrobot_data');
 
 BN01_offset = 0;
-BN02_offset = -0.1789;
+BN02_offset = 0;
 pwm = 0;
 try
     while (t < duration)
@@ -104,9 +105,9 @@ try
         end
         
         % Display the robot
-        ts = ts.addsample('Data',robot.x,'Time',t);
+        ts = ts.addsample('Data',[robot.x; collision],'Time',t);
         tend = toc;
-        fprintf("Elapsed Time: %.3f\t x1: %.3f\t x2: %.3f\t tau:%.3f\t pwm: %.3f\n", tend, robot.x(1), robot.x(2), tau(2), pwm);
+        fprintf("Time: %.3f\t Elapsed Time: %.3f\t x1: %.3f\t x2: %.3f\t tau:%.3f\t pwm: %.3f\n", t, tend, robot.x(1), robot.x(2), tau(2), pwm);
 
         % Read next step
         waitfor(rate);
@@ -114,6 +115,9 @@ try
     end
 catch ex
     disp(ex)
+    writeDigitalPin(a, 'D6', 0);
+    writeDigitalPin(a, 'D7', 1);
+    writePWMDutyCycle(a,'D9',0);
 end
 writeDigitalPin(a, 'D6', 0);
 writeDigitalPin(a, 'D7', 1);

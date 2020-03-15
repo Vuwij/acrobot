@@ -15,6 +15,7 @@ classdef acrobot_control < acrobot.acrobot
         
         % Controller parameters
         gamma = 0.2;
+        d_gain = 1;
     end
     
     methods
@@ -39,7 +40,7 @@ classdef acrobot_control < acrobot.acrobot
         end
         
         function Kd = Kd(obj)
-            Kd = 2/obj.gamma;
+            Kd = 2/obj.gamma * obj.d_gain;
         end
         
         function [dist, isterminal, direction] = dist_to_floor(obj, t, x)
@@ -197,7 +198,7 @@ classdef acrobot_control < acrobot.acrobot
             
             plot(q1(1), q2(1), '.', 'markersize',10,'color',[0 0 0]);
             plot(obj.holo_point(1), obj.holo_point(2), '.', 'markersize',5,'color',[0 1 0]);
-            quiver(q1(1), q2(1), obj.tau_q(1) * 0.0005, obj.tau_q(2) * 0.0005);
+            quiver(q1(1), q2(1), obj.tau_q(1) * 0.005, obj.tau_q(2) * 0.005);
         end
         
         function plotTau(obj, t)

@@ -9,7 +9,6 @@ classdef acrobot < handle
     end
     properties(Access = protected)
         robot = importrobot("acrobot_description/models/acrobot.urdf");
-        plot_curves = 1;
         
         % Convenience values
         mass = zeros(2,1);
@@ -41,7 +40,7 @@ classdef acrobot < handle
         
         % Mechanical Parameters
         leg_length;
-        foot_radius = 0.0075;
+        foot_radius = 0.018;
         angle_limit = pi/16;
 
         step_count = 0;
@@ -52,8 +51,9 @@ classdef acrobot < handle
         
         % Curves
         top_clip = 40;
-        c1 = acrobot.curve(pi/9.3, pi*0.4, 1.5, 0.45, -pi*0.23, 0.24); % First Step
-        c2 = acrobot.curve(pi/9, pi*0.4, 1.5, 0.45, -pi*0.15, 0.24); % Second Step
+        plot_curves = 1;
+        c1 = acrobot.curve(pi/9, pi*0.5, 1.5, 0.45, -pi*0.05, 0.185); % First Step
+        c2 = acrobot.curve(pi/9, pi*0.5, 1.5, 0.45, -pi*0.05, 0.185); % Second Step
     end
     
     methods
@@ -407,7 +407,7 @@ classdef acrobot < handle
 
         function plotControllerSensitivityField(obj)
             % Plot vector field inv(D)*B
-            finity = 0.02;
+            finity = 0.1;
             q1_range = 0:finity:pi;
             q2_range = -pi:2*finity:pi;
             [X1,X2] = meshgrid(q1_range,q2_range);

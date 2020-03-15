@@ -20,7 +20,7 @@ plane_y = 0.5;
 
 %% Foot parameters
 leg_length = 0.3480;
-foot_radius = 0.0075;
+foot_radius = 0.018;
 line_depth_to_reference_frame = 0.05;
 
 
