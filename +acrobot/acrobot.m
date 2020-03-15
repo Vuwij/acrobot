@@ -9,6 +9,7 @@ classdef acrobot < handle
     end
     properties(Access = protected)
         robot = importrobot("acrobot_description/models/acrobot.urdf");
+        plot_curves = 1;
         
         % Convenience values
         mass = zeros(2,1);
@@ -25,6 +26,10 @@ classdef acrobot < handle
         calc_De;
         calc_E;
         calc_dUde;
+        
+        % Forward and Inverse Kinematics
+        calc_qd;
+        calc_rend;
         
         % VHC Parameters
         B = [0; 1];
@@ -47,8 +52,8 @@ classdef acrobot < handle
         
         % Curves
         top_clip = 40;
-        c1 = acrobot.curve(pi/9.2, 16.734, -0.055, 0.4); % First Step
-        c2 = acrobot.curve(pi/8.2, 22.9517, -0.043, 0.4); % Second Step
+        c1 = acrobot.curve(pi/9.5, pi/2, 1.5, 0.45, -pi*0.2, 0.24); % First Step
+        c2 = acrobot.curve(pi/9, pi/2, 1.5, 0.45, -pi*0.2, 0.24); % Second Step
     end
     
     methods
@@ -146,18 +151,18 @@ classdef acrobot < handle
             obj.c2.qp = [(pi + obj.c1.beta)/2; pi - obj.c1.beta]; % Joint angles post impact
             
             obj.step_count = 0;
-            [v, w] = obj.getImpactVelocities(obj.c1.qm, obj.c2.qp, obj.c1.impact_velocity);
+            [v, w] = obj.getImpactVelocities(obj.c1.qm, obj.c2.qp, obj.c1.impact_angle, obj.c1.impact_velocity);
             obj.c1.w = w;
             obj.c2.v = v;
             obj.step_count = 1;
-            [v, w] = obj.getImpactVelocities(obj.c2.qm, obj.c1.qp, obj.c2.impact_velocity);
+            [v, w] = obj.getImpactVelocities(obj.c2.qm, obj.c1.qp, obj.c2.impact_angle, obj.c2.impact_velocity);
             obj.c2.w = w;
             obj.c1.v = v;
             
             % Search for rising curve with const tau
             obj.step_count = 0;
-            obj.c1.tau_const = obj.getBestConstTau(obj.c1.qp, obj.c1.qm, obj.c1.v, obj.fall_duration);
-            X = obj.getFallingCurve([obj.c1.qp; obj.c1.v], obj.fall_duration, 1, [0; obj.c1.tau_const]);
+            obj.c1.tau_const = obj.getBestConstTau(obj.c1.qp, obj.c1.qm, obj.c1.v, obj.fall_duration, obj.c1.pre_impact_angle, obj.c1.pre_impact_torque);
+            X = obj.getFallingCurve([obj.c1.qp; obj.c1.v], obj.fall_duration, 1, [0; obj.c1.tau_const], obj.c1.pre_impact_angle, obj.c1.pre_impact_torque);
             X_ext = [...
                 X(obj.top_clip:end,:); ...
                 X(end,1:2) + [0 -1] 0 0 ...
@@ -167,8 +172,8 @@ classdef acrobot < handle
             obj.c1.phi_ddot = fnder(obj.c1.phi,2);
             
             obj.step_count = 1;
-            obj.c2.tau_const = obj.getBestConstTau(obj.c2.qp, obj.c2.qm, obj.c2.v, obj.fall_duration);
-            X = obj.getFallingCurve([obj.c2.qp; obj.c2.v], obj.fall_duration, 1, [0; obj.c2.tau_const]);
+            obj.c2.tau_const = obj.getBestConstTau(obj.c2.qp, obj.c2.qm, obj.c2.v, obj.fall_duration, obj.c2.pre_impact_angle, obj.c2.pre_impact_torque);
+            X = obj.getFallingCurve([obj.c2.qp; obj.c2.v], obj.fall_duration, 1, [0; obj.c2.tau_const], obj.c2.pre_impact_angle, obj.c2.pre_impact_torque);
             X_ext = [...
                 X(obj.top_clip:end,:); ...
                 X(end,1:2) + [0 -1] 0 0 ...
@@ -181,29 +186,12 @@ classdef acrobot < handle
             obj.step_count = 0;
         end
         
-        function [v, w] = getImpactVelocities(obj, qm, qp, impact_velocity)
-
-            % Use the gravity potential field for calculation of w
-            D = obj.calc_D(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), ...
-                            obj.lmass(1), obj.lmass(2), qm(2));
-            P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), ...
-                            obj.lmass(1), obj.lmass(2), qm(1), qm(2));
-            J = obj.calc_J(obj.leg_length,obj.leg_length, qm(1), qm(2));
+        function [v, w] = getImpactVelocities(obj, qm, qp, impact_angle, impact_velocity)
             
-            min_angle = 2*pi;
-            for angle = -pi:0.001:0 % Search for the angle of impact with the most natural fall
-                qdot = [cos(angle); sin(angle)] * impact_velocity;
-
-                C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), qm(2), qdot(1), qdot(2));
-                qddt = D \ (-C * qdot - P);
-                if abs(angdiff(atan2(qddt(2), qddt(1)),angle)) < min_angle
-                    w = qdot;
-                    min_angle = abs(angdiff(atan2(qddt(2), qddt(1)),angle));
-                end
-            end
-            rotMatrix = eul2rotm([obj.lcurve.w_ang_diff 0 0]);
-            rotMatrix2D = rotMatrix(1:2,1:2);
-            w = rotMatrix2D*w;
+            rend = obj.calc_rend(obj.leg_length, obj.leg_length, qm(1), qm(2));
+            rend = rend + [cos(impact_angle) * 0.01; sin(impact_angle) * 0.01];
+            qm_pre = obj.calc_qd(obj.leg_length, obj.leg_length, rend(1), rend(2));
+            w = unit(qm - qm_pre) * impact_velocity;
             
             % Post impact calculations
             De = obj.calc_De(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), qm(1), qm(2));
@@ -223,26 +211,53 @@ classdef acrobot < handle
             end
         end
         
-        function tau_best = getBestConstTau(obj, qp, qm, v, dur)
+        function tau_best = getBestConstTau(obj, qp, qm, v, dur, pre_impact_angle, pre_impact_torque)
             tau_best = 0;
             closest_distance = 100000;
             
-            for tau = -obj.tau_limit:0.001:obj.tau_limit
-                X = obj.getFallingCurve([qp; v], dur, 1, [0; tau]);
-%                 plot(X(:,1),X(:,2));
-                for i = 1:length(X)
-                    dist = norm(X(i,1:2) - qm');
-                    if (dist < closest_distance)
-                        closest_distance = dist;
-                        tau_best = tau;
-                    end
-                end
-%                 hold on;
+            if (obj.plot_curves)
+                figure;
             end
             
-%             plot(qp(1), qp(2),'o', 'MarkerSize',5,'color','k');
-%             plot(qm(1), qm(2),'o', 'MarkerSize',5,'color','k');
-%             hold off;
+            for tau = -obj.tau_limit/2:0.0002:0
+                X = obj.getFallingCurve([qp; v], dur, 1, [0; tau], pre_impact_angle, pre_impact_torque);
+                if (obj.plot_curves)
+                    plot(X(:,1),X(:,2), 'color', [0,0.5,0,0.3]);
+                end
+                dist = norm(X(end,1:2) - qm');
+                if (dist < closest_distance)
+                    closest_distance = dist;
+                    tau_best = tau;
+                end
+                if (obj.plot_curves)
+                    hold on;
+                end
+            end
+            if (obj.plot_curves)
+                plot(qp(1), qp(2),'o', 'MarkerSize',5,'color','k');
+                plot(qm(1), qm(2),'o', 'MarkerSize',5,'color','k');
+                q1_range = 0:0.05:pi;
+                plot(q1_range, -2 * q1_range + 2 * pi,'color','cyan');
+                plot(q1_range, -2 * q1_range, 'color','cyan');
+                
+                % Plot 90 degree fall curve
+                rend = obj.calc_rend(obj.leg_length, obj.leg_length, qm(1), qm(2));
+                rend_range = 0:0.01:0.1;
+                qup = zeros(2, length(rend_range));
+                for i = 1:length(rend_range)
+                    qup(:,i) = obj.calc_qd(obj.leg_length, obj.leg_length, rend(1), rend_range(i));
+                end
+                plot(qup(1,:), qup(2,:));
+                
+                axis equal;
+                grid minor;
+                xlim([0, pi]);
+                ylim([-pi, pi]);
+                xlabel('q1');
+                ylabel('q2');
+                title(strcat('Best Tau: ', num2str(tau_best)));
+                hold off;
+            end
         end
         
         function fnplti(~, fnct)
@@ -336,9 +351,12 @@ classdef acrobot < handle
             quiver(X1,X2,R,Z,'color',[1 0 1])
         end
 
-        function X = getFallingCurve(obj, X_s, tend, dir, tau)
+        function X = getFallingCurve(obj, X_s, tend, dir, tau, tau_stop_angle, pre_impact_torque)
             if nargin < 5
                 tau = [0; 0];
+            end
+            if nargin < 6
+                tau_stop_angle = -pi;
             end
             % Basically perform a fall in reverse, TODO, use ODE
             tstep = 0.005;
@@ -354,7 +372,12 @@ classdef acrobot < handle
                 P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), ...
                                 obj.lmass(1), obj.lmass(2), X(s,1), X(s,2));
                 C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), X(s,2), X(s,3), X(s,4));
-                qddot_new = D \ tau + D \ (-C * X(s, 3:4)' - P);
+                
+                if (X(s,2) < tau_stop_angle)
+                    qddot_new = D \ [0; pre_impact_torque] + D \ (-C * X(s, 3:4)' - P);
+                else
+                    qddot_new = D \ tau + D \ (-C * X(s, 3:4)' - P);
+                end
                 dxdt = [X(s, 3:4)'; qddot_new];
                 s = s + 1;
                 X(s,:) = X(s-1,:) + (dir * dxdt * tstep)';
@@ -521,6 +544,12 @@ classdef acrobot < handle
             E = simplify(jacobian(rende, qe));
             dUde = simplify(jacobian(rHe,q));
             
+            % Inverse kinematics
+            syms x y r q1d q2d qd real;
+            q2d = acos((l1^2 + l2^2 - (x^2 + y^2))/l1/l2/2) - pi;
+            q1d = atan2(y,x) + (pi - (pi + q2d))/2;
+            qd = [q1d; q2d];
+            
             % Add the matlab functions
             obj.calc_J = matlabFunction(renddot);
             obj.calc_D = matlabFunction(D);
@@ -530,6 +559,8 @@ classdef acrobot < handle
             obj.calc_E = matlabFunction(E);
             obj.calc_dUde = matlabFunction(dUde);
             obj.calc_EE = matlabFunction(EE);
+            obj.calc_qd = matlabFunction(qd);
+            obj.calc_rend = matlabFunction(rend);
         end
     end
 end

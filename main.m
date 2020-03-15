@@ -36,7 +36,7 @@ writeRegister(BNO2,hex2dec('3D'),hex2dec('08'),'uint8');
 
 %% Main loop
 close all;
-test_state_estimation = 0;
+test_state_estimation = 1;
 
 if test_state_estimation
     fig = figure;
@@ -54,7 +54,7 @@ duration = 20;
 ts = timeseries('acrobot_data');
 
 BN01_offset = 0;
-BN02_offset = 1.1494 - pi/2;
+BN02_offset = -0.1789;
 pwm = 0;
 try
     while (t < duration)

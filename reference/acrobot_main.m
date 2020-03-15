@@ -9,7 +9,7 @@ run_from_scratch = 1; %1 = run symbolic code; 0 = load symbolic expressions
 
 if run_from_scratch ==1
     acrobot_symbolic
-end
+end+
 
 load('acrobot_syms.mat');
 load('h_vars.mat');
