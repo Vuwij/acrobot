@@ -52,8 +52,8 @@ classdef acrobot < handle
         
         % Curves
         top_clip = 40;
-        c1 = acrobot.curve(pi/9.5, pi/2, 1.5, 0.45, -pi*0.2, 0.24); % First Step
-        c2 = acrobot.curve(pi/9, pi/2, 1.5, 0.45, -pi*0.2, 0.24); % Second Step
+        c1 = acrobot.curve(pi/9.3, pi*0.4, 1.5, 0.45, -pi*0.23, 0.24); % First Step
+        c2 = acrobot.curve(pi/9, pi*0.4, 1.5, 0.45, -pi*0.15, 0.24); % Second Step
     end
     
     methods
@@ -219,7 +219,7 @@ classdef acrobot < handle
                 figure;
             end
             
-            for tau = -obj.tau_limit/2:0.0002:0
+            for tau = -obj.tau_limit/2:0.0005:-0.05
                 X = obj.getFallingCurve([qp; v], dur, 1, [0; tau], pre_impact_angle, pre_impact_torque);
                 if (obj.plot_curves)
                     plot(X(:,1),X(:,2), 'color', [0,0.5,0,0.3]);
@@ -242,10 +242,10 @@ classdef acrobot < handle
                 
                 % Plot 90 degree fall curve
                 rend = obj.calc_rend(obj.leg_length, obj.leg_length, qm(1), qm(2));
-                rend_range = 0:0.01:0.1;
+                rend_range = [sin(pre_impact_torque); cos(pre_impact_torque)] * (0:0.01:0.05);
                 qup = zeros(2, length(rend_range));
                 for i = 1:length(rend_range)
-                    qup(:,i) = obj.calc_qd(obj.leg_length, obj.leg_length, rend(1), rend_range(i));
+                    qup(:,i) = obj.calc_qd(obj.leg_length, obj.leg_length, rend(1) + rend_range(2, i), rend(2) + rend_range(2, i));
                 end
                 plot(qup(1,:), qup(2,:));
                 
