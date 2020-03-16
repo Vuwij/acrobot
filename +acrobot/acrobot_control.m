@@ -24,9 +24,6 @@ classdef acrobot_control < acrobot.acrobot
         end
         
         function reset(obj)
-            % Start on the cycle
-            X = obj.getFallingCurve([obj.c1.qm; obj.c1.w], 0.1, -1, [0; 0]);
-            obj.x = X(end,:)';
             obj.x = [pi/2; 0; 0; 0];
             obj.tau = [0; 0];
             obj.holo_point = [0; 0];
@@ -43,15 +40,26 @@ classdef acrobot_control < acrobot.acrobot
             Kd = 2/obj.gamma * obj.d_gain;
         end
         
-        function [dist, isterminal, direction] = dist_to_floor(obj, t, x)
+        function [value, isterminal, direction] = angle_min(obj, t, x, x2_max)
+            dist = x(2) - x2_max;
+            
+            value = [dist (pi - x(1)) x(1) pi - abs(x(2))];
+
+            direction = [-1 -1 -1 -1];
+            isterminal = [1 1 1 1];
+        end
+        
+        function [value, isterminal, direction] = dist_to_floor(obj, t, x)
             q1 = x(1);
             q2 = x(2);
             rH = obj.leg_length * [cos(q1); sin(q1)];
             rc2 = rH + obj.leg_length * [cos(q1+q2); sin(q1+q2)];
             dist = rc2(2);
             
-            direction = -1;
-            isterminal = 1;
+            value = [dist (pi - x(1)) x(1) pi - abs(x(2))];
+
+            direction = [-1 -1 -1 -1];
+            isterminal = [1 1 1 1];
         end
         
         function dxdt = step(obj, ~, x, tau)

@@ -10,7 +10,7 @@ t = 0;
 % Simulate robot falling on the ground
 fig = figure;
 set(fig, 'Position',  [100, 100, 1500, 700]);
-options = odeset('Events',@(t,x)robot.dist_to_floor(t,x), 'RelTol', 1e-9, 'AbsTol', 1e-9);
+options = odeset('Events',@(t,x)robot.dist_to_floor(t,x), 'RelTol', 1e-3, 'AbsTol', 1e-6);
 rate = rateControl(1/tstep);
 
 % Simulate Robot Walking
