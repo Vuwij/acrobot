@@ -41,7 +41,7 @@ classdef acrobot < handle
         % Mechanical Parameters
         leg_length;
         foot_radius = 0.018;
-        angle_limit = pi/16;
+        angle_limit = pi/20;
 
         step_count = 0;
         
@@ -51,10 +51,10 @@ classdef acrobot < handle
         
         % Curves
         top_clip = 10;
-        bottom_clip = 0;
+        bottom_clip = 1;
         plot_curves = 0;
-        c1 = acrobot.curve(pi/9.5, pi*0.5, 1.45, 0.45); % First Step
-        c2 = acrobot.curve(pi/9.5, pi*0.5, 1.45, 0.45); % Second Step
+        c1 = acrobot.curve(pi/9.6, pi*0.25, 1.70, 0.48); % First Step
+        c2 = acrobot.curve(pi/9.6, pi*0.25, 1.66, 0.48); % Second Step
     end
     
     methods
