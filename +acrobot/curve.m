@@ -9,8 +9,6 @@ classdef curve < handle
         impact_angle = 0.0;         % Angle to impact the ground
         impact_velocity = 0.0;      % In terms of q1 q2 norm
         energy_loss = 1.0;
-        pre_impact_angle = -pi + pi/2; % Angle of preimpact before stop torque
-        pre_impact_torque = 0;
 
         % Computed Curve parameters
         qm; % q1-q2 angle pre-impact
@@ -23,17 +21,16 @@ classdef curve < handle
         phi_ddot;
         
         tau_const = 0;  % Constant tau for it to reach the starting to the end point
-        
+        pre_impact_angle = -pi*0.10; % Angle of preimpact before stop torque
+        pre_impact_torque = 0.2; % Optimized
     end
     
     methods
-        function obj = curve(beta, impact_angle, impact_velocity, energy_loss, pre_impact_angle, pre_impact_torque)
+        function obj = curve(beta, impact_angle, impact_velocity, energy_loss)
             obj.beta = beta;
             obj.impact_angle = impact_angle;
             obj.impact_velocity = impact_velocity;
             obj.energy_loss = energy_loss;
-            obj.pre_impact_angle = pre_impact_angle;
-            obj.pre_impact_torque = pre_impact_torque;
         end
     end
 end

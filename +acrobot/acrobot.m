@@ -51,10 +51,10 @@ classdef acrobot < handle
         
         % Curves
         top_clip = 10;
-        bottom_clip = 1;
+        bottom_clip = 0;
         plot_curves = 0;
-        c1 = acrobot.curve(pi/9, pi*0.5, 1.5, 0.45, -pi*0.10, 0.185); % First Step
-        c2 = acrobot.curve(pi/9, pi*0.5, 1.5, 0.45, -pi*0.10, 0.185); % Second Step
+        c1 = acrobot.curve(pi/9.5, pi*0.5, 1.45, 0.45); % First Step
+        c2 = acrobot.curve(pi/9.5, pi*0.5, 1.45, 0.45); % Second Step
     end
     
     methods
@@ -157,6 +157,7 @@ classdef acrobot < handle
                 ang_diff = abs(angdiff(impact_angle, final_angle));
             end
         end
+        
         function calcHolonomicCurves(obj)
             % Post impact for one foot is pre-impact for next foot
             obj.c1.qm = [(pi - obj.c1.beta)/2; obj.c1.beta - pi]; % Joint angles pre impact
@@ -174,9 +175,13 @@ classdef acrobot < handle
             obj.c1.v = v;
             
             % Search for rising curve with const tau
+            options = optimoptions('fmincon','OptimalityTolerance', 1e-2, 'StepTolerance', 1e-3);
+
             obj.step_count = 0;
-            D = @(const_tau) obj.calcHolonomicCurveHelper(obj.c1.qp, obj.c1.qm, obj.c1.v, obj.fall_duration, obj.c1.pre_impact_angle, const_tau, obj.c1.impact_angle);
-            obj.c1.pre_impact_torque = fminbnd(D,0,obj.tau_limit);
+            D = @(tau_info) obj.calcHolonomicCurveHelper(obj.c1.qp, obj.c1.qm, obj.c1.v, obj.fall_duration, tau_info(1), tau_info(2), obj.c1.impact_angle);
+            tmp = fmincon(D,[obj.c1.pre_impact_angle; obj.c1.pre_impact_torque], [], [], [], [], [-pi/2, 0], [0, obj.tau_limit], [], options);
+            obj.c1.pre_impact_angle = tmp(1);
+            obj.c1.pre_impact_torque = tmp(2);
             obj.c1.tau_const = obj.getBestConstTau(obj.c1.qp, obj.c1.qm, obj.c1.v, obj.fall_duration, obj.c1.pre_impact_angle, obj.c1.pre_impact_torque);
             X = obj.getFallingCurve([obj.c1.qp; obj.c1.v], obj.fall_duration, [0; obj.c1.tau_const], obj.c1.pre_impact_angle, obj.c1.pre_impact_torque);
             [~,idx] = unique(X(:,2));
@@ -187,8 +192,10 @@ classdef acrobot < handle
             obj.c1.phi_ddot = fnder(obj.c1.phi,2);
             
             obj.step_count = 1;
-            D = @(const_tau) obj.calcHolonomicCurveHelper(obj.c2.qp, obj.c2.qm, obj.c2.v, obj.fall_duration, obj.c2.pre_impact_angle, const_tau, obj.c2.impact_angle);
-            obj.c2.pre_impact_torque = fminbnd(D,0,obj.tau_limit);
+            D = @(tau_info) obj.calcHolonomicCurveHelper(obj.c2.qp, obj.c2.qm, obj.c2.v, obj.fall_duration, tau_info(1), tau_info(2), obj.c2.impact_angle);
+            tmp = fmincon(D,[obj.c1.pre_impact_angle; obj.c1.pre_impact_torque], [], [], [], [], [-pi/2, 0], [0, obj.tau_limit], [], options);
+            obj.c2.pre_impact_angle = tmp(1);
+            obj.c2.pre_impact_torque = tmp(2);
             obj.c2.tau_const = obj.getBestConstTau(obj.c2.qp, obj.c2.qm, obj.c2.v, obj.fall_duration, obj.c2.pre_impact_angle, obj.c2.pre_impact_torque);
             X = obj.getFallingCurve([obj.c2.qp; obj.c2.v], obj.fall_duration, [0; obj.c2.tau_const], obj.c2.pre_impact_angle, obj.c2.pre_impact_torque);
             [~,idx] = unique(X(:,2));
