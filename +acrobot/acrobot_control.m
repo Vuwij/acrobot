@@ -17,7 +17,8 @@ classdef acrobot_control < acrobot.acrobot
         gamma = 0.2;
         d_gain = 1;
     end
-    
+%     robot.gamma = 25;
+% robot.d_gain = 1.8;
     methods
         function obj = acrobot_control()
             obj = obj@acrobot.acrobot();
@@ -40,15 +41,6 @@ classdef acrobot_control < acrobot.acrobot
             Kd = 2/obj.gamma * obj.d_gain;
         end
         
-        function [value, isterminal, direction] = angle_min(obj, t, x, x2_max)
-            dist = x(2) - x2_max;
-            
-            value = [dist (pi - x(1)) x(1) pi - abs(x(2))];
-
-            direction = [-1 -1 -1 -1];
-            isterminal = [1 1 1 1];
-        end
-        
         function [value, isterminal, direction] = dist_to_floor(obj, t, x)
             q1 = x(1);
             q2 = x(2);
@@ -57,7 +49,6 @@ classdef acrobot_control < acrobot.acrobot
             dist = rc2(2);
             
             value = [dist (pi - x(1)) x(1) pi - abs(x(2))];
-
             direction = [-1 -1 -1 -1];
             isterminal = [1 1 1 1];
         end
