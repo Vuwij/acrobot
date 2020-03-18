@@ -6,7 +6,7 @@ robot = acrobot.acrobot_control();
 torque_controller = acrobot.acrobot_torque_control();
 estimator = acrobot.acrobot_state_estimator();
 
-tstep = 0.035;  % Time step
+tstep = 0.01;  % Time step
 rate = rateControl(1/tstep);
 rotmXYZ = eul2rotm([0 pi 0], 'XYZ');
 

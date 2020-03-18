@@ -11,13 +11,11 @@ classdef curve < handle
         energy_loss = 1.0;
 
         % Computed Curve parameters
-        xs = [pi/2 -0.05 0 0];
-        xm; % Robot state pre-impact [q1, q2, q1dot, q2dot]
-        xp; % Robot state post-impact [q1, q2, q1dot, q2dot]
+        xm; % Robot state pre-impact [q1, q2, q1dot, q2dot] (Starting point)
+        xp; % Robot state post-impact [q1, q2, q1dot, q2dot] (Ending point)
         
-        % [t1 tau1 t2 tau2]
-        tau_pre = [0.1 -0.05 0.3 0.0];
-        tau_post = [0.2 -0.5 0.3 -0.1];
+        % [t1 tau1 t2 tau2] % Timeseries of taus
+        tau_m;
         
         phi;         % Function phi(q2) = q1
         phi_dot;
@@ -26,11 +24,12 @@ classdef curve < handle
     end
     
     methods
-        function obj = curve(beta, impact_angle, impact_velocity, energy_loss)
+        function obj = curve(beta, impact_angle, impact_velocity, energy_loss, tau_m_guess)
             obj.beta = beta;
             obj.impact_angle = impact_angle;
             obj.impact_velocity = impact_velocity;
             obj.energy_loss = energy_loss;
+            obj.tau_m = tau_m_guess;
         end
     end
 end

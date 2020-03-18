@@ -50,11 +50,13 @@ classdef acrobot < handle
         tau_limit = 0.25;
         
         % Curves
-        top_clip = 10;
-        bottom_clip = 1;
+        toptop_clip = 60;
+        top_clip = 5;
+        bottom_clip = 5;
         plot_curves = 1;
-        c1; % First Step
-        c2; % Second Step
+        pre_c;  % Pre first step
+        c1;     % First Step
+        c2;     % Second Step
     end
     
     methods
@@ -72,14 +74,17 @@ classdef acrobot < handle
                 obj.inertia(i) = obj.robot.Bodies{i}.Inertia(2);
             end
             
-            obj.c1 = acrobot.curve(pi/9.6, pi*0.25, 1.70, 0.48); % First Step
-            obj.c2 = acrobot.curve(pi/9.6, pi*0.25, 1.66, 0.48); % Second Step
+            obj.c1 = acrobot.curve(pi/9.5, pi*0.25, 1.35, 0.48, [0.0122 0.0000 1.1361 0.1531], [0.0533 -0.1281 0.5250 0.0752]); % First Step
+            obj.c2 = acrobot.curve(pi/9.3, pi*0.25, 1.34, 0.48, [0.0000 0.0000 1.0982 0.1280], [0.0478 -0.1308 0.4775 0.0316]); % Second Step
             
             % Create Robot Equation handles
             obj.solveRoboticsEquation();
             
             % Solve for the curve for both legs
-            obj.calcHolonomicCurves();
+            obj.calcRobotStates();
+            obj.calcHolonomicCurves(obj.pre_c);
+            obj.calcHolonomicCurves(obj.c2);
+            obj.calcHolonomicCurves(obj.c1);
         end
         
         function mass = lmass(obj, num)
@@ -131,84 +136,71 @@ classdef acrobot < handle
             end
         end
         
-        function t_value = bezier(~, precision, p1, p2, p3, p4)
-            t_range = 0:precision:1;
-            t_value = zeros(2,length(t_range));
-            
-            for s = 1:length(t_range)
-                t = t_range(s);
-                for d = 1:2
-                    bez_param = [p1(d) p2(d) p3(d) p4(d)];
-
-                    % Cubic bezier
-                    for i = 0:3
-                        t_value(d, s) = t_value(d, s) + bez_param(i+1) * nchoosek(3, i) * (1 - t)^(3 - i) * t ^ i;
-                    end
-                end
-            end
-        end
-        
-        % objective [dist to final point; velocity to final point]
-        function objective = calcHolonomicCurveHelper(obj, xm, xp, tau_m)
-            [X, fail] = obj.getFallingCurve(xm, obj.fall_duration, tau_m);
-            
-            if (fail)
-                objective = xp' - X(end,:) + 1e9 * [1 1 1 1];
-            else
-                objective = xp' - X(end,:);
-            end
-            tau_m
-            if (obj.plot_curves)
-                plot(X(:,1),X(:,2), 'color', [0.5,0,0,1]);
-                hold on;
-            end
-        end
-        
-        function calcHolonomicCurves(obj)
+        function calcRobotStates(obj)
             % Post impact for one foot is pre-impact for next foot
-            c1_qm = [(pi - obj.c1.beta)/2; obj.c1.beta - pi]; % Joint angles pre impact
+            
+            % Heavy foot on the ground
             c1_qp = [(pi + obj.c2.beta)/2; pi - obj.c2.beta]; % Joint angles post impact
-            c2_qm = [(pi - obj.c2.beta)/2; obj.c2.beta - pi]; % Joint angles pre impact
+            c1_qm = [(pi - obj.c1.beta)/2; obj.c1.beta - pi]; % Joint angles pre impact
+            
+            % Light foot on the ground
             c2_qp = [(pi + obj.c1.beta)/2; pi - obj.c1.beta]; % Joint angles post impact
+            c2_qm = [(pi - obj.c2.beta)/2; obj.c2.beta - pi]; % Joint angles pre impact
             
             obj.step_count = 0;
             [c2_v, c1_w] = obj.getImpactVelocities(c1_qm, c2_qp, obj.c1.impact_angle, obj.c1.impact_velocity);
             obj.step_count = 1;
             [c1_v, c2_w] = obj.getImpactVelocities(c2_qm, c1_qp, obj.c2.impact_angle, obj.c2.impact_velocity);
             
-            obj.c1.xm = [c1_qm; c1_w];
-            obj.c1.xp = [c1_qp; c1_v];
-            obj.c2.xm = [c2_qm; c2_w];
-            obj.c2.xp = [c2_qp; c2_v];
+            % First go from air to ground
+            obj.pre_c.xp = [pi/2; 0; -0.005; -0.05];
+            obj.pre_c.xm = [c1_qm; c1_w];
+
+            % Then ground to ground
+            obj.c1.xp = [c2_qp; c2_v];
+            obj.c1.xm = [c2_qm; c2_w];
             
-            % Search for rising curve with const tau
-            options = optimoptions('fgoalattain','OptimalityTolerance', 1e-2, 'StepTolerance', 1e-3);
+            % Then again ground to ground
+            obj.c2.xm = [c1_qm; c1_w];
+            obj.c2.xp = [c1_qp; c1_v];
+        end
+        
+        % objective [dist to final point; velocity to final point]
+        function objective = calcHolonomicCurveHelper(obj, xm, xp, tau_m, q2_min)
+            if (nargin == 5)
+                [X, fail] = obj.getFallingCurve(xm, obj.fall_duration, tau_m, q2_min);
+            else
+                [X, fail] = obj.getFallingCurve(xm, obj.fall_duration, tau_m);
+            end
             
-            obj.step_count = 0;
-            fun = @(tau_m) obj.calcHolonomicCurveHelper(obj.c1.xs, obj.c1.xm, tau_m);
-            goal = [0,0,0,0];
-            weight = [1,1,0.2,0.2];
-            x0 = obj.c1.tau_pre;
-            lb = [0,-obj.tau_limit,0,-obj.tau_limit];
-            ub = [obj.fall_duration,obj.tau_limit,obj.fall_duration,obj.tau_limit];
-            A = [1 -1 0 0]; % time 1 < time 2
-            b = 0;
-            Aeq = [];
-            beq = [];
-            nonlcon = [];
+            dist = (xp' - X(end,:)).^2;
+            objective = [dist(1) + dist(2) dist(3) + dist(4) abs(angdiff(atan2(X(end,4), X(end,3)), atan2(xp(4), xp(3))))];
+            if (fail)
+                objective = objective * 10;
+            end
+
+            if (obj.plot_curves && ~fail)
+                plot(X(:,1),X(:,2), 'color', [0.5,0,0,1]);
+                hold on;
+            end
+        end
+        
+        function calcHolonomicCurves(obj, curve)
             
             if (obj.plot_curves)
                 figure;
                 hold on;
-                plot(obj.c1.xs(1), obj.c1.xs(2),'o', 'MarkerSize',5,'color','k');
-                plot(obj.c1.xm(1), obj.c1.xm(2),'o', 'MarkerSize',5,'color','k');
+                plot(curve.xs(1), curve.xs(2),'o', 'MarkerSize',5,'color','k');
+                plot(curve.xm(1), curve.xm(2),'o', 'MarkerSize',5,'color','k');
+                plot(curve.xp(1), curve.xp(2),'o', 'MarkerSize',5,'color','k');
+                
                 q1_range = 0:0.05:pi;
                 plot(q1_range, -2 * q1_range + 2 * pi,'color','cyan');
                 plot(q1_range, -2 * q1_range, 'color','cyan');
                 
                 % Plot 90 degree fall curve
-                rend = obj.calc_rend(obj.leg_length, obj.leg_length, obj.c1.xm(1), obj.c1.xm(2));
-                rend_range = [sin(obj.c1.impact_angle); cos(obj.c2.impact_angle)] * (0:0.01:0.05);
+                rend = obj.calc_rend(obj.leg_length, obj.leg_length, curve.xm(1), curve.xm(2));
+                rend_range = [sin(curve.impact_angle); cos(curve.impact_angle)] * (0:0.01:0.05);
                 qup = zeros(2, length(rend_range));
                 for i = 1:length(rend_range)
                     qup(:,i) = obj.calc_qd(obj.leg_length, obj.leg_length, rend(1) + rend_range(2, i), rend(2) + rend_range(2, i));
@@ -222,35 +214,39 @@ classdef acrobot < handle
                 xlabel('q1');
                 ylabel('q2');
             end
-            obj.c1.tau_pre = fgoalattain(fun,x0,goal,weight,A,b,Aeq,beq,lb,ub,nonlcon,options);
+            
+            
+            % Search for rising curve with const tau
+            options = optimoptions('fgoalattain','OptimalityTolerance', 1e-3, 'StepTolerance', 1e-4, 'MaxFunctionEvaluations', 5e2, 'UseParallel', true, 'DiffMinChange', 1e-5);
+%             options = optimoptions('gamultiobj','UseParallel', true);
+%            [x,fval] = gamultiobj(fun,4,A,b,Aeq,beq,lb,ub,nonlcon,options);
+            obj.step_count = 0;
+            fun = @(tau_m) obj.calcHolonomicCurveHelper(curve.xp, curve.xm, tau_m);
+            goal = [0,0,0];
+            weight = [1,0.08,0.08];
+            x0 = curve.tau_pre;
+            lb = [0,-obj.tau_limit,0,-obj.tau_limit];
+            ub = [obj.fall_duration,obj.tau_limit,obj.fall_duration,obj.tau_limit];
+            A = [1 0 -1 0]; % time 1 < time 2
+            b = 0;
+            Aeq = [];
+            beq = [];
+            nonlcon = [];
+            curve.tau_m = fgoalattain(fun,x0,goal,weight,A,b,Aeq,beq,lb,ub,nonlcon,options);
+            
+            X = obj.getFallingCurve(curve.xs, obj.fall_duration, curve.tau_pre);
+            [~,idx] = unique(X(:,2));
+            X = X(idx,:);
+            X = X(1+obj.top_clip:end-obj.bottom_clip,:);
+
+            curve.phi = spline(X(:,2), X(:,1));
+            curve.phi_dot = fnder(curve.phi,1);
+            curve.phi_ddot = fnder(curve.phi,2);
+                        
             if (obj.plot_curves)
+                plot(X(:,1), X(:,2), 'Color', 'blue')
                 hold off;
             end
-            
-            X = obj.getFallingCurve(obj.c1.xs, obj.fall_duration, obj.c1.tau_pre);
-            [~,idx] = unique(X(:,2));
-            X_ext = X(idx,:);
-            X_ext = X_ext(1+obj.bottom_clip:end-obj.top_clip,:);
-            obj.c1.phi = spline(X_ext(:,2), X_ext(:,1));
-            obj.c1.phi_dot = fnder(obj.c1.phi,1);
-            obj.c1.phi_ddot = fnder(obj.c1.phi,2);
-            
-            obj.step_count = 1;
-            D = @(tau_info) obj.calcHolonomicCurveHelper(obj.c2.qp, obj.c2.qm, obj.c2.v, obj.fall_duration, tau_info(1), tau_info(2), obj.c2.impact_angle);
-            tmp = fmincon(D,[obj.c1.pre_impact_angle; obj.c1.pre_impact_torque], [], [], [], [], [-pi/2, 0], [0, obj.tau_limit], [], options);
-            obj.c2.pre_impact_angle = tmp(1);
-            obj.c2.pre_impact_torque = tmp(2);
-            obj.c2.tau_const = obj.getBestConstTau(obj.c2.qp, obj.c2.qm, obj.c2.v, obj.fall_duration, obj.c2.pre_impact_angle, obj.c2.pre_impact_torque);
-            X = obj.getFallingCurve([obj.c2.qp; obj.c2.v], obj.fall_duration, [0; obj.c2.tau_const], obj.c2.pre_impact_angle, obj.c2.pre_impact_torque);
-            [~,idx] = unique(X(:,2));
-            X_ext = X(idx,:);
-            X_ext = X_ext(1+obj.bottom_clip:end-obj.top_clip,:);
-            obj.c2.phi = spline(X_ext(:,2), X_ext(:,1));
-            obj.c2.phi_dot = fnder(obj.c2.phi,1);
-            obj.c2.phi_ddot = fnder(obj.c2.phi,2);
-            
-            % Set back to original
-            obj.step_count = 0;
         end
         
         function [v, w] = getImpactVelocities(obj, qm, qp, impact_angle, impact_velocity)
@@ -278,71 +274,6 @@ classdef acrobot < handle
             end
         end
         
-        
-        function dist = getBestConstTauHelper(obj, tau, qp, qm, v, dur, pre_impact_angle, pre_impact_torque)
-            [X, fail] = obj.getFallingCurve([qp; v], dur, [0; tau], pre_impact_angle, pre_impact_torque);
-            if (fail)
-                dist = norm(X(end, 1:2) - qm') + 1e9;
-            else
-                dist = norm(X(end, 1:2) - qm');
-            end
-        end
-        
-        function tau_best = getBestConstTau(obj, qp, qm, v, dur, pre_impact_angle, pre_impact_torque)            
-            
-            
-            D = @(tau) obj.getBestConstTauHelper(tau, qp, qm, v, dur, pre_impact_angle, pre_impact_torque);
-            
-            tau_best = fminbnd(D,-obj.tau_limit,0);
-
-            if (obj.plot_curves)
-                X = obj.getFallingCurve([qp; v], dur, [0; tau_best], pre_impact_angle, pre_impact_torque);
-                plot(X(:,1),X(:,2), 'color', [0.5,0,0,1]);
-                hold on;
-                
-                tau_best = 0;
-                closest_distance = 100000;
-                for tau = -obj.tau_limit:0.005:0
-                    X = obj.getFallingCurve([qp; v], dur, [0; tau], pre_impact_angle, pre_impact_torque);
-                    if (obj.plot_curves)
-                        plot(X(:,1),X(:,2), 'color', [0,0.5,0,0.3]);
-                    end
-                    dist = norm(X(end,1:2) - qm');
-                    if (dist < closest_distance)
-                        closest_distance = dist;
-                        tau_best = tau;
-                    end
-                    if (obj.plot_curves)
-                        hold on;
-                    end
-                end
-                
-                plot(qp(1), qp(2),'o', 'MarkerSize',5,'color','k');
-                plot(qm(1), qm(2),'o', 'MarkerSize',5,'color','k');
-                q1_range = 0:0.05:pi;
-                plot(q1_range, -2 * q1_range + 2 * pi,'color','cyan');
-                plot(q1_range, -2 * q1_range, 'color','cyan');
-                
-                % Plot 90 degree fall curve
-                rend = obj.calc_rend(obj.leg_length, obj.leg_length, qm(1), qm(2));
-                rend_range = [sin(pre_impact_torque); cos(pre_impact_torque)] * (0:0.01:0.05);
-                qup = zeros(2, length(rend_range));
-                for i = 1:length(rend_range)
-                    qup(:,i) = obj.calc_qd(obj.leg_length, obj.leg_length, rend(1) + rend_range(2, i), rend(2) + rend_range(2, i));
-                end
-                plot(qup(1,:), qup(2,:));
-                
-                axis equal;
-                grid minor;
-                xlim([0, pi]);
-                ylim([-pi, pi]);
-                xlabel('q1');
-                ylabel('q2');
-                title(strcat('Best Tau: ', num2str(tau_best)));
-                hold off;
-            end
-        end
-        
         function fnplti(~, fnct)
             X = -pi:0.01:pi;
             Y = fnval(fnct, X);
@@ -354,17 +285,15 @@ classdef acrobot < handle
             hold on;
             obj.plotPField();
             obj.plotControllerSensitivityField();
-            obj.plotFallingCurve(curve);
 
-            plot(curve.qp(1), curve.qp(2),'o', 'MarkerSize',5,'color','k');
-            plot(curve.qm(1), curve.qm(2),'o', 'MarkerSize',5,'color','k');
+            plot(curve.xp(1), curve.xp(2),'o', 'MarkerSize',5,'color','k');
+            plot(curve.xm(1), curve.xm(2),'o', 'MarkerSize',5,'color','k');
             
-            quiver(curve.qp(1), curve.qp(2), curve.v(1), curve.v(2), 'LineWidth', 2, 'MaxHeadSize', 0.4);
-            quiver(curve.qm(1), curve.qm(2), curve.w(1), curve.w(2), 'LineWidth', 2, 'MaxHeadSize', 0.4);
+            quiver(curve.xp(1), curve.xp(2), curve.xp(3), curve.xp(4), 'LineWidth', 2, 'MaxHeadSize', 0.4);
+            quiver(curve.xm(1), curve.xm(2), curve.xm(3), curve.xm(4), 'LineWidth', 2, 'MaxHeadSize', 0.4);
             
             obj.fnplti(curve.phi);
             
-            title(strcat('Plot of sigma(theta) Tau: ', num2str(curve.tau_const)))
             xlabel('q1')
             ylabel('q2')
             axis equal
@@ -435,13 +364,21 @@ classdef acrobot < handle
         end
         
         % tau_m = [t1, tau_1, t2, tau_2]
-        function [X, fail] = getFallingCurve(obj, xs, tend, tau)
+        function [X, fail] = getFallingCurve(obj, xs, tend, tau, q2_min)
             fail = 0;
             t = 0;
             
+            xs = xs';
             X = zeros(0,4);
             
             tau = [0 tau tend];
+            
+            if nargin == 5
+                options = odeset('Events',@(t,x)obj.dist_to_floor(t, x, q2_min), 'RelTol', 1e-2, 'AbsTol', 1e-5);
+            else
+                options = odeset('Events',@(t,x)obj.dist_to_floor(t, x), 'RelTol', 1e-2, 'AbsTol', 1e-5);
+            end
+
             for i = 1:length(tau)/2
                 tau_curr = tau(i*2-1);
                 t_max = tau(i*2);
@@ -450,8 +387,7 @@ classdef acrobot < handle
                     continue;
                 end
                 
-                % Run Tau until angle reached
-                options = odeset('Events',@(t,x)obj.dist_to_floor(t, x), 'RelTol', 1e-2, 'AbsTol', 1e-5);
+                % Run Tau until collision or angle reached
                 [tt, XX, ~, xe, ie] = ode45(@(t, x) obj.step(t, x, [0; tau_curr]), [t t_max], xs, options);
                 X = [X; XX];
                 
@@ -467,13 +403,6 @@ classdef acrobot < handle
                 xs = XX(end,:);
             end
             X = [X; xe];
-        end
-
-        function plotFallingCurve(obj, curve)
-            X = obj.getFallingCurve([curve.qp; curve.v], 0.3, 1);
-            quiver(X(:,1),X(:,2),X(:,3),X(:,4),'color',[1 1 0], 'markersize',1)
-            xlabel('q1');
-            ylabel('q2');
         end
 
         function plotControllerSensitivityField(obj)

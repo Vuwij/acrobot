@@ -14,7 +14,7 @@ classdef acrobot_control < acrobot.acrobot
         x = zeros(4,1);     % Current x state space
         
         % Controller parameters
-        gamma = 0.2;
+        gamma = 0.20;
         d_gain = 1;
     end
 %     robot.gamma = 25;
@@ -25,7 +25,7 @@ classdef acrobot_control < acrobot.acrobot
         end
         
         function reset(obj)
-            obj.x = [pi/2; 0; 0; 0];
+            obj.x = [pi/2; 0; -0.005; -0.05];
             obj.tau = [0; 0];
             obj.holo_point = [0; 0];
             obj.holo_point_dt = [0; 0];
@@ -41,16 +41,22 @@ classdef acrobot_control < acrobot.acrobot
             Kd = 2/obj.gamma * obj.d_gain;
         end
         
-        function [value, isterminal, direction] = dist_to_floor(obj, t, x)
+        function [value, isterminal, direction] = dist_to_floor(obj, t, x, x2_min)
             q1 = x(1);
             q2 = x(2);
             rH = obj.leg_length * [cos(q1); sin(q1)];
             rc2 = rH + obj.leg_length * [cos(q1+q2); sin(q1+q2)];
             dist = rc2(2);
             
-            value = [dist (pi - x(1)) x(1) pi - abs(x(2))];
-            direction = [-1 -1 -1 -1];
-            isterminal = [1 1 1 1];
+            if nargin == 4
+                value = [(q1 + q2 - pi/2 - x2_min) dist (pi - x(1)) x(1) pi - abs(x(2))];
+                direction = [-1 -1 -1 -1 -1];
+                isterminal = [1 1 1 1 1];
+            else
+                value = [dist (pi - x(1)) x(1) pi - abs(x(2))];
+                direction = [-1 -1 -1 -1];
+                isterminal = [1 1 1 1];
+            end
         end
         
         function dxdt = step(obj, ~, x, tau)
@@ -124,10 +130,10 @@ classdef acrobot_control < acrobot.acrobot
                 obj.x = [qp; qp_dot];
             end
             
-            disp(strcat("Impact Velocity Pre: Q: ", num2str(norm(q_dot)), " D: ", num2str(norm(obj.lcurve.w))));
-            disp(strcat("Impact Velocity Post: Q: ", num2str(norm(qp_dot)), " D: ", num2str(norm(obj.l2curve.v))));
-            disp(strcat("Impact Angle Error Pre: ", num2str(angdiff(atan2(obj.lcurve.w(2), obj.lcurve.w(1)), atan2(q_dot(2), q_dot(1))))));
-            disp(strcat("Impact Angle Error Post: ", num2str(angdiff(atan2(obj.lcurve.v(2), obj.lcurve.v(1)), atan2(qp_dot(2), qp_dot(1))))));
+            disp(strcat("Impact Velocity Pre: Q: ", num2str(norm(q_dot)), " D: ", num2str(norm(obj.lcurve.xm(3:4)))));
+            disp(strcat("Impact Velocity Post: Q: ", num2str(norm(qp_dot)), " D: ", num2str(norm(obj.l2curve.xp(3:4)))));
+            disp(strcat("Impact Angle Error Pre: ", num2str(angdiff(atan2(obj.lcurve.xm(4), obj.lcurve.xm(3)), atan2(q_dot(2), q_dot(1))))));
+            disp(strcat("Impact Angle Error Post: ", num2str(angdiff(atan2(obj.lcurve.xp(4), obj.lcurve.xp(3)), atan2(qp_dot(2), qp_dot(1))))));
 
             % Increase Step Count
             obj.step_count = obj.step_count + 1;
