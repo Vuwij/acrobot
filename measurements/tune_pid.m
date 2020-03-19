@@ -6,9 +6,9 @@ encoder = rotaryEncoder(a,'D2','D3');
 robot = acrobot.acrobot_control();
 robot_t_control = acrobot.acrobot_torque_control();
 %%
-gain = 15;
+gain = 5;
 measuredAngle = 0;
-error_tolerance = 8;
+error_tolerance = 2;
 frequency = 2;
 cpr = 2797; % encoder resolution
 encoder.resetCount();
@@ -21,7 +21,7 @@ angles = [];
 torques = [];
 pwms = [];
 time = [];
-robot.gamma = 25;
+robot.gamma = 15;
 robot.d_gain = 1.8;
 delta_t = 0.035;
 rate = rateControl(1/delta_t);
@@ -29,7 +29,7 @@ t = 0;
 t_last = 0;
 pwm = 0;
 tstart = tic;
-while(t < 20)
+while(t < 10)
     t = toc(tstart);
     dt = t - t_last;
     t_last = t;
@@ -50,10 +50,6 @@ while(t < 20)
     error = measuredAngle - desiredAngle;
     derror = (error - lastErr) * dt;
     u = (robot.Kp * error) + (robot.Kd * derror);
-    
-%     if (abs(error) < error_tolerance && derror < 0.02)
-%         u = 0;
-%     end
     
     torques = [torques, u];
 

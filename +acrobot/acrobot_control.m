@@ -14,7 +14,7 @@ classdef acrobot_control < acrobot.acrobot
         x = zeros(4,1);     % Current x state space
         
         % Controller parameters
-        gamma = 0.20;
+        gamma = 0.15;
         d_gain = 1;
     end
 %     robot.gamma = 25;
@@ -67,9 +67,10 @@ classdef acrobot_control < acrobot.acrobot
             D = obj.calc_D(obj.linertia(1), obj.linertia(1), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q(2));
             C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
             P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
-
+            B = obj.calc_B(qdot(2));
+            
             obj.tau_q = D \ tau;
-            obj.tau_g = D \ (-C * qdot - P);
+            obj.tau_g = D \ (-C * qdot - P - B);
             qddot_new = obj.tau_g + obj.tau_q;
             dxdt = [qdot; qddot_new];
         end
@@ -82,7 +83,8 @@ classdef acrobot_control < acrobot.acrobot
             D = obj.calc_D(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q(2));
             C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
             P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
-                        
+            B = obj.calc_B(qdot(2));
+            
             phi = @(q2) ppval(obj.lcurve.phi,q2);
             phi_dot = @(q2) ppval(obj.lcurve.phi_dot,q2);
             phi_ddot = @(q2) ppval(obj.lcurve.phi_ddot,q2);
@@ -94,7 +96,7 @@ classdef acrobot_control < acrobot.acrobot
             e_dot = qdot(1) - phi_dot(q(2)) * qdot(2);
             
             part1 = [1 -phi_dot(q(2))] * inv(D) * obj.B;
-            part2 = -obj.Kp * e - obj.Kd * e_dot + phi_ddot(q(2)) * qdot(2)^2 + [1 -phi_dot(q(2))] * inv(D) * (C * qdot + P);
+            part2 = -obj.Kp * e - obj.Kd * e_dot + phi_ddot(q(2)) * qdot(2)^2 + [1 -phi_dot(q(2))] * inv(D) * (C * qdot + P + B);
             obj.tau = [0; inv(part1) * part2];
 
             obj.tau = max(min(obj.tau_limit, obj.tau), -obj.tau_limit);

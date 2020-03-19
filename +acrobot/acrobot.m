@@ -20,6 +20,7 @@ classdef acrobot < handle
         calc_C;
         calc_P;
         calc_EE;
+        calc_B;
         
         calc_J;
         calc_De;
@@ -42,6 +43,7 @@ classdef acrobot < handle
         leg_length;
         foot_radius = 0.018;
         angle_limit = pi/20;
+        motor_friction = 0.01;
 
         step_count = 0;
         
@@ -50,10 +52,9 @@ classdef acrobot < handle
         tau_limit = 0.25;
         
         % Curves
-        toptop_clip = 60;
-        top_clip = 5;
-        bottom_clip = 5;
-        plot_curves = 1;
+        top_clip = 0;
+        bottom_clip = 10;
+        plot_curves = 0;
         pre_c;  % Pre first step
         c1;     % First Step
         c2;     % Second Step
@@ -74,8 +75,9 @@ classdef acrobot < handle
                 obj.inertia(i) = obj.robot.Bodies{i}.Inertia(2);
             end
             
-            obj.c1 = acrobot.curve(pi/9.5, pi*0.25, 1.35, 0.48, [0.0122 0.0000 1.1361 0.1531], [0.0533 -0.1281 0.5250 0.0752]); % First Step
-            obj.c2 = acrobot.curve(pi/9.3, pi*0.25, 1.34, 0.48, [0.0000 0.0000 1.0982 0.1280], [0.0478 -0.1308 0.4775 0.0316]); % Second Step
+            obj.pre_c = acrobot.curve(pi/9.5, pi*0.25, 1.35, 0.48, [0.6112,-0.0432,1.1286,0.1456]); % First Step
+            obj.c1 = acrobot.curve(pi/9.3, pi*0.25, 1.34, 0.48, [0.1072,-0.1740,0.7483,0.1272]); % Second Step
+            obj.c2 = acrobot.curve(pi/9.5, pi*0.25, 1.35, 0.48, [0.0456,-0.1713,0.6962,0.1245]); % Third Step
             
             % Create Robot Equation handles
             obj.solveRoboticsEquation();
@@ -83,8 +85,8 @@ classdef acrobot < handle
             % Solve for the curve for both legs
             obj.calcRobotStates();
             obj.calcHolonomicCurves(obj.pre_c);
-            obj.calcHolonomicCurves(obj.c2);
             obj.calcHolonomicCurves(obj.c1);
+            obj.calcHolonomicCurves(obj.c2);
         end
         
         function mass = lmass(obj, num)
@@ -121,7 +123,9 @@ classdef acrobot < handle
         end
         
         function curve = lcurve(obj)
-            if rem(obj.step_count,2) == 0
+            if obj.step_count == 0
+                curve = obj.pre_c;
+            elseif rem(obj.step_count,2) == 0
                 curve = obj.c1;
             else
                 curve = obj.c2;
@@ -134,6 +138,17 @@ classdef acrobot < handle
             else
                 curve = obj.c2;
             end
+        end
+        
+        function X = clipCurve(~, X)
+            x = X(round(length(X)/2),2);
+            for i = round(length(X)/2):-1:1
+                if X(i,2) < x
+                    break
+                end
+                x = X(i,2);
+            end
+            X = X(i+1:end,:);
         end
         
         function calcRobotStates(obj)
@@ -180,8 +195,9 @@ classdef acrobot < handle
             end
 
             if (obj.plot_curves && ~fail)
-                plot(X(:,1),X(:,2), 'color', [0.5,0,0,1]);
+                plot(X(:,1),X(:,2), 'color', [0,0,0.5,0.06]);
                 hold on;
+                disp(objective);
             end
         end
         
@@ -190,7 +206,6 @@ classdef acrobot < handle
             if (obj.plot_curves)
                 figure;
                 hold on;
-                plot(curve.xs(1), curve.xs(2),'o', 'MarkerSize',5,'color','k');
                 plot(curve.xm(1), curve.xm(2),'o', 'MarkerSize',5,'color','k');
                 plot(curve.xp(1), curve.xp(2),'o', 'MarkerSize',5,'color','k');
                 
@@ -215,16 +230,13 @@ classdef acrobot < handle
                 ylabel('q2');
             end
             
-            
             % Search for rising curve with const tau
-            options = optimoptions('fgoalattain','OptimalityTolerance', 1e-3, 'StepTolerance', 1e-4, 'MaxFunctionEvaluations', 5e2, 'UseParallel', true, 'DiffMinChange', 1e-5);
-%             options = optimoptions('gamultiobj','UseParallel', true);
-%            [x,fval] = gamultiobj(fun,4,A,b,Aeq,beq,lb,ub,nonlcon,options);
+            options = optimoptions('fgoalattain','MaxFunctionEvaluations', 5e2, 'UseParallel', true);
             obj.step_count = 0;
             fun = @(tau_m) obj.calcHolonomicCurveHelper(curve.xp, curve.xm, tau_m);
             goal = [0,0,0];
-            weight = [1,0.08,0.08];
-            x0 = curve.tau_pre;
+            weight = [1,0.2,0.02];
+            x0 = curve.tau_m;
             lb = [0,-obj.tau_limit,0,-obj.tau_limit];
             ub = [obj.fall_duration,obj.tau_limit,obj.fall_duration,obj.tau_limit];
             A = [1 0 -1 0]; % time 1 < time 2
@@ -232,19 +244,24 @@ classdef acrobot < handle
             Aeq = [];
             beq = [];
             nonlcon = [];
+            
+            % GA to look for valid starts
+%             options = optimoptions('gamultiobj','UseParallel', true);
+%             [x,fval] = gamultiobj(fun,4,A,b,Aeq,beq,lb,ub,nonlcon,options);
+            
             curve.tau_m = fgoalattain(fun,x0,goal,weight,A,b,Aeq,beq,lb,ub,nonlcon,options);
             
-            X = obj.getFallingCurve(curve.xs, obj.fall_duration, curve.tau_pre);
+            X = obj.getFallingCurve(curve.xp, obj.fall_duration, curve.tau_m);
+            X = obj.clipCurve(X);
             [~,idx] = unique(X(:,2));
             X = X(idx,:);
-            X = X(1+obj.top_clip:end-obj.bottom_clip,:);
 
             curve.phi = spline(X(:,2), X(:,1));
             curve.phi_dot = fnder(curve.phi,1);
             curve.phi_ddot = fnder(curve.phi,2);
                         
             if (obj.plot_curves)
-                plot(X(:,1), X(:,2), 'Color', 'blue')
+                plot(X(:,1), X(:,2), 'Color', 'red')
                 hold off;
             end
         end
@@ -486,8 +503,8 @@ classdef acrobot < handle
             ddtdLdqdot = jacobian(dLdqdot,q) * qdot + jacobian(dLdqdot,qdot) * qddot;
             Tau = simplify(ddtdLdqdot - dLdq);
 
-            % Find the C, D, P Matrix
-            syms C D P real
+            % Find the C, D, P, B Matrix
+            syms C D P B real
             [D, b] = equationsToMatrix(Tau, qddot);
             P = -subs(b, [q1dot, q2dot], [0, 0]);
             C = sym(zeros(length(q)));
@@ -499,6 +516,7 @@ classdef acrobot < handle
                     end
                 end
             end
+            B = [0; obj.motor_friction] .* qdot;
 
             % Impact Map
             % Solving for EOM and impact map following
@@ -555,6 +573,7 @@ classdef acrobot < handle
             obj.calc_D = matlabFunction(D);
             obj.calc_C = matlabFunction(C);
             obj.calc_P = matlabFunction(P);
+            obj.calc_B = matlabFunction(B);
             obj.calc_De = matlabFunction(De);
             obj.calc_E = matlabFunction(E);
             obj.calc_dUde = matlabFunction(dUde);
