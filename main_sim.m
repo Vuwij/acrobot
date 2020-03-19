@@ -3,7 +3,7 @@ close all;
 robot = acrobot.acrobot_control();
 robot.reset();
 
-tmax = 6;       % Max simulation time
+tmax = 10;       % Max simulation time
 tstep = 0.035;  % Simulation time step
 t = 0;
 

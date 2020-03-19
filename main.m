@@ -16,10 +16,10 @@ clear a imu encoder BNO1 BNO2;
 a = arduino('/dev/ttyUSB0','Nano3','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
 writeDigitalPin(a, 'D6', 0);
 writeDigitalPin(a, 'D7', 1);
-writePWMDutyCycle(a,'D9',0);
+writePWMDutyCycle(a, 'D9',0);
 pause(2);
-BNO1 = i2cdev(a,'0x28');
-BNO2 = i2cdev(a,'0x29');
+BNO1 = device(a,'I2CAddress', '0x28');
+BNO2 = device(a,'I2CAddress', '0x29');
 encoder = rotaryEncoder(a, 'D2','D3', steps_per_rotation);
 
 writeRegister(BNO2,hex2dec('3F'), hex2dec('20'),'uint8');
@@ -36,7 +36,7 @@ writeRegister(BNO2,hex2dec('3D'),hex2dec('08'),'uint8');
 
 %% Main loop
 close all;
-test_state_estimation = 0;
+test_state_estimation = 1;
 
 if test_state_estimation
     fig = figure;

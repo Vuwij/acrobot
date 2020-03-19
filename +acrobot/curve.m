@@ -11,26 +11,25 @@ classdef curve < handle
         energy_loss = 1.0;
 
         % Computed Curve parameters
-        qm; % q1-q2 angle pre-impact
-        qp; % q1-q2 angle post-impact
-        w;  % Preimpact vector
-        v;  % Postimpact vector
-
+        xm; % Robot state pre-impact [q1, q2, q1dot, q2dot] (Starting point)
+        xp; % Robot state post-impact [q1, q2, q1dot, q2dot] (Ending point)
+        
+        % [t1 tau1 t2 tau2] % Timeseries of taus
+        tau_m;
+        
         phi;         % Function phi(q2) = q1
         phi_dot;
         phi_ddot;
         
-        tau_const = 0;  % Constant tau for it to reach the starting to the end point
-        pre_impact_angle = -pi*0.10; % Angle of preimpact before stop torque
-        pre_impact_torque = 0.2; % Optimized
     end
     
     methods
-        function obj = curve(beta, impact_angle, impact_velocity, energy_loss)
+        function obj = curve(beta, impact_angle, impact_velocity, energy_loss, tau_m_guess)
             obj.beta = beta;
             obj.impact_angle = impact_angle;
             obj.impact_velocity = impact_velocity;
             obj.energy_loss = energy_loss;
+            obj.tau_m = tau_m_guess;
         end
     end
 end
