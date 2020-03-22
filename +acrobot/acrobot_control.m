@@ -9,16 +9,25 @@ classdef acrobot_control < acrobot.acrobot
         tau_g = [0; 0];
         holo_point = [0; 0];
         holo_point_dt = [0; 0];
+        
+        e_acc = 0;
     end
     properties
         x = zeros(4,1);     % Current x state space
         
+        actual_robot = 0;
+        
         % Controller parameters
-        gamma = 0.15;
-        d_gain = 1;
+        gamma = 0.10; % Used for simulation
+        
+        % Real life
+        kp = 200;
+        ki = 0;
+        kd = 5;
+        kb = 0.01;
+        integral_saturation = 2;
     end
-%     robot.gamma = 25;
-% robot.d_gain = 1.8;
+
     methods
         function obj = acrobot_control()
             obj = obj@acrobot.acrobot();
@@ -33,14 +42,38 @@ classdef acrobot_control < acrobot.acrobot
             obj.step_count = 0;
         end
         
+        function TauLimit = TauLimit(obj)
+            if (obj.actual_robot)
+                TauLimit = 1;
+            else
+                TauLimit = obj.tau_limit;
+            end
+        end
+        
         function Kp = Kp(obj)
-            Kp = (1/obj.gamma)^2;
+            if (obj.actual_robot)
+                Kp = obj.kp;
+            else
+                Kp = (1/obj.gamma)^2;
+            end
         end
         
         function Kd = Kd(obj)
-            Kd = 2/obj.gamma * obj.d_gain;
+            if (obj.actual_robot)
+                Kd = obj.kd;
+            else
+                Kd = 2/obj.gamma;
+            end
         end
         
+        function Ki = Ki(obj)
+            if (obj.actual_robot)
+                Ki = obj.ki;
+            else
+                Ki = 1;
+            end
+        end
+
         function [value, isterminal, direction] = dist_to_floor(obj, t, x, x2_min)
             q1 = x(1);
             q2 = x(2);
@@ -94,13 +127,15 @@ classdef acrobot_control < acrobot.acrobot
             % PD Control
             e = q(1) - phi(q(2));
             e_dot = qdot(1) - phi_dot(q(2)) * qdot(2);
+            obj.e_acc = max(-obj.integral_saturation, min(obj.integral_saturation, obj.e_acc + e));
             
             part1 = [1 -phi_dot(q(2))] * inv(D) * obj.B;
-            part2 = -obj.Kp * e - obj.Kd * e_dot + phi_ddot(q(2)) * qdot(2)^2 + [1 -phi_dot(q(2))] * inv(D) * (C * qdot + P + B);
+            part2 = -obj.Ki * obj.e_acc + -obj.Kp * e - obj.Kd * e_dot + phi_ddot(q(2)) * qdot(2)^2 + [1 -phi_dot(q(2))] * inv(D) * (C * qdot + P + B);
             obj.tau = [0; inv(part1) * part2];
 
-            obj.tau = max(min(obj.tau_limit, obj.tau), -obj.tau_limit);
+            obj.tau(2) = max(-obj.TauLimit, min(obj.TauLimit, obj.tau(2)));
             tau = obj.tau;
+%             fprintf("E: %.3f\t Edot: %.3f\t Eacc: %.3f Part 2:%.3f Tau: %.3f\n", e, e_dot, obj.e_acc, part2, obj.tau(2));
         end
         
         function impact_foot(obj, x)

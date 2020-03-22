@@ -1,15 +1,3 @@
-%% Robot Setup
-
-clear; clc;close all;
-robotParameters;
-robot = acrobot.acrobot_control();
-torque_controller = acrobot.acrobot_torque_control();
-estimator = acrobot.acrobot_state_estimator();
-
-tstep = 0.035;  % Time step
-rate = rateControl(1/tstep);
-rotmXYZ = eul2rotm([0 pi 0], 'XYZ');
-
 %% Device Connection
 
 clear a imu encoder BNO1 BNO2;
@@ -17,41 +5,58 @@ a = arduino('/dev/ttyUSB0','Nano3','BaudRate',115200,'Libraries',{'RotaryEncoder
 writeDigitalPin(a, 'D6', 0);
 writeDigitalPin(a, 'D7', 1);
 writePWMDutyCycle(a, 'D9',0);
-pause(2);
-BNO1 = device(a,'I2CAddress', '0x28');
+pause(1);
+%BNO1 = device(a,'I2CAddress', '0x28');
 BNO2 = device(a,'I2CAddress', '0x29');
 encoder = rotaryEncoder(a, 'D2','D3', steps_per_rotation);
 
 writeRegister(BNO2,hex2dec('3F'), hex2dec('20'),'uint8');
-pause(1);
+%writeRegister(BNO1,hex2dec('3F'), hex2dec('20'),'uint8');
+
+pause(0.5);
+
 writeRegister(BNO2,hex2dec('3D'),hex2dec('00'),'uint8');
-writeRegister(BNO1,hex2dec('3D'),hex2dec('00'),'uint8');
-pause(1);
+%writeRegister(BNO1,hex2dec('3D'),hex2dec('00'),'uint8');
+
+pause(0.5);
 
 writeRegister(BNO2,hex2dec('42'),hex2dec('03'),'uint8');
-writeRegister(BNO1,hex2dec('42'),hex2dec('03'),'uint8');
-pause(1);
-writeRegister(BNO1,hex2dec('3D'),hex2dec('08'),'uint8');
+%writeRegister(BNO1,hex2dec('42'),hex2dec('03'),'uint8');
+
+pause(0.5);
+
 writeRegister(BNO2,hex2dec('3D'),hex2dec('08'),'uint8');
+%writeRegister(BNO1,hex2dec('3D'),hex2dec('08'),'uint8');
 
 %% Main loop
 close all;
-test_state_estimation = 1;
 
+robotParameters;
+robot = acrobot.acrobot_control();
+estimator = acrobot.acrobot_state_estimator();
+robot.actual_robot = 1;
+
+tstep = 0.035;  % Time step
+rate = rateControl(1/tstep);
+rotmXYZ = eul2rotm([0 pi 0], 'XYZ');
+
+test_state_estimation = 0;
+setup_duration = 1;
 if test_state_estimation
     fig = figure;
     set(fig, 'Position',  [100, 100, 1500, 700]);
+    duration = 100;
+else
+    duration = 20;
 end
 
 estimator.sample_time = tstep;
 estimator.setupImplPublic();
 encoder.resetCount();
 robot.reset();
-robot.gamma = 25;
-robot.d_gain = 1.8;
+
 last_motor_step = encoder.readCount();
 t = 0;
-duration = 20;
 ts = timeseries('acrobot_data');
 
 BN01_offset = 0;
@@ -87,9 +92,8 @@ try
             break
         end
 
-        
         % Motor Output
-        pwm_new = torque_controller.getPWM(tau(2));
+        pwm_new = tau(2);
         if (pwm_new < 0 && pwm >= 0)
             writeDigitalPin(a, 'D6', 1);
             writeDigitalPin(a, 'D7', 0);
@@ -100,14 +104,14 @@ try
         pwm = pwm_new;
         if test_state_estimation
             robot.show(t);
-        else
+        elseif (t > setup_duration)
             writePWMDutyCycle(a,'D9',abs(pwm));
         end
         
         % Display the robot
         ts = ts.addsample('Data',[robot.x; collision],'Time',t);
         tend = toc;
-        fprintf("Time: %.3f\t Elapsed Time: %.3f\t x1: %.3f\t x2: %.3f\t tau:%.3f\t pwm: %.3f\n", t, tend, robot.x(1), robot.x(2), tau(2), pwm);
+        %fprintf("Time: %.3f\t Elapsed Time: %.3f\t x1: %.3f\t x2: %.3f\t tau:%.3f\t pwm: %.3f\n", t, tend, robot.x(1), robot.x(2), tau(2), pwm);
 
         % Read next step
         waitfor(rate);

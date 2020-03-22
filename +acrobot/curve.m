@@ -15,6 +15,7 @@ classdef curve < handle
         xp; % Robot state post-impact [q1, q2, q1dot, q2dot] (Ending point)
         
         % [t1 tau1 t2 tau2] % Timeseries of taus
+        tau_m_guess;
         tau_m;
         
         phi;         % Function phi(q2) = q1
@@ -29,7 +30,7 @@ classdef curve < handle
             obj.impact_angle = impact_angle;
             obj.impact_velocity = impact_velocity;
             obj.energy_loss = energy_loss;
-            obj.tau_m = tau_m_guess;
+            obj.tau_m_guess = tau_m_guess;
         end
     end
 end

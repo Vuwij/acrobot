@@ -14,7 +14,7 @@ fig = figure;
 set(fig, 'Position',  [100, 100, 1500, 700]);
 listing = dir('data/tests/');
 load(strcat('data/tests/',listing(end).name));
-load('data/tests/test_03-15-2020 03-13.mat');
+%load('data/tests/test_03-15-2020 03-13.mat');
 
 options = odeset('Events',@(t,x)robot.dist_to_floor(t,x), 'RelTol', 1e-9, 'AbsTol', 1e-9);
 

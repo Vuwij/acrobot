@@ -6,9 +6,8 @@ encoder = rotaryEncoder(a,'D2','D3');
 robot = acrobot.acrobot_control();
 robot_t_control = acrobot.acrobot_torque_control();
 %%
-gain = 5;
+gain = pi/16;
 measuredAngle = 0;
-error_tolerance = 2;
 frequency = 2;
 cpr = 2797; % encoder resolution
 encoder.resetCount();
@@ -18,11 +17,17 @@ lastTime = t0;
 lastErr = 1;
 errSum = 0;
 angles = [];
+desangles = [];
 torques = [];
 pwms = [];
 time = [];
-robot.gamma = 15;
-robot.d_gain = 1.8;
+
+robot.kp = 1.0;
+robot.kd = 75.0;
+robot.ki = 0.04;
+robot.kb = 0.01;
+robot.integral_saturation = 1;
+
 delta_t = 0.035;
 rate = rateControl(1/delta_t);
 t = 0;
@@ -41,19 +46,28 @@ while(t < 10)
     
 
     count = readCount(encoder);
-    measuredAngle = (360 / cpr) * count;
+    measuredAngle = deg2rad((360 / cpr) * count);
     
     angles = [angles, measuredAngle];
+    desangles = [desangles, desiredAngle];
     time = [time, t];
     
     % PID
     error = measuredAngle - desiredAngle;
     derror = (error - lastErr) * dt;
-    u = (robot.Kp * error) + (robot.Kd * derror);
+    errSum = error + errSum;
+    u = (robot.kp * error) + (robot.ki * errSum) + (robot.kd * derror);
+    if (abs(errSum) > robot.integral_saturation)
+        if (errSum > 0)
+            errSum = errSum + (robot.integral_saturation - errSum) * robot.kb;
+        else
+            errSum = errSum + (-robot.integral_saturation - errSum) * robot.kb;
+        end
+    end
     
     torques = [torques, u];
 
-    pwm_new = robot_t_control.getPWM(u);
+    pwm_new = min(1,max(-1,u))
     if (pwm_new < 0 && pwm >= 0)
         writeDigitalPin(a, 'D6', 1);
         writeDigitalPin(a, 'D7', 0);
@@ -71,11 +85,14 @@ end
 
 writePWMDutyCycle(a,'D9',0.0);
 %%
+figure;
 subplot(3,1,1)
 plot(time, angles);
+hold on;
+plot(time, desangles);
 title('Measured Angle vs Time');
 xlabel('Time (s)');
-ylabel('Angle (degrees)');
+ylabel('Angle (radians)');
 grid minor;
 
 subplot(3,1,2)

@@ -54,7 +54,6 @@ classdef acrobot < handle
         % Curves
         top_clip = 0;
         bottom_clip = 10;
-        plot_curves = 0;
         pre_c;  % Pre first step
         c1;     % First Step
         c2;     % Second Step
@@ -76,17 +75,15 @@ classdef acrobot < handle
             end
             
             obj.pre_c = acrobot.curve(pi/9.5, pi*0.25, 1.35, 0.48, [0.6112,-0.0432,1.1286,0.1456]); % First Step
-            obj.c1 = acrobot.curve(pi/9.3, pi*0.25, 1.34, 0.48, [0.1072,-0.1740,0.7483,0.1272]); % Second Step
-            obj.c2 = acrobot.curve(pi/9.5, pi*0.25, 1.35, 0.48, [0.0456,-0.1713,0.6962,0.1245]); % Third Step
+            obj.c1 = acrobot.curve(pi/9.3, pi*0.25, 1.34, 0.48, [0.1072,-0.1740,0.7483,0.1272]); % Third Step
+            obj.c2 = acrobot.curve(pi/9.5, pi*0.25, 1.35, 0.48, [0.0205,-0.1687,0.7978,0.2171]); % Second Step
             
             % Create Robot Equation handles
             obj.solveRoboticsEquation();
             
             % Solve for the curve for both legs
             obj.calcRobotStates();
-            obj.calcHolonomicCurves(obj.pre_c);
-            obj.calcHolonomicCurves(obj.c1);
-            obj.calcHolonomicCurves(obj.c2);
+            obj.updateCurves();
         end
         
         function mass = lmass(obj, num)
@@ -194,49 +191,96 @@ classdef acrobot < handle
                 objective = objective * 10;
             end
 
-            if (obj.plot_curves && ~fail)
+            if (~fail)
                 plot(X(:,1),X(:,2), 'color', [0,0,0.5,0.06]);
                 hold on;
                 disp(objective);
             end
         end
         
+        function calcCurves(obj)
+            obj.step_count = 0;
+            obj.calcHolonomicCurves(obj.pre_c);
+            obj.step_count = 0;
+            obj.calcHolonomicCurves(obj.c1);
+            obj.step_count = 1;
+            obj.calcHolonomicCurves(obj.c2);
+            obj.step_count = 0;
+            pre_c_tau_m = obj.pre_c.tau_m;
+            c1_tau_m = obj.c1.tau_m;
+            c2_tau_m = obj.c2.tau_m;
+            save("data/curve_parameters", "pre_c_tau_m", "c1_tau_m", "c2_tau_m");
+
+            updateCurves(obj);
+        end
+        
+         function updateCurves(obj)
+            obj.pre_c.tau_m = load("data/curve_parameters", "pre_c_tau_m").pre_c_tau_m;
+            obj.c1.tau_m = load("data/curve_parameters", "c1_tau_m").c1_tau_m;
+            obj.c2.tau_m = load("data/curve_parameters", "c2_tau_m").c2_tau_m;
+            
+            obj.step_count = 0;
+            X = obj.getFallingCurve(obj.pre_c.xp, obj.fall_duration, obj.pre_c.tau_m);
+            X = obj.clipCurve(X);
+            [~,idx] = unique(X(:,2));
+            X = X(idx,:);
+            obj.pre_c.phi = spline(X(:,2), X(:,1));
+            obj.pre_c.phi_dot = fnder(obj.pre_c.phi,1);
+            obj.pre_c.phi_ddot = fnder(obj.pre_c.phi,2);
+            
+            obj.step_count = 0;
+            X = obj.getFallingCurve(obj.c1.xp, obj.fall_duration, obj.c1.tau_m);
+            X = obj.clipCurve(X);
+            [~,idx] = unique(X(:,2));
+            X = X(idx,:);
+            obj.c1.phi = spline(X(:,2), X(:,1));
+            obj.c1.phi_dot = fnder(obj.c1.phi,1);
+            obj.c1.phi_ddot = fnder(obj.c1.phi,2);
+            
+            obj.step_count = 1;
+            X = obj.getFallingCurve(obj.c2.xp, obj.fall_duration, obj.c2.tau_m);
+            X = obj.clipCurve(X);
+            [~,idx] = unique(X(:,2));
+            X = X(idx,:);
+            obj.c2.phi = spline(X(:,2), X(:,1));
+            obj.c2.phi_dot = fnder(obj.c2.phi,1);
+            obj.c2.phi_ddot = fnder(obj.c2.phi,2);
+            
+            obj.step_count = 0;
+        end
+        
         function calcHolonomicCurves(obj, curve)
             
-            if (obj.plot_curves)
-                figure;
-                hold on;
-                plot(curve.xm(1), curve.xm(2),'o', 'MarkerSize',5,'color','k');
-                plot(curve.xp(1), curve.xp(2),'o', 'MarkerSize',5,'color','k');
-                
-                q1_range = 0:0.05:pi;
-                plot(q1_range, -2 * q1_range + 2 * pi,'color','cyan');
-                plot(q1_range, -2 * q1_range, 'color','cyan');
-                
-                % Plot 90 degree fall curve
-                rend = obj.calc_rend(obj.leg_length, obj.leg_length, curve.xm(1), curve.xm(2));
-                rend_range = [sin(curve.impact_angle); cos(curve.impact_angle)] * (0:0.01:0.05);
-                qup = zeros(2, length(rend_range));
-                for i = 1:length(rend_range)
-                    qup(:,i) = obj.calc_qd(obj.leg_length, obj.leg_length, rend(1) + rend_range(2, i), rend(2) + rend_range(2, i));
-                end
-                plot(qup(1,:), qup(2,:));
-                
-                axis equal;
-                grid minor;
-                xlim([0, pi]);
-                ylim([-pi, pi]);
-                xlabel('q1');
-                ylabel('q2');
+            figure;
+            hold on;
+            plot(curve.xm(1), curve.xm(2),'o', 'MarkerSize',5,'color','k');
+            plot(curve.xp(1), curve.xp(2),'o', 'MarkerSize',5,'color','k');
+            q1_range = 0:0.05:pi;
+            plot(q1_range, -2 * q1_range + 2 * pi,'color','cyan');
+            plot(q1_range, -2 * q1_range, 'color','cyan');
+
+            % Plot 90 degree fall curve
+            rend = obj.calc_rend(obj.leg_length, obj.leg_length, curve.xm(1), curve.xm(2));
+            rend_range = [sin(curve.impact_angle); cos(curve.impact_angle)] * (0:0.01:0.05);
+            qup = zeros(2, length(rend_range));
+            for i = 1:length(rend_range)
+                qup(:,i) = obj.calc_qd(obj.leg_length, obj.leg_length, rend(1) + rend_range(2, i), rend(2) + rend_range(2, i));
             end
+            plot(qup(1,:), qup(2,:));
+
+            axis equal;
+            grid minor;
+            xlim([0, pi]);
+            ylim([-pi, pi]);
+            xlabel('q1');
+            ylabel('q2');
             
             % Search for rising curve with const tau
             options = optimoptions('fgoalattain','MaxFunctionEvaluations', 5e2, 'UseParallel', true);
-            obj.step_count = 0;
             fun = @(tau_m) obj.calcHolonomicCurveHelper(curve.xp, curve.xm, tau_m);
             goal = [0,0,0];
             weight = [1,0.2,0.02];
-            x0 = curve.tau_m;
+            x0 = curve.tau_m_guess;
             lb = [0,-obj.tau_limit,0,-obj.tau_limit];
             ub = [obj.fall_duration,obj.tau_limit,obj.fall_duration,obj.tau_limit];
             A = [1 0 -1 0]; % time 1 < time 2
@@ -255,15 +299,8 @@ classdef acrobot < handle
             X = obj.clipCurve(X);
             [~,idx] = unique(X(:,2));
             X = X(idx,:);
-
-            curve.phi = spline(X(:,2), X(:,1));
-            curve.phi_dot = fnder(curve.phi,1);
-            curve.phi_ddot = fnder(curve.phi,2);
-                        
-            if (obj.plot_curves)
-                plot(X(:,1), X(:,2), 'Color', 'red')
-                hold off;
-            end
+            plot(X(:,1), X(:,2), 'Color', 'red')
+            hold off;
         end
         
         function [v, w] = getImpactVelocities(obj, qm, qp, impact_angle, impact_velocity)
