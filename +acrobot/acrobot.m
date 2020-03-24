@@ -50,7 +50,7 @@ classdef acrobot < handle
         % Energy Loss
         fall_duration = 1.8;            % Max Fall duration (not desired)
         tau_limit = 0.25;
-        floor_limit = 0.025;             % Distance to the floor where no torque is allowed
+        floor_limit = 0.0;             % Distance to the floor where no torque is allowed
         
         % Curves
         top_clip = 0;
@@ -75,9 +75,9 @@ classdef acrobot < handle
                 obj.inertia(i) = obj.robot.Bodies{i}.Inertia(2);
             end
             
-            obj.pre_c = acrobot.curve(pi/9.5, pi*0.25, 1.35, 0.48, [0.4950 -0.0332 0.9581 0.0850]); % First Step
-            obj.c1 = acrobot.curve(pi/9.3, pi*0.25, 1.34, 0.48, [0.0811,-0.1680,0.7254,0.1097]); % Third Step
-            obj.c2 = acrobot.curve(pi/9.5, pi*0.25, 1.35, 0.48, [0.0247, -0.1775, 0.7202,0.1851]); % Second Step
+            obj.pre_c = acrobot.curve(pi/9.3, pi*0.25, 1.40, 0.48, [0.6200,-0.0553,1.013,0.088]); % First Step
+            obj.c1 = acrobot.curve(pi/9.3, pi*0.25, 1.40, 0.48, [0.004,-0.1918,0.5600,0.1001]); % Third Step
+            obj.c2 = acrobot.curve(pi/9.5, pi*0.25, 1.40, 0.48, [0.0305427320850607,-0.210190202255343,0.549640602180841,0.120949051732730]); % Second Step
             
             % Create Robot Equation handles
             obj.solveRoboticsEquation();
@@ -208,11 +208,11 @@ classdef acrobot < handle
         
         function calcCurves(obj)
             obj.step_count = 0;
-            obj.calcHolonomicCurves(obj.pre_c);
+            obj.calcHolonomicCurves(obj.pre_c, true);
             obj.step_count = 0;
-            obj.calcHolonomicCurves(obj.c1);
+            obj.calcHolonomicCurves(obj.c1, false);
             obj.step_count = 1;
-            obj.calcHolonomicCurves(obj.c2);
+            obj.calcHolonomicCurves(obj.c2, true);
             obj.step_count = 0;
             pre_c_tau_m = obj.pre_c.tau_m;
             c1_tau_m = obj.c1.tau_m;
@@ -257,7 +257,7 @@ classdef acrobot < handle
             obj.step_count = 0;
         end
         
-        function calcHolonomicCurves(obj, curve, research)
+        function calcHolonomicCurves(obj, curve, optimize)
             
             figure;
             hold on;
@@ -284,12 +284,12 @@ classdef acrobot < handle
             ylabel('q2');
             
             % Global Search
-            weight = [1,0.01,0.001];
+            weight = [1,0.2,0.01];
             x0 = curve.tau_m_guess;
             
             % Local Search
             fun = @(tau_m) obj.calcHolonomicCurveHelper(curve.xp, curve.xm, tau_m);
-            goal = [0.001,0.05,0.01];
+            goal = [0.000,0.00,0.00];
             lb = [0,-obj.tau_limit,0,-obj.tau_limit];
             ub = [obj.fall_duration,obj.tau_limit,obj.fall_duration,obj.tau_limit];
             A = [1 0 -1 0]; % time 1 < time 2
@@ -304,8 +304,12 @@ classdef acrobot < handle
 %             [~, index] = min(vecnorm(fval,2,2));
 %             x0 = x(index,:);
             
-            options = optimoptions('fgoalattain','MaxFunctionEvaluations', 1e2, 'UseParallel', true);
-            curve.tau_m = fgoalattain(fun,x0,goal,weight,A,b,Aeq,beq,lb,ub,nonlcon,options);
+            if (optimize)
+                options = optimoptions('fgoalattain','MaxFunctionEvaluations', 5e2, 'UseParallel', true);
+                curve.tau_m = fgoalattain(fun,x0,goal,weight,A,b,Aeq,beq,lb,ub,nonlcon,options);
+            else
+                curve.tau_m = x0;
+            end
             
             X = obj.getFallingCurve(curve.xp, obj.fall_duration, curve.tau_m);
             X = obj.clipCurve(X);
