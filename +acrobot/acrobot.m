@@ -50,6 +50,7 @@ classdef acrobot < handle
         % Energy Loss
         fall_duration = 1.8;            % Max Fall duration (not desired)
         tau_limit = 0.25;
+        floor_limit = 0.025;             % Distance to the floor where no torque is allowed
         
         % Curves
         top_clip = 0;
@@ -74,9 +75,9 @@ classdef acrobot < handle
                 obj.inertia(i) = obj.robot.Bodies{i}.Inertia(2);
             end
             
-            obj.pre_c = acrobot.curve(pi/9.5, pi*0.25, 1.35, 0.48, [0.6112,-0.0432,1.1286,0.1456]); % First Step
-            obj.c1 = acrobot.curve(pi/9.3, pi*0.25, 1.34, 0.48, [0.1072,-0.1740,0.7483,0.1272]); % Third Step
-            obj.c2 = acrobot.curve(pi/9.5, pi*0.25, 1.35, 0.48, [0.0205,-0.1687,0.7978,0.2171]); % Second Step
+            obj.pre_c = acrobot.curve(pi/9.5, pi*0.25, 1.35, 0.48, [0.4950 -0.0332 0.9581 0.0850]); % First Step
+            obj.c1 = acrobot.curve(pi/9.3, pi*0.25, 1.34, 0.48, [0.0811,-0.1680,0.7254,0.1097]); % Third Step
+            obj.c2 = acrobot.curve(pi/9.5, pi*0.25, 1.35, 0.48, [0.0247, -0.1775, 0.7202,0.1851]); % Second Step
             
             % Create Robot Equation handles
             obj.solveRoboticsEquation();
@@ -136,8 +137,8 @@ classdef acrobot < handle
                 curve = obj.c2;
             end
         end
-        
-        function X = clipCurve(~, X)
+                
+        function X = clipCurve(obj, X)
             x = X(round(length(X)/2),2);
             for i = round(length(X)/2):-1:1
                 if X(i,2) < x
@@ -145,7 +146,14 @@ classdef acrobot < handle
                 end
                 x = X(i,2);
             end
-            X = X(i+1:end,:);
+            
+            for j = round(length(X)/2):1:length(X)
+                dist = obj.dist_to_floor(0, X(j,:));
+                if (dist(1) < obj.floor_limit)
+                    break;
+                end
+            end
+            X = X(i+1:j,:);
         end
         
         function calcRobotStates(obj)
@@ -249,7 +257,7 @@ classdef acrobot < handle
             obj.step_count = 0;
         end
         
-        function calcHolonomicCurves(obj, curve)
+        function calcHolonomicCurves(obj, curve, research)
             
             figure;
             hold on;
@@ -275,12 +283,13 @@ classdef acrobot < handle
             xlabel('q1');
             ylabel('q2');
             
-            % Search for rising curve with const tau
-            options = optimoptions('fgoalattain','MaxFunctionEvaluations', 5e2, 'UseParallel', true);
-            fun = @(tau_m) obj.calcHolonomicCurveHelper(curve.xp, curve.xm, tau_m);
-            goal = [0,0,0];
-            weight = [1,0.2,0.02];
+            % Global Search
+            weight = [1,0.01,0.001];
             x0 = curve.tau_m_guess;
+            
+            % Local Search
+            fun = @(tau_m) obj.calcHolonomicCurveHelper(curve.xp, curve.xm, tau_m);
+            goal = [0.001,0.05,0.01];
             lb = [0,-obj.tau_limit,0,-obj.tau_limit];
             ub = [obj.fall_duration,obj.tau_limit,obj.fall_duration,obj.tau_limit];
             A = [1 0 -1 0]; % time 1 < time 2
@@ -289,10 +298,13 @@ classdef acrobot < handle
             beq = [];
             nonlcon = [];
             
-            % GA to look for valid starts
 %             options = optimoptions('gamultiobj','UseParallel', true);
 %             [x,fval] = gamultiobj(fun,4,A,b,Aeq,beq,lb,ub,nonlcon,options);
+%             fval = fval .* weight;
+%             [~, index] = min(vecnorm(fval,2,2));
+%             x0 = x(index,:);
             
+            options = optimoptions('fgoalattain','MaxFunctionEvaluations', 1e2, 'UseParallel', true);
             curve.tau_m = fgoalattain(fun,x0,goal,weight,A,b,Aeq,beq,lb,ub,nonlcon,options);
             
             X = obj.getFallingCurve(curve.xp, obj.fall_duration, curve.tau_m);
@@ -334,14 +346,18 @@ classdef acrobot < handle
             plot(Y, X, 'LineWidth',2);
         end
         
-        function plotHolonomicCurve(obj, curve)
+        function plotHolonomicCurve(obj, curve, color)
+            if nargin == 2
+                color = 'k';
+            end
+            
             obj.plotQField();
             hold on;
             obj.plotPField();
             obj.plotControllerSensitivityField();
 
-            plot(curve.xp(1), curve.xp(2),'o', 'MarkerSize',5,'color','k');
-            plot(curve.xm(1), curve.xm(2),'o', 'MarkerSize',5,'color','k');
+            plot(curve.xp(1), curve.xp(2),'o', 'MarkerSize',5,'color',color);
+            plot(curve.xm(1), curve.xm(2),'o', 'MarkerSize',5,'color',color);
             
             quiver(curve.xp(1), curve.xp(2), curve.xp(3), curve.xp(4), 'LineWidth', 2, 'MaxHeadSize', 0.4);
             quiver(curve.xm(1), curve.xm(2), curve.xm(3), curve.xm(4), 'LineWidth', 2, 'MaxHeadSize', 0.4);

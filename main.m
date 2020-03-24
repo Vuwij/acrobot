@@ -1,6 +1,7 @@
 %% Device Connection
 
 clear a imu encoder BNO1 BNO2;
+robotParameters;
 a = arduino('/dev/ttyUSB0','Nano3','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
 writeDigitalPin(a, 'D6', 0);
 writeDigitalPin(a, 'D7', 1);
@@ -30,16 +31,21 @@ writeRegister(BNO2,hex2dec('3D'),hex2dec('08'),'uint8');
 
 %% Main loop
 close all;
+writePWMDutyCycle(a,'D9',abs(pwm));
 
 robotParameters;
 robot = acrobot.acrobot_control();
 estimator = acrobot.acrobot_state_estimator();
+torque_control = acrobot.acrobot_torque_control();
 robot.actual_robot = 1;
+robot.kp = 5;
+robot.ki = 0;
+robot.kd = 0.0;
+robot.kb = 0.01;
 
-tstep = 0.035;  % Time step
+tstep = 0.05;  % Time step
 rate = rateControl(1/tstep);
 rotmXYZ = eul2rotm([0 pi 0], 'XYZ');
-
 test_state_estimation = 0;
 setup_duration = 1;
 if test_state_estimation
@@ -60,11 +66,11 @@ t = 0;
 ts = timeseries('acrobot_data');
 
 BN01_offset = 0;
-BN02_offset = 0;
+BN02_offset = -0.1331;
 pwm = 0;
 try
     while (t < duration)
-        tic
+        tstart = tic;
 
         % State Estimation
         motor_step = encoder.readCount();
@@ -75,25 +81,23 @@ try
             [acc, ~, pos] = read_data(BNO1);
             pos = wrapToPi(pos + BN01_offset);
         end
-        
+        tic
         [robot.x, collision] = estimator.stepImplPublic(robot.step_count, pos, acc, motor_step);
         if (collision)
             robot.step_count = robot.step_count + 1;
         end
         
-
         % Control Code
         tau = robot.getTau(robot.x);
-        
         
         % End Conditions
         if (robot.x(2) > pi - robot.angle_limit || robot.x(2) < -pi + robot.angle_limit || robot.x(1) > pi || robot.x(1) < 0)
             disp(strcat("Robot Impacted With Itself, angles: x1: ", num2str(robot.x(1)), " x2: ", num2str(robot.x(2))));
             break
         end
-
         % Motor Output
-        pwm_new = tau(2);
+        pwm_new = torque_control.getPWM(tau(2));
+
         if (pwm_new < 0 && pwm >= 0)
             writeDigitalPin(a, 'D6', 1);
             writeDigitalPin(a, 'D7', 0);
@@ -110,12 +114,11 @@ try
         
         % Display the robot
         ts = ts.addsample('Data',[robot.x; collision],'Time',t);
-        tend = toc;
-        %fprintf("Time: %.3f\t Elapsed Time: %.3f\t x1: %.3f\t x2: %.3f\t tau:%.3f\t pwm: %.3f\n", t, tend, robot.x(1), robot.x(2), tau(2), pwm);
+        tend = toc(tstart);
+        fprintf("Time: %.3f\t Elapsed Time: %.3f\t x1: %.3f\t x2: %.3f\t tau:%.3f\t pwm: %.3f\n", t, tend, robot.x(1), robot.x(2), tau(2), pwm);
 
         % Read next step
-        waitfor(rate);
-        t = t + tstep;
+        t = t + tend;
     end
 catch ex
     disp(ex)

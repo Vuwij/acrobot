@@ -18,7 +18,7 @@ classdef acrobot_control < acrobot.acrobot
         actual_robot = 0;
         
         % Controller parameters
-        gamma = 0.10; % Used for simulation
+        gamma = 0.05; % Used for simulation
         
         % Real life
         kp = 200;
@@ -43,11 +43,7 @@ classdef acrobot_control < acrobot.acrobot
         end
         
         function TauLimit = TauLimit(obj)
-            if (obj.actual_robot)
-                TauLimit = 1;
-            else
-                TauLimit = obj.tau_limit;
-            end
+            TauLimit = obj.tau_limit;
         end
         
         function Kp = Kp(obj)
@@ -73,7 +69,7 @@ classdef acrobot_control < acrobot.acrobot
                 Ki = 1;
             end
         end
-
+        
         function [value, isterminal, direction] = dist_to_floor(obj, t, x, x2_min)
             q1 = x(1);
             q2 = x(2);
@@ -102,7 +98,12 @@ classdef acrobot_control < acrobot.acrobot
             P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
             B = obj.calc_B(qdot(2));
             
-            obj.tau_q = D \ tau;
+            dist = obj.dist_to_floor(0, x);
+            if (dist(1) < obj.floor_limit && q(2) < 0)
+                obj.tau_q = [0; 0];
+            else
+                obj.tau_q = D \ tau;
+            end
             obj.tau_g = D \ (-C * qdot - P - B);
             qddot_new = obj.tau_g + obj.tau_q;
             dxdt = [qdot; qddot_new];
@@ -111,6 +112,12 @@ classdef acrobot_control < acrobot.acrobot
         function tau = getTau(obj, x)
             q = [x(1); x(2)];
             qdot = [x(3); x(4)];
+            
+            dist = obj.dist_to_floor(0, x);
+            if (dist(1) < obj.floor_limit && q(2) < 0)
+                tau = [0; 0];
+                return;
+            end
             
             % Robotics Equation Parameters
             D = obj.calc_D(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q(2));
@@ -219,6 +226,8 @@ classdef acrobot_control < acrobot.acrobot
                 obj.step_count = 0;
                 plotHolonomicCurve(obj, obj.c1);
                 hold on;
+                plotHolonomicCurve(obj, obj.pre_c, 'y');
+                hold on;
                 
                 subplot(2,3,[3,6]);
                 obj.step_count = 1;
@@ -250,7 +259,7 @@ classdef acrobot_control < acrobot.acrobot
             ylabel('Tau N*m');
             xlabel('Time (s)');
             title("Torque over Time Plot")
-            ylim([-obj.tau_limit - 0.1 obj.tau_limit + 0.1]);
+            ylim([-obj.TauLimit - 0.1 obj.TauLimit + 0.1]);
             grid on;
         end
         

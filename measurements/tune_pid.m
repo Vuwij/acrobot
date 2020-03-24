@@ -6,6 +6,14 @@ encoder = rotaryEncoder(a,'D2','D3');
 robot = acrobot.acrobot_control();
 robot_t_control = acrobot.acrobot_torque_control();
 %%
+gain = pi/8;
+speed = 10;
+t_duration = 10;
+delta_t = 0.035;
+rate = rateControl(1/delta_t);
+t_step = 0:delta_t:t_duration;
+value = sin(t_step*speed) * gain;
+
 gain = pi/16;
 measuredAngle = 0;
 frequency = 2;
@@ -22,27 +30,25 @@ torques = [];
 pwms = [];
 time = [];
 
-robot.kp = 1.0;
-robot.kd = 75.0;
-robot.ki = 0.04;
+robot.kp = 0.8;
+robot.kd = 150;
+0.0;
+robot.ki = 0.02;
 robot.kb = 0.01;
 robot.integral_saturation = 1;
 
-delta_t = 0.035;
-rate = rateControl(1/delta_t);
 t = 0;
 t_last = 0;
 pwm = 0;
 tstart = tic;
+i = 0;
 while(t < 10)
     t = toc(tstart);
     dt = t - t_last;
     t_last = t;
-    if (rem((t / frequency), frequency) > frequency/2)
-        desiredAngle = gain;
-    else
-        desiredAngle = -gain;
-    end
+    
+    i = i + 1;
+    desiredAngle = value(i);
     
 
     count = readCount(encoder);

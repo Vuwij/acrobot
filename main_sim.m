@@ -1,11 +1,11 @@
 close all; clc;
 
 robot = acrobot.acrobot_control();
-%robot.calcCurves();
+robot.calcCurves();
 robot.reset();
 
 tmax = 10;       % Max simulation time
-tstep = 0.035;  % Simulation time step
+tstep = 0.05;  % Simulation time step
 t = 0;
 
 % Simulate robot falling on the ground
