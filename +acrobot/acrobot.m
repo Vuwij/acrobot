@@ -76,7 +76,7 @@ classdef acrobot < handle
             end
             
             obj.pre_c = acrobot.curve(pi/9.3, pi*0.25, 1.40, 0.48, [0.6200,-0.0553,1.013,0.088]); % First Step
-            obj.c1 = acrobot.curve(pi/9.3, pi*0.25, 1.40, 0.48, [0.004,-0.1918,0.5600,0.1001]); % Third Step
+            obj.c1 = acrobot.curve(pi/9.3, pi*0.25, 1.40, 0.48, [0.0960804536593042,-0.211617429208404,0.659358736156863,0.211867160150805]); % Third Step
             obj.c2 = acrobot.curve(pi/9.5, pi*0.25, 1.40, 0.48, [0.0305427320850607,-0.210190202255343,0.549640602180841,0.120949051732730]); % Second Step
             
             % Create Robot Equation handles
@@ -289,7 +289,7 @@ classdef acrobot < handle
             
             % Local Search
             fun = @(tau_m) obj.calcHolonomicCurveHelper(curve.xp, curve.xm, tau_m);
-            goal = [0.000,0.00,0.00];
+            goal = [0.001,0.01,0.01];
             lb = [0,-obj.tau_limit,0,-obj.tau_limit];
             ub = [obj.fall_duration,obj.tau_limit,obj.fall_duration,obj.tau_limit];
             A = [1 0 -1 0]; % time 1 < time 2
