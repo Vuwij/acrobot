@@ -324,7 +324,7 @@ classdef acrobot < handle
             rend = obj.calc_rend(obj.leg_length, obj.leg_length, qm(1), qm(2));
             rend = rend + [cos(impact_angle) * 0.01; sin(impact_angle) * 0.01];
             qm_pre = obj.calc_qd(obj.leg_length, obj.leg_length, rend(1), rend(2));
-            w = unit(qm - qm_pre) * impact_velocity;
+            w = (qm - qm_pre)/norm(qm-qm_pre) * impact_velocity;
             
             % Post impact calculations
             De = obj.calc_De(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), qm(1), qm(2));
