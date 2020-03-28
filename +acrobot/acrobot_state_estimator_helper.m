@@ -16,7 +16,6 @@ classdef acrobot_state_estimator_helper < matlab.System
 
     % Pre-computed constants
     properties(Access = private)
-       step_count = 0;
         
     end
 
@@ -40,18 +39,15 @@ classdef acrobot_state_estimator_helper < matlab.System
             obj.setupImplPublic();
         end
 
-        function [step, pos, acc] = stepImpl(obj, collision, pos1, acc1, pos2, acc2)
-            if (collision)
-                obj.step_count = obj.step_count + 1;
-            end
-            if mod(obj.step_count, 2) == 0
-                pos = pos1;
-                acc = acc1;
-            else
+        function [step, pos, acc] = stepImpl(obj, step_count, pos1, acc1, pos2, acc2)
+            if mod(step_count, 2) == 0
                 pos = pos2;
                 acc = acc2;
+            else
+                pos = pos1;
+                acc = acc1;
             end
-            step = obj.step_count;
+            step = step_count;
         end
         
         function [s1, s2, s3] = getOutputSizeImpl(~)

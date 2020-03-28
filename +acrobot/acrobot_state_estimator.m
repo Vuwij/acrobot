@@ -94,7 +94,7 @@ classdef acrobot_state_estimator < matlab.System
         
         function [d1, d2] = getOutputDataTypeImpl(~)
             d1 = 'double';
-            d2 = 'boolean';
+            d2 = 'double';
         end
         
         function [c1, c2] = isOutputComplexImpl(~)
