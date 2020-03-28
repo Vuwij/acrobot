@@ -134,6 +134,9 @@ filename = sprintf('data/tests/test_%s', datestr(now,'mm-dd-yyyy HH-MM'));
 save(filename, 'ts')
 
 %%
+codertarget.arduinobase.blocks.registerMotorCarrierLibrary(gcbh);
+
+%%
 function [acc, gyro, pos] = read_data(BNO)
 %     x = double(readRegister(BNO,hex2dec('8'),'int16')) / 100.0;
 %     y = double(readRegister(BNO,hex2dec('A'),'int16')) / 100.0;
@@ -151,3 +154,6 @@ function [acc, gyro, pos] = read_data(BNO)
     rad_pitch = deg2rad(deg_pitch);   
     pos = [0 rad_pitch 0];
 end
+
+%%
+

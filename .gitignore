@@ -40,3 +40,8 @@ reference/Psi2_func.m
 reference/acrobot_syms.mat
 reference/h_extra_vars.mat
 reference/h_vars.mat
+acrobot_sim_ert_rtw/
+*.original
+*.elf
+*.hex
+*.eep
