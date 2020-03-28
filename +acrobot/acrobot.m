@@ -158,7 +158,7 @@ classdef acrobot < handle
         
         function calcRobotStates(obj)
             % Post impact for one foot is pre-impact for next foot
-            
+            temp = obj.step_count;
             % Heavy foot on the ground
             c1_qp = [(pi + obj.c2.beta)/2; pi - obj.c2.beta]; % Joint angles post impact
             c1_qm = [(pi - obj.c1.beta)/2; obj.c1.beta - pi]; % Joint angles pre impact
@@ -183,6 +183,11 @@ classdef acrobot < handle
             % Then again ground to ground
             obj.c2.xm = [c1_qm; c1_w];
             obj.c2.xp = [c1_qp; c1_v];
+     
+            obj.step_count = temp;
+            if obj.step_count ~= 0
+                step_count;
+            end
         end
         
         % objective [dist to final point; velocity to final point]

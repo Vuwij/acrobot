@@ -16,7 +16,7 @@ classdef acrobot_state_estimator_helper < matlab.System
 
     % Pre-computed constants
     properties(Access = private)
-        
+        cycle = 0;
     end
 
     methods
@@ -40,18 +40,19 @@ classdef acrobot_state_estimator_helper < matlab.System
         end
 
         function [step, pos, acc] = stepImpl(obj, step_count, pos1, acc1, pos2, acc2)
-            if mod(step_count, 2) == 0
+                step = step_count;
+            if mod(cast(step, 'int8'), 2) == 0
                 pos = pos2;
                 acc = acc2;
             else
                 pos = pos1;
                 acc = acc1;
             end
-            step = step_count;
+            obj.cycle = obj.cycle + 1;
         end
         
         function [s1, s2, s3] = getOutputSizeImpl(~)
-            s1 = [1,1];
+            s1 = 1;
             s2 = [4,1];
             s3 = [3,1];
         end
