@@ -39,13 +39,6 @@ classdef acrobot_state_estimator < matlab.System
         end
         
         function [state, collision] = stepImplPublic(obj, step, pos, acc, motor_step)
-            if(obj.timeOut)
-                obj.cycleCount = obj.cycleCount + 1;
-                if(obj.cycleCount > 100)
-                    obj.timeOut = false;
-                    obj.cycleCount = 0;
-                end
-            end
             % Motor Angle
             qm = pi - motor_step / (obj.steps_per_rotation/ (2 * pi));
             
@@ -72,17 +65,17 @@ classdef acrobot_state_estimator < matlab.System
             
             collision = 0;
  
-            if(~obj.timeOut)
-                rH = obj.leg_length * [cos(q1); sin(q1)];
-                rc2 = rH + obj.leg_length * [cos(q1+q2); sin(q1+q2)];
-                dist_to_floor = rc2(2);
-                if dist_to_floor < 0
-                    obj.timeOut = true;
-                    collision = 1;
-                    obj.step_count = obj.step_count + 1;
-                end
 
+            rH = obj.leg_length * [cos(q1); sin(q1)];
+            rc2 = rH + obj.leg_length * [cos(q1+q2); sin(q1+q2)];
+            dist_to_floor = rc2(2);
+            if dist_to_floor < 0
+                obj.timeOut = true;
+                collision = 1;
+                obj.step_count = obj.step_count + 1;
             end
+
+           
             state = [q1;q2;q1_dot;q2_dot];
 %             state = [ pos(1); pos(2) ; pos(3); 0];
             obj.state = state;
