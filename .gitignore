@@ -45,3 +45,4 @@ acrobot_sim_ert_rtw/
 *.elf
 *.hex
 *.eep
+acrobot_sim.bin

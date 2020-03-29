@@ -2,36 +2,36 @@
 
 clear a imu encoder BNO1 BNO2;
 robotParameters;
-a = arduino('/dev/ttyUSB0','Nano3','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
+a = arduino('/dev/ttyACM0','MKR1000','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
 writeDigitalPin(a, 'D6', 0);
 writeDigitalPin(a, 'D7', 1);
-writePWMDutyCycle(a, 'D9',0);
+writePWMDutyCycle(a, 'D10',0);
 pause(1);
-%BNO1 = device(a,'I2CAddress', '0x28');
+BNO1 = device(a,'I2CAddress', '0x28');
 BNO2 = device(a,'I2CAddress', '0x29');
-encoder = rotaryEncoder(a, 'D2','D3', steps_per_rotation);
+encoder = rotaryEncoder(a, 'D0','D1', steps_per_rotation);
 
-writeRegister(BNO2,hex2dec('3F'), hex2dec('20'),'uint8');
-%writeRegister(BNO1,hex2dec('3F'), hex2dec('20'),'uint8');
-
-pause(0.5);
-
-writeRegister(BNO2,hex2dec('3D'),hex2dec('00'),'uint8');
-%writeRegister(BNO1,hex2dec('3D'),hex2dec('00'),'uint8');
-
-pause(0.5);
-
-writeRegister(BNO2,hex2dec('42'),hex2dec('03'),'uint8');
-%writeRegister(BNO1,hex2dec('42'),hex2dec('03'),'uint8');
-
-pause(0.5);
-
-writeRegister(BNO2,hex2dec('3D'),hex2dec('08'),'uint8');
-%writeRegister(BNO1,hex2dec('3D'),hex2dec('08'),'uint8');
+% writeRegister(BNO2,hex2dec('3F'), hex2dec('20'),'uint8');
+% %writeRegister(BNO1,hex2dec('3F'), hex2dec('20'),'uint8');
+% 
+% pause(0.5);
+% 
+% writeRegister(BNO2,hex2dec('3D'),hex2dec('00'),'uint8');
+% %writeRegister(BNO1,hex2dec('3D'),hex2dec('00'),'uint8');
+% 
+% pause(0.5);
+% 
+% writeRegister(BNO2,hex2dec('42'),hex2dec('03'),'uint8');
+% %writeRegister(BNO1,hex2dec('42'),hex2dec('03'),'uint8');
+% 
+% pause(0.5);
+% 
+% writeRegister(BNO2,hex2dec('3D'),hex2dec('08'),'uint8');
+% %writeRegister(BNO1,hex2dec('3D'),hex2dec('08'),'uint8');
 
 %% Main loop
 close all;
-writePWMDutyCycle(a,'D9',abs(pwm));
+writePWMDutyCycle(a,'D8',0);
 
 robotParameters;
 robot = acrobot.acrobot_control();
@@ -46,7 +46,7 @@ robot.kb = 0.01;
 tstep = 0.05;  % Time step
 rate = rateControl(1/tstep);
 rotmXYZ = eul2rotm([0 pi 0], 'XYZ');
-test_state_estimation = 0;
+test_state_estimation = 1;
 setup_duration = 1;
 if test_state_estimation
     fig = figure;
@@ -109,7 +109,7 @@ try
         if test_state_estimation
             robot.show(t);
         elseif (t > setup_duration)
-            writePWMDutyCycle(a,'D9',abs(pwm));
+            writePWMDutyCycle(a,'D8',abs(pwm));
         end
         
         % Display the robot
@@ -124,17 +124,14 @@ catch ex
     disp(ex)
     writeDigitalPin(a, 'D6', 0);
     writeDigitalPin(a, 'D7', 1);
-    writePWMDutyCycle(a,'D9',0);
+    writePWMDutyCycle(a,'D8',0);
 end
 writeDigitalPin(a, 'D6', 0);
 writeDigitalPin(a, 'D7', 1);
-writePWMDutyCycle(a,'D9',0);
+writePWMDutyCycle(a,'D8',0);
 
 filename = sprintf('data/tests/test_%s', datestr(now,'mm-dd-yyyy HH-MM'));
 save(filename, 'ts')
-
-%%
-codertarget.arduinobase.blocks.registerMotorCarrierLibrary(gcbh);
 
 %%
 function [acc, gyro, pos] = read_data(BNO)

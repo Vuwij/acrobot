@@ -35,9 +35,10 @@ classdef acrobot_walker < acrobot.acrobot_control & matlab.System
             obj.tau = [0;0];
         end
 
-        function tau = stepImpl(obj,state)
-            obj.x = state;
-            obj.show(0);
+        function tau = stepImpl(obj, state)
+%            
+%             obj.x = state;
+%             obj.show(0);
             tau = 0;
         end
         
@@ -47,14 +48,17 @@ classdef acrobot_walker < acrobot.acrobot_control & matlab.System
         
         function d1 = getOutputDataTypeImpl(~)
             d1 = 'double';
+          
         end
         
         function c1 = isOutputComplexImpl(~)
             c1 = false;
+           
         end
         
         function c1 = isOutputFixedSizeImpl(~)
             c1 = true;
+           
         end
     end
 end

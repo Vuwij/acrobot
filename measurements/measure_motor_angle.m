@@ -1,6 +1,6 @@
 clear; clc;
-a = arduino('COM7','Nano3','Libraries',{'RotaryEncoder', 'I2C'});
-encoder = rotaryEncoder(a,'D2','D3');
+a = arduino('/dev/ttyACM0','MKR1000','Libraries',{'RotaryEncoder', 'I2C'});
+encoder = rotaryEncoder(a,'D0','D1');
 
 while(1)
     count = readCount(encoder);

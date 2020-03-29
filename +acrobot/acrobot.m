@@ -35,12 +35,12 @@ classdef acrobot < handle
         B = [0; 1];
         
     end
-    properties
+    properties(Access = public)
         % Physical Parameters
         g = 9.81;
         
         % Mechanical Parameters
-        leg_length;
+        leg_length = 0;
         foot_radius = 0.018;
         angle_limit = pi/20;
         motor_friction = 0.01;
@@ -55,9 +55,9 @@ classdef acrobot < handle
         % Curves
         top_clip = 0;
         bottom_clip = 10;
-        pre_c;  % Pre first step
-        c1;     % First Step
-        c2;     % Second Step
+        pre_c = 0;  % Pre first step
+        c1 = 0;     % First Step
+        c2 = 0;     % Second Step
     end
     
     methods
@@ -79,14 +79,14 @@ classdef acrobot < handle
             obj.c1 = acrobot.curve(pi/9.3, pi*0.25, 1.40, 0.48, [0.0960804536593042,-0.211617429208404,0.659358736156863,0.211867160150805]); % Third Step
             obj.c2 = acrobot.curve(pi/9.5, pi*0.25, 1.40, 0.48, [0.0305427320850607,-0.210190202255343,0.549640602180841,0.120949051732730]); % Second Step
             
-            % Create Robot Equation handles
+%             % Create Robot Equation handles
             obj.solveRoboticsEquation();
-            
-            % Solve for the curve for both legs
+%             
+%             % Solve for the curve for both legs
             obj.calcRobotStates();
-            obj.updateCurves();
+%             obj.updateCurves();
         end
-        
+%         
         function mass = lmass(obj, num)
             if rem(obj.step_count,2) == 1
                 if num == 2
@@ -158,7 +158,7 @@ classdef acrobot < handle
         
         function calcRobotStates(obj)
             % Post impact for one foot is pre-impact for next foot
-            
+            temp = obj.step_count;
             % Heavy foot on the ground
             c1_qp = [(pi + obj.c2.beta)/2; pi - obj.c2.beta]; % Joint angles post impact
             c1_qm = [(pi - obj.c1.beta)/2; obj.c1.beta - pi]; % Joint angles pre impact
@@ -183,6 +183,11 @@ classdef acrobot < handle
             % Then again ground to ground
             obj.c2.xm = [c1_qm; c1_w];
             obj.c2.xp = [c1_qp; c1_v];
+     
+            obj.step_count = temp;
+            if obj.step_count ~= 0
+                step_count;
+            end
         end
         
         % objective [dist to final point; velocity to final point]
@@ -324,7 +329,7 @@ classdef acrobot < handle
             rend = obj.calc_rend(obj.leg_length, obj.leg_length, qm(1), qm(2));
             rend = rend + [cos(impact_angle) * 0.01; sin(impact_angle) * 0.01];
             qm_pre = obj.calc_qd(obj.leg_length, obj.leg_length, rend(1), rend(2));
-            w = unit(qm - qm_pre) * impact_velocity;
+            w = (qm - qm_pre)/norm(qm-qm_pre) * impact_velocity;
             
             % Post impact calculations
             De = obj.calc_De(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), qm(1), qm(2));
