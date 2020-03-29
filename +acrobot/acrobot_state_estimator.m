@@ -46,7 +46,7 @@ classdef acrobot_state_estimator < matlab.System
             if (mod(step, 2) == 1)
                 qm = 2*pi - qm;
             end
-            pos = (quat2eul(pos'))';
+%             pos = (quat2eul(pos'))';
             % q1 & q1_dot
             roll = pos(3);
             q1 = roll + pi/2;
