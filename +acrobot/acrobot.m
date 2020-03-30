@@ -84,7 +84,7 @@ classdef acrobot < handle
 %             
 %             % Solve for the curve for both legs
             obj.calcRobotStates();
-%             obj.updateCurves();
+            obj.updateCurves();
         end
 %         
         function mass = lmass(obj, num)
@@ -185,9 +185,6 @@ classdef acrobot < handle
             obj.c2.xp = [c1_qp; c1_v];
      
             obj.step_count = temp;
-            if obj.step_count ~= 0
-                step_count;
-            end
         end
         
         % objective [dist to final point; velocity to final point]
@@ -224,7 +221,7 @@ classdef acrobot < handle
             c2_tau_m = obj.c2.tau_m;
             save("data/curve_parameters", "pre_c_tau_m", "c1_tau_m", "c2_tau_m");
 
-            updateCurves(obj);
+            obj.updateCurves();
         end
         
          function updateCurves(obj)
@@ -467,7 +464,7 @@ classdef acrobot < handle
                 end
                 
                 % Run Tau until collision or angle reached
-                [tt, XX, ~, xe, ie] = ode45(@(t, x) obj.step(t, x, [0; tau_curr]), [t t_max], xs, options);
+                [tt, XX, ~, xe, ie] = ode45(@(t, x) obj.physics_step(t, x, [0; tau_curr]), [t t_max], xs, options);
                 X = [X; XX];
                 
                 % Collided with something or never hit the ground

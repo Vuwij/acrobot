@@ -6,28 +6,27 @@ a = arduino('/dev/ttyACM0','MKR1000','BaudRate',115200,'Libraries',{'RotaryEncod
 writeDigitalPin(a, 'D6', 0);
 writeDigitalPin(a, 'D7', 1);
 writePWMDutyCycle(a, 'D10',0);
-pause(1);
-BNO1 = device(a,'I2CAddress', '0x28');
+BNO1 = device(a,'I2CAddress', '0x60');
 BNO2 = device(a,'I2CAddress', '0x29');
 encoder = rotaryEncoder(a, 'D0','D1', steps_per_rotation);
 
-% writeRegister(BNO2,hex2dec('3F'), hex2dec('20'),'uint8');
-% %writeRegister(BNO1,hex2dec('3F'), hex2dec('20'),'uint8');
-% 
-% pause(0.5);
-% 
-% writeRegister(BNO2,hex2dec('3D'),hex2dec('00'),'uint8');
-% %writeRegister(BNO1,hex2dec('3D'),hex2dec('00'),'uint8');
-% 
-% pause(0.5);
-% 
-% writeRegister(BNO2,hex2dec('42'),hex2dec('03'),'uint8');
-% %writeRegister(BNO1,hex2dec('42'),hex2dec('03'),'uint8');
-% 
-% pause(0.5);
-% 
-% writeRegister(BNO2,hex2dec('3D'),hex2dec('08'),'uint8');
-% %writeRegister(BNO1,hex2dec('3D'),hex2dec('08'),'uint8');
+writeRegister(BNO2,hex2dec('3F'), hex2dec('20'),'uint8');
+writeRegister(BNO1,hex2dec('3F'), hex2dec('20'),'uint8');
+
+pause(1);
+
+writeRegister(BNO2,hex2dec('3D'),hex2dec('00'),'uint8');
+writeRegister(BNO1,hex2dec('3D'),hex2dec('00'),'uint8');
+
+pause(1);
+
+writeRegister(BNO2,hex2dec('42'),hex2dec('07'),'uint8');
+writeRegister(BNO1,hex2dec('42'),hex2dec('07'),'uint8');
+
+pause(1);
+
+writeRegister(BNO2,hex2dec('3D'),hex2dec('08'),'uint8');
+writeRegister(BNO1,hex2dec('3D'),hex2dec('08'),'uint8');
 
 %% Main loop
 close all;

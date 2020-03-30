@@ -19,8 +19,6 @@ plane_x = 1;
 plane_y = 0.5;
 
 %% Foot parameters
-leg_length = 0.3480;
-foot_radius = 0.018;
 line_depth_to_reference_frame = 0.05;
 
 
@@ -33,5 +31,10 @@ gyro_noise = 0.001;
 acc_noise = 0.01;
 
 %% Simulation parameters
-VSS_MODE=2;
-ts = 0.01;
+VSS_MODE=1;
+ROBOT_CONTROLLER=1;
+ts = 0.001;
+robot_description = importrobot("acrobot_description/models/acrobot.urdf");
+foot_radius = 0.01;
+t = robot_description.getTransform(robot_description.homeConfiguration, 'base_link', 'leg1');
+leg_length = t(1,4);

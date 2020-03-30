@@ -70,7 +70,7 @@ classdef acrobot_control < acrobot.acrobot
             end
         end
         
-        function [value, isterminal, direction] = dist_to_floor(obj, t, x, x2_min)
+        function [value, isterminal, direction] = dist_to_floor(obj, ~, x, x2_min)
             q1 = x(1);
             q2 = x(2);
             rH = obj.leg_length * [cos(q1); sin(q1)];
@@ -88,7 +88,7 @@ classdef acrobot_control < acrobot.acrobot
             end
         end
         
-        function dxdt = step(obj, ~, x, tau)
+        function dxdt = physics_step(obj, ~, x, tau)
             q = [x(1); x(2)];
             qdot = [x(3); x(4)];
             

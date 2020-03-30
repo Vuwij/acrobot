@@ -22,7 +22,7 @@ for t = ts.Time'
     robot.x = ts.getsampleusingtime(t).Data(1:4);
     is_collision = ts.getsampleusingtime(t).Data(5);
     tau = robot.getTau(robot.x);
-    [t_anim, x_anim, te, xe, ie] = ode45(@(t, x) robot.step(t, x, tau), [t t+tstep], robot.x, options);
+    [t_anim, x_anim, te, xe, ie] = ode45(@(t, x) robot.physics_step(t, x, tau), [t t+tstep], robot.x, options);
     if (is_collision)
         robot.impact_foot(robot.x);
         disp(strcat("Expected: ", num2str(robot.x')));

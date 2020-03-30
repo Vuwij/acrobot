@@ -3,25 +3,15 @@ classdef acrobot_state_estimator < matlab.System
     properties
         steps_per_rotation = 2797;
         sample_time = 0.01;
-    end
-
-    % Public, non-tunable properties
-    properties(Nontunable)
-
-    end
-
-    properties(DiscreteState)
-        
-        
+        leg_length = 0.335;
+        max_velocity_change = 10;
     end
 
     % Pre-computed constants
     properties(Access = private)
-        leg_length = 0.335;
         state = [0;0;0;0];
         cycleCount = 0;
         timeOut = false;
-        max_velocity_change = 10;
         step_count = 0;
     end
 
@@ -46,13 +36,9 @@ classdef acrobot_state_estimator < matlab.System
             if (mod(step, 2) == 1)
                 qm = 2*pi - qm;
             end
-%             pos = (quat2eul(pos'))';
-            % q1 & q1_dot
-            roll = pos(3);
-            q1 = roll + pi/2;
+            pos = quat2eul(quatmultiply(eul2quat([pi/2 0 pi]), pos'));
+            q1 = -pos(3) + pi/2;
             q1_dot = (q1 - obj.state(1))/obj.sample_time;
-            
-            % q2 & q2_dot
             q2 = qm - pi;
             q2_dot = (q2 - obj.state(2))/obj.sample_time;
             
@@ -65,7 +51,6 @@ classdef acrobot_state_estimator < matlab.System
             
             collision = 0;
  
-
             rH = obj.leg_length * [cos(q1); sin(q1)];
             rc2 = rH + obj.leg_length * [cos(q1+q2); sin(q1+q2)];
             dist_to_floor = rc2(2);
@@ -76,8 +61,7 @@ classdef acrobot_state_estimator < matlab.System
             end
 
            
-            state = [q1;q2;q1_dot;q2_dot];
-%             state = [ pos(1); pos(2) ; pos(3); 0];
+            state = [q1; q2; q1_dot; q2_dot];
             obj.state = state;
         end
     end
@@ -91,12 +75,11 @@ classdef acrobot_state_estimator < matlab.System
         function [state, collision] = stepImpl(obj,pos1, pos2, motor_step)
              if mod(obj.step_count, 2) == 0
                 pos = pos1;
-            else
+             else
                 pos = pos2;
              end
-            %placeholder for acc
-            acc = 0;
-            [state, collision] = obj.stepImplPublic(obj.step_count, pos,acc, motor_step);
+             
+             [state, collision] = obj.stepImplPublic(obj.step_count, pos, 0, motor_step);
         end
         
         function [s1, s2] = getOutputSizeImpl(~)

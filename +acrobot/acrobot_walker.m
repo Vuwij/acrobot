@@ -1,22 +1,11 @@
 classdef acrobot_walker < acrobot.acrobot_control & matlab.System
 
-    % Public, tunable properties
-    properties
-
-    end
-
-    % Public, non-tunable properties
-    properties(Nontunable)
-
-    end
-
     properties(DiscreteState)
-
     end
 
     % Pre-computed constants
     properties(Access = private)
-
+        t;
     end
 
     methods
@@ -33,13 +22,19 @@ classdef acrobot_walker < acrobot.acrobot_control & matlab.System
             % Perform one-time calculations, such as computing constants
             obj.tau_q = [0;0];
             obj.tau = [0;0];
+            obj.t = 0;
+            obj.step_count = 0;
         end
 
-        function tau = stepImpl(obj, state)
-%            
-%             obj.x = state;
-%             obj.show(0);
-            tau = 0;
+        function tau = stepImpl(obj, state, collision)
+            obj.x = state;
+            if (collision)
+                obj.step_count = obj.step_count +1;
+            end
+            obj.t = obj.t + 0.01;
+            obj.show(obj.t);
+            tau_vec = obj.getTau(state);
+            tau = tau_vec(2);
         end
         
         function s1 = getOutputSizeImpl(~)
@@ -48,7 +43,6 @@ classdef acrobot_walker < acrobot.acrobot_control & matlab.System
         
         function d1 = getOutputDataTypeImpl(~)
             d1 = 'double';
-          
         end
         
         function c1 = isOutputComplexImpl(~)
