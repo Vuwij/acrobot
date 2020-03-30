@@ -5,7 +5,7 @@ robot.calcCurves();
 robot.reset();
 
 tmax = 10;       % Max simulation time
-tstep = 0.035;  % Simulation time step
+tstep = 0.01;  % Simulation time step
 t = 0;
 
 % Simulate robot falling on the ground
@@ -43,6 +43,7 @@ while (t < tmax)
     
     t2 = toc;
     
+    set(0, 'CurrentFigure', fig)
     robot.show(t);
     
     t3 = toc;

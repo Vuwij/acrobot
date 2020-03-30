@@ -49,7 +49,7 @@ classdef acrobot < handle
         
         % Energy Loss
         fall_duration = 1.8;            % Max Fall duration (not desired)
-        tau_limit = 0.25;
+        tau_limit = 0.33;
         floor_limit = 0.0;             % Distance to the floor where no torque is allowed
         
         % Curves
@@ -75,9 +75,9 @@ classdef acrobot < handle
                 obj.inertia(i) = obj.robot.Bodies{i}.Inertia(2);
             end
             
-            obj.pre_c = acrobot.curve(pi/9.3, pi*0.25, 1.40, 0.48, [0.6200,-0.0553,1.013,0.088]); % First Step
-            obj.c1 = acrobot.curve(pi/9.3, pi*0.25, 1.40, 0.48, [0.0960804536593042,-0.211617429208404,0.659358736156863,0.211867160150805]); % Third Step
-            obj.c2 = acrobot.curve(pi/9.5, pi*0.25, 1.40, 0.48, [0.0305427320850607,-0.210190202255343,0.549640602180841,0.120949051732730]); % Second Step
+            obj.pre_c = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.6052, -0.0754, 0.8631, 0.0658]); % First Step
+            obj.c1 = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.0232, -0.2047, 0.5594, 0.1340]); % Third Step
+            obj.c2 = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.0602, -0.2710, 0.4843, 0.2053]); % Second Step
             
 %             % Create Robot Equation handles
             obj.solveRoboticsEquation();
@@ -159,6 +159,17 @@ classdef acrobot < handle
         function calcRobotStates(obj)
             % Post impact for one foot is pre-impact for next foot
             temp = obj.step_count;
+            
+            % First Step
+            obj.step_count = 0;
+            obj.pre_c.xp = [pi/2; 0; -0.005; -0.05];
+            pre_c_qm = [(pi - obj.pre_c.beta)/2; obj.pre_c.beta - pi]; % Joint angles pre impact
+            pre_c_qp = [(pi + obj.pre_c.beta)/2; pi - obj.pre_c.beta]; % Joint angles pre impact
+            [~, pre_c_w] = obj.getImpactVelocities(pre_c_qm, pre_c_qp, obj.pre_c.impact_angle, obj.pre_c.impact_velocity);
+            obj.pre_c.xm = [pre_c_qm; pre_c_w];
+
+            % Second Step
+            
             % Heavy foot on the ground
             c1_qp = [(pi + obj.c2.beta)/2; pi - obj.c2.beta]; % Joint angles post impact
             c1_qm = [(pi - obj.c1.beta)/2; obj.c1.beta - pi]; % Joint angles pre impact
@@ -167,15 +178,11 @@ classdef acrobot < handle
             c2_qp = [(pi + obj.c1.beta)/2; pi - obj.c1.beta]; % Joint angles post impact
             c2_qm = [(pi - obj.c2.beta)/2; obj.c2.beta - pi]; % Joint angles pre impact
             
-            obj.step_count = 0;
+
             [c2_v, c1_w] = obj.getImpactVelocities(c1_qm, c2_qp, obj.c1.impact_angle, obj.c1.impact_velocity);
             obj.step_count = 1;
             [c1_v, c2_w] = obj.getImpactVelocities(c2_qm, c1_qp, obj.c2.impact_angle, obj.c2.impact_velocity);
             
-            % First go from air to ground
-            obj.pre_c.xp = [pi/2; 0; -0.005; -0.05];
-            obj.pre_c.xm = [c1_qm; c1_w];
-
             % Then ground to ground
             obj.c1.xp = [c2_qp; c2_v];
             obj.c1.xm = [c2_qm; c2_w];
@@ -212,7 +219,7 @@ classdef acrobot < handle
             obj.step_count = 0;
             obj.calcHolonomicCurves(obj.pre_c, true);
             obj.step_count = 0;
-            obj.calcHolonomicCurves(obj.c1, false);
+            obj.calcHolonomicCurves(obj.c1, true);
             obj.step_count = 1;
             obj.calcHolonomicCurves(obj.c2, true);
             obj.step_count = 0;
@@ -286,12 +293,12 @@ classdef acrobot < handle
             ylabel('q2');
             
             % Global Search
-            weight = [1,0.2,0.01];
+            weight = [1,0.1,0.005];
             x0 = curve.tau_m_guess;
             
             % Local Search
             fun = @(tau_m) obj.calcHolonomicCurveHelper(curve.xp, curve.xm, tau_m);
-            goal = [0.001,0.01,0.01];
+            goal = [0.001,0.05,0.1];
             lb = [0,-obj.tau_limit,0,-obj.tau_limit];
             ub = [obj.fall_duration,obj.tau_limit,obj.fall_duration,obj.tau_limit];
             A = [1 0 -1 0]; % time 1 < time 2
@@ -300,19 +307,18 @@ classdef acrobot < handle
             beq = [];
             nonlcon = [];
             
-%             options = optimoptions('gamultiobj','UseParallel', true);
-%             [x,fval] = gamultiobj(fun,4,A,b,Aeq,beq,lb,ub,nonlcon,options);
-%             fval = fval .* weight;
-%             [~, index] = min(vecnorm(fval,2,2));
-%             x0 = x(index,:);
-            
             if (optimize)
-                options = optimoptions('fgoalattain','MaxFunctionEvaluations', 5e2, 'UseParallel', true);
+                [x,fval] = gamultiobj(fun,4,A,b,Aeq,beq,lb,ub,nonlcon, ...
+                    optimoptions('gamultiobj','PopulationSize', 100, 'UseParallel', true)); 
+                fval = fval .* weight;
+                [~, index] = min(vecnorm(fval,2,2));
+                x0 = x(index,:);
+                options = optimoptions('fgoalattain','DiffMaxChange', 0.001, 'MaxFunctionEvaluations', 5e3, 'UseParallel', true);
                 curve.tau_m = fgoalattain(fun,x0,goal,weight,A,b,Aeq,beq,lb,ub,nonlcon,options);
             else
                 curve.tau_m = x0;
             end
-            
+
             X = obj.getFallingCurve(curve.xp, obj.fall_duration, curve.tau_m);
             X = obj.clipCurve(X);
             [~,idx] = unique(X(:,2));

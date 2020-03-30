@@ -142,6 +142,7 @@ classdef acrobot_control < acrobot.acrobot
 
             obj.tau(2) = max(-obj.TauLimit, min(obj.TauLimit, obj.tau(2)));
             tau = obj.tau;
+            obj.tau_q = D \ tau;
 %             fprintf("E: %.3f\t Edot: %.3f\t Eacc: %.3f Part 2:%.3f Tau: %.3f\n", e, e_dot, obj.e_acc, part2, obj.tau(2));
         end
         

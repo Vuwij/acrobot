@@ -6,6 +6,7 @@ classdef acrobot_walker < acrobot.acrobot_control & matlab.System
     % Pre-computed constants
     properties(Access = private)
         t;
+        fig;
     end
 
     methods
@@ -24,6 +25,8 @@ classdef acrobot_walker < acrobot.acrobot_control & matlab.System
             obj.tau = [0;0];
             obj.t = 0;
             obj.step_count = 0;
+            obj.fig = figure;
+            set(obj.fig, 'Position',  [100, 100, 1500, 700]);
         end
 
         function tau = stepImpl(obj, state, collision)
@@ -32,9 +35,14 @@ classdef acrobot_walker < acrobot.acrobot_control & matlab.System
                 obj.step_count = obj.step_count +1;
             end
             obj.t = obj.t + 0.01;
+            set(0, 'CurrentFigure', obj.fig)
             obj.show(obj.t);
             tau_vec = obj.getTau(state);
-            tau = tau_vec(2);
+            if (mod(obj.step_count,2) == 0)
+                tau = tau_vec(2);
+            else
+                tau = -tau_vec(2);
+            end
         end
         
         function s1 = getOutputSizeImpl(~)
