@@ -29,6 +29,8 @@ steps_per_rotation = 2797;
 imu_sample_rate = 100;
 gyro_noise = 0.001;
 acc_noise = 0.01;
+angle_noise = 0.000000;
+encoder_noise = 0.000;
 
 %% Simulation parameters
 VSS_MODE=1;

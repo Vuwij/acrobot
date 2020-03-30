@@ -18,9 +18,10 @@ classdef curve < handle
         tau_m_guess;
         tau_m;
         
-        phi;         % Function phi(q2) = q1
-        phi_dot;
-        phi_ddot;
+        x_fall;
+        phi = struct([]);         % Function phi(q2) = q1
+        phi_dot = struct([]);
+        phi_ddot = struct([]);
         
     end
     

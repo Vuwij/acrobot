@@ -8,32 +8,19 @@ classdef acrobot < handle
         p4;
     end
     properties(Access = protected)
-        robot = importrobot("acrobot_description/models/acrobot.urdf");
+        robot;
         
         % Convenience values
         mass = zeros(2,1);
         com = zeros(2,1);
         inertia = zeros(2,1);
         
-        % Function Handles
-        calc_D;
-        calc_C;
-        calc_P;
-        calc_EE;
-        calc_B;
-        
-        calc_J;
-        calc_De;
-        calc_E;
-        calc_dUde;
-        
-        % Forward and Inverse Kinematics
-        calc_qd;
-        calc_rend;
-        
         % VHC Parameters
         B = [0; 1];
         
+        pre_c = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.6052, -0.0754, 0.8631, 0.0658]); % First Step
+        c1 = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.0232, -0.2047, 0.5594, 0.1340]); % Third Step
+        c2 = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.0602, -0.2710, 0.4843, 0.2053]); % Second Step
     end
     properties(Access = public)
         % Physical Parameters
@@ -55,38 +42,76 @@ classdef acrobot < handle
         % Curves
         top_clip = 0;
         bottom_clip = 10;
-        pre_c = 0;  % Pre first step
-        c1 = 0;     % First Step
-        c2 = 0;     % Second Step
     end
     
     methods
-        function obj = acrobot()
+        function obj = acrobot(recalculate)
+            if (recalculate == true)
+                obj.calcCurves();
+                obj.updateCurves();
+            else
+                obj.updateCurves();
+            end
             
+        end
+            
+        function calcCurves(obj)
+            obj.robot = importrobot("acrobot_description/models/acrobot.urdf");
             obj.robot.showdetails
-        
             t = obj.robot.getTransform(obj.robot.homeConfiguration, 'base_link', 'leg1');
             obj.leg_length = t(1,4) + obj.foot_radius;
-
+            
             % Calculations
             for i = 1:2
                 obj.mass(i) = obj.robot.Bodies{i}.Mass;
                 obj.com(i) = norm(obj.robot.Bodies{i}.CenterOfMass(1));
                 obj.inertia(i) = obj.robot.Bodies{i}.Inertia(2);
             end
-            
             obj.pre_c = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.6052, -0.0754, 0.8631, 0.0658]); % First Step
             obj.c1 = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.0232, -0.2047, 0.5594, 0.1340]); % Third Step
             obj.c2 = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.0602, -0.2710, 0.4843, 0.2053]); % Second Step
             
-%             % Create Robot Equation handles
+            % Create Robot Equation handles
             obj.solveRoboticsEquation();
-%             
-%             % Solve for the curve for both legs
+
+            % Solve for the curve for both legs
             obj.calcRobotStates();
-            obj.updateCurves();
+            
+            obj.step_count = 0;
+            obj.calcHolonomicCurves(obj.pre_c, false);
+            obj.step_count = 0;
+            obj.calcHolonomicCurves(obj.c1, false);
+            obj.step_count = 1;
+            obj.calcHolonomicCurves(obj.c2, false);
+            obj.step_count = 0;
+            
+            pre_c = struct(obj.pre_c);
+            c1 = struct(obj.c1);
+            c2 = struct(obj.c2);
+            leg_length = obj.leg_length;
+            mass = obj.mass;
+            com = obj.com;
+            inertia = obj.inertia;
+
+            save("data/curve_parameters", "leg_length", "mass", "com", "inertia", "pre_c", "c1", "c2");
         end
-%         
+        
+        function updateCurves(obj)
+            
+            
+            % Curves
+            data = load("data/curve_parameters");
+            obj.pre_c = data.pre_c;
+            obj.c1 = data.c1;
+            obj.c2 = data.c2;
+            obj.leg_length = data.leg_length;
+            obj.mass = data.mass;
+            obj.com = data.com;
+            obj.inertia = data.inertia;
+
+        end
+        
+        
         function mass = lmass(obj, num)
             if rem(obj.step_count,2) == 1
                 if num == 2
@@ -196,7 +221,7 @@ classdef acrobot < handle
         
         % objective [dist to final point; velocity to final point]
         function objective = calcHolonomicCurveHelper(obj, xm, xp, tau_m, q2_min)
-            if (nargin == 5)
+            if (nargin == 4)
                 [X, fail] = obj.getFallingCurve(xm, obj.fall_duration, tau_m, q2_min);
             else
                 [X, fail] = obj.getFallingCurve(xm, obj.fall_duration, tau_m);
@@ -209,61 +234,10 @@ classdef acrobot < handle
             end
 
             if (~fail)
-                plot(X(:,1),X(:,2), 'color', [0,0,0.5,0.06]);
-                hold on;
+                %plot(X(:,1),X(:,2), 'color', [0,0,0.5,0.06]);
+                %hold on;
                 disp(objective);
             end
-        end
-        
-        function calcCurves(obj)
-            obj.step_count = 0;
-            obj.calcHolonomicCurves(obj.pre_c, true);
-            obj.step_count = 0;
-            obj.calcHolonomicCurves(obj.c1, true);
-            obj.step_count = 1;
-            obj.calcHolonomicCurves(obj.c2, true);
-            obj.step_count = 0;
-            pre_c_tau_m = obj.pre_c.tau_m;
-            c1_tau_m = obj.c1.tau_m;
-            c2_tau_m = obj.c2.tau_m;
-            save("data/curve_parameters", "pre_c_tau_m", "c1_tau_m", "c2_tau_m");
-
-            obj.updateCurves();
-        end
-        
-         function updateCurves(obj)
-            obj.pre_c.tau_m = load("data/curve_parameters", "pre_c_tau_m").pre_c_tau_m;
-            obj.c1.tau_m = load("data/curve_parameters", "c1_tau_m").c1_tau_m;
-            obj.c2.tau_m = load("data/curve_parameters", "c2_tau_m").c2_tau_m;
-            
-            obj.step_count = 0;
-            X = obj.getFallingCurve(obj.pre_c.xp, obj.fall_duration, obj.pre_c.tau_m);
-            X = obj.clipCurve(X);
-            [~,idx] = unique(X(:,2));
-            X = X(idx,:);
-            obj.pre_c.phi = spline(X(:,2), X(:,1));
-            obj.pre_c.phi_dot = fnder(obj.pre_c.phi,1);
-            obj.pre_c.phi_ddot = fnder(obj.pre_c.phi,2);
-            
-            obj.step_count = 0;
-            X = obj.getFallingCurve(obj.c1.xp, obj.fall_duration, obj.c1.tau_m);
-            X = obj.clipCurve(X);
-            [~,idx] = unique(X(:,2));
-            X = X(idx,:);
-            obj.c1.phi = spline(X(:,2), X(:,1));
-            obj.c1.phi_dot = fnder(obj.c1.phi,1);
-            obj.c1.phi_ddot = fnder(obj.c1.phi,2);
-            
-            obj.step_count = 1;
-            X = obj.getFallingCurve(obj.c2.xp, obj.fall_duration, obj.c2.tau_m);
-            X = obj.clipCurve(X);
-            [~,idx] = unique(X(:,2));
-            X = X(idx,:);
-            obj.c2.phi = spline(X(:,2), X(:,1));
-            obj.c2.phi_dot = fnder(obj.c2.phi,1);
-            obj.c2.phi_ddot = fnder(obj.c2.phi,2);
-            
-            obj.step_count = 0;
         end
         
         function calcHolonomicCurves(obj, curve, optimize)
@@ -277,11 +251,11 @@ classdef acrobot < handle
             plot(q1_range, -2 * q1_range, 'color','cyan');
 
             % Plot 90 degree fall curve
-            rend = obj.calc_rend(obj.leg_length, obj.leg_length, curve.xm(1), curve.xm(2));
+            rend = acrobot.gen.calc_rend(obj.leg_length, obj.leg_length, curve.xm(1), curve.xm(2));
             rend_range = [sin(curve.impact_angle); cos(curve.impact_angle)] * (0:0.01:0.05);
             qup = zeros(2, length(rend_range));
             for i = 1:length(rend_range)
-                qup(:,i) = obj.calc_qd(obj.leg_length, obj.leg_length, rend(1) + rend_range(2, i), rend(2) + rend_range(2, i));
+                qup(:,i) = acrobot.gen.calc_qd(obj.leg_length, obj.leg_length, rend(1) + rend_range(2, i), rend(2) + rend_range(2, i));
             end
             plot(qup(1,:), qup(2,:));
 
@@ -322,29 +296,32 @@ classdef acrobot < handle
             X = obj.getFallingCurve(curve.xp, obj.fall_duration, curve.tau_m);
             X = obj.clipCurve(X);
             [~,idx] = unique(X(:,2));
-            X = X(idx,:);
-            plot(X(:,1), X(:,2), 'Color', 'red')
+            curve.x_fall = X(idx,:);
+            curve.phi = spline(curve.x_fall(:,2), curve.x_fall(:,1));
+            curve.phi_dot = fnder(curve.phi,1);
+            curve.phi_ddot = fnder(curve.phi,2);
+            plot(curve.x_fall(:,1), curve.x_fall(:,2), 'Color', 'red')
             hold off;
         end
         
         function [v, w] = getImpactVelocities(obj, qm, qp, impact_angle, impact_velocity)
             
-            rend = obj.calc_rend(obj.leg_length, obj.leg_length, qm(1), qm(2));
+            rend = acrobot.gen.calc_rend(obj.leg_length, obj.leg_length, qm(1), qm(2));
             rend = rend + [cos(impact_angle) * 0.01; sin(impact_angle) * 0.01];
-            qm_pre = obj.calc_qd(obj.leg_length, obj.leg_length, rend(1), rend(2));
+            qm_pre = acrobot.gen.calc_qd(obj.leg_length, obj.leg_length, rend(1), rend(2));
             w = (qm - qm_pre)/norm(qm-qm_pre) * impact_velocity;
             
             % Post impact calculations
-            De = obj.calc_De(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), qm(1), qm(2));
-            E = obj.calc_E(obj.leg_length, obj.leg_length, qm(1), qm(2));
-            dUde = obj.calc_dUde(obj.leg_length, qm(1));
+            De = acrobot.gen.calc_De(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), qm(1), qm(2));
+            E = acrobot.gen.calc_E(obj.leg_length, obj.leg_length, qm(1), qm(2));
+            dUde = acrobot.gen.calc_dUde(obj.leg_length, qm(1));
             last_term = [eye(2); dUde];
 
             delta_F = -(E/De*E')\E*last_term;
             delta_qedot = De\E'*delta_F + last_term;
             T = [1 1; 0 -1]; % Relabelling
             qp_dot = [T zeros(2,2)] * (delta_qedot * w) * obj.lcurve.energy_loss;
-            rend_dot = obj.calc_J(obj.leg_length, obj.leg_length, qp(1), qp(2)) * qp_dot;
+            rend_dot = acrobot.gen.calc_J(obj.leg_length, obj.leg_length, qp(1), qp(2)) * qp_dot;
             if (rend_dot(2) < 0)
                 v = -qp_dot;
             else
@@ -396,7 +373,7 @@ classdef acrobot < handle
             m2 = obj.lmass(2);
             for i=1:size(BX,1)
                 for j=1:size(BY,2)
-                    temp = obj.calc_D(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), ...
+                    temp = acrobot.gen.calc_D(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), ...
                                     m1, m2, BY(i,j)) \ obj.B;
                     BU(i,j) = temp(1);
                     BV(i,j) = temp(2);
@@ -432,9 +409,9 @@ classdef acrobot < handle
             m2 = obj.lmass(2);
             for i=1:size(X2,1)
                 for j=1:size(X2,2)
-                    D = obj.calc_D(obj.linertia(1), obj.linertia(1), obj.leg_length, obj.lcom(1), obj.lcom(2), ...
+                    D = acrobot.gen.calc_D(obj.linertia(1), obj.linertia(1), obj.leg_length, obj.lcom(1), obj.lcom(2), ...
                                     m1, m2, X2(i,j));
-                    P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), ...
+                    P = acrobot.gen.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), ...
                                     m1, m2, X1(i,j), X2(i,j));
                     temp = D \ -P;
                     R(i,j) = temp(1);
@@ -501,9 +478,9 @@ classdef acrobot < handle
             m2 = obj.lmass(2);
             for i=1:size(X2,1)
                 for j=1:size(X2,2)
-                    D = obj.calc_D(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), ...
+                    D = acrobot.gen.calc_D(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), ...
                                     m1, m2, X2(i,j));
-                    P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), ...
+                    P = acrobot.gen.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), ...
                                     m1, m2, X1(i,j), X2(i,j));
 
                     temp1 = D \ obj.B;
@@ -634,17 +611,17 @@ classdef acrobot < handle
             qd = [q1d; q2d];
             
             % Add the matlab functions
-            obj.calc_J = matlabFunction(renddot);
-            obj.calc_D = matlabFunction(D);
-            obj.calc_C = matlabFunction(C);
-            obj.calc_P = matlabFunction(P);
-            obj.calc_B = matlabFunction(B);
-            obj.calc_De = matlabFunction(De);
-            obj.calc_E = matlabFunction(E);
-            obj.calc_dUde = matlabFunction(dUde);
-            obj.calc_EE = matlabFunction(EE);
-            obj.calc_qd = matlabFunction(qd);
-            obj.calc_rend = matlabFunction(rend);
+            matlabFunction(renddot, 'File', '+acrobot/+gen/calc_J');
+            matlabFunction(D, 'File', '+acrobot/+gen/calc_D');
+            matlabFunction(C, 'File', '+acrobot/+gen/calc_C');
+            matlabFunction(P, 'File', '+acrobot/+gen/calc_P');
+            matlabFunction(B, 'File', '+acrobot/+gen/calc_B');
+            matlabFunction(De, 'File', '+acrobot/+gen/calc_De');
+            matlabFunction(E, 'File', '+acrobot/+gen/calc_E');
+            matlabFunction(dUde, 'File', '+acrobot/+gen/calc_dUde');
+            matlabFunction(EE, 'File', '+acrobot/+gen/calc_EE');
+            matlabFunction(qd, 'File', '+acrobot/+gen/calc_qd');
+            matlabFunction(rend, 'File', '+acrobot/+gen/calc_rend');
         end
     end
 end

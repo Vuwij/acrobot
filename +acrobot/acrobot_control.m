@@ -29,8 +29,8 @@ classdef acrobot_control < acrobot.acrobot
     end
 
     methods
-        function obj = acrobot_control()
-            obj = obj@acrobot.acrobot();
+        function obj = acrobot_control(recalculate)
+            obj = obj@acrobot.acrobot(recalculate);
         end
         
         function reset(obj)
@@ -93,10 +93,10 @@ classdef acrobot_control < acrobot.acrobot
             qdot = [x(3); x(4)];
             
             % Robotics Equation Parameters
-            D = obj.calc_D(obj.linertia(1), obj.linertia(1), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q(2));
-            C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
-            P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
-            B = obj.calc_B(qdot(2));
+            D = acrobot.gen.calc_D(obj.linertia(1), obj.linertia(1), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q(2));
+            C = acrobot.gen.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
+            P = acrobot.gen.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
+            B = acrobot.gen.calc_B(qdot(2));
             
             dist = obj.dist_to_floor(0, x);
             if (dist(1) < obj.floor_limit && q(2) < 0)
@@ -120,10 +120,10 @@ classdef acrobot_control < acrobot.acrobot
             end
             
             % Robotics Equation Parameters
-            D = obj.calc_D(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q(2));
-            C = obj.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
-            P = obj.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
-            B = obj.calc_B(qdot(2));
+            D = acrobot.gen.calc_D(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2),q(2));
+            C = acrobot.gen.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
+            P = acrobot.gen.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
+            B = acrobot.gen.calc_B(qdot(2));
             
             phi = @(q2) ppval(obj.lcurve.phi,q2);
             phi_dot = @(q2) ppval(obj.lcurve.phi_dot,q2);
@@ -155,9 +155,9 @@ classdef acrobot_control < acrobot.acrobot
             q = [q1; q2];
             q_dot = [q1_dot; q2_dot];
 
-            De = obj.calc_De(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q1, q2);
-            E = obj.calc_E(obj.leg_length, obj.leg_length, q1, q2);
-            dUde = obj.calc_dUde(obj.leg_length, q1);
+            De = acrobot.gen.calc_De(obj.linertia(1), obj.linertia(2), obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q1, q2);
+            E = acrobot.gen.calc_E(obj.leg_length, obj.leg_length, q1, q2);
+            dUde = acrobot.gen.calc_dUde(obj.leg_length, q1);
             last_term = [eye(2); dUde];
 
             delta_F = -(E/De*E')\E*last_term;
@@ -168,7 +168,7 @@ classdef acrobot_control < acrobot.acrobot
             qp_dot = [T zeros(2,2)] * (delta_qedot * q_dot) * obj.lcurve.energy_loss;
             
             % Collision with floor?
-            rend_dot = obj.calc_J(obj.leg_length, obj.leg_length, qp(1), qp(2)) * qp_dot;
+            rend_dot = acrobot.gen.calc_J(obj.leg_length, obj.leg_length, qp(1), qp(2)) * qp_dot;
             if (rend_dot(2) < 0)
                 obj.x = [qp; -qp_dot];
             else
