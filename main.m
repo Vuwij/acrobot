@@ -2,10 +2,13 @@
 
 clear a imu encoder BNO1 BNO2;
 robotParameters;
-a = arduino('/dev/ttyACM0','MKR1000','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
+a = arduino('/dev/ttyACM1','MKR1000','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
 writeDigitalPin(a, 'D6', 0);
 writeDigitalPin(a, 'D7', 1);
 writePWMDutyCycle(a, 'D10',0);
+%%
+scanI2CBus(a)
+%%
 BNO1 = device(a,'I2CAddress', '0x60');
 BNO2 = device(a,'I2CAddress', '0x29');
 encoder = rotaryEncoder(a, 'D0','D1', steps_per_rotation);

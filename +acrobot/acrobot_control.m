@@ -125,19 +125,34 @@ classdef acrobot_control < acrobot.acrobot
             P = acrobot.gen.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
             B = acrobot.gen.calc_B(qdot(2));
             
-            phi = @(q2) ppval(obj.lcurve.phi,q2);
-            phi_dot = @(q2) ppval(obj.lcurve.phi_dot,q2);
-            phi_ddot = @(q2) ppval(obj.lcurve.phi_ddot,q2);
+            [breaks, coefs] = unmkpp(obj.lcurve.phi);
+            phi_curve = mkpp(breaks, coefs);
+            [breaks, coefs] = unmkpp(obj.lcurve.phi_dot);
+            phi_dot_curve = mkpp(breaks, coefs);
+            [breaks, coefs] = unmkpp(obj.lcurve.phi_ddot);
+            phi_ddot_curve = mkpp(breaks, coefs);
             
-            obj.holo_point = [phi(q(2)); q(2)];
+            phi = @(q2) ppval(phi_curve,q2);
+            phi_dot = @(q2) ppval(phi_dot_curve,q2);
+            phi_ddot = @(q2) ppval(phi_ddot_curve,q2);
+            
+            if (coder.target('MATLAB'))
+                obj.holo_point = [phi(q(2)); q(2)];
+            end
+            
+            % Code generation hack
+            phi_q2 = phi(q(2));
+            phi_dot_q2 = phi_dot(q(2));
+            phi_ddot_q2 = phi_ddot(q(2));
+            
             
             % PD Control
-            e = q(1) - phi(q(2));
-            e_dot = qdot(1) - phi_dot(q(2)) * qdot(2);
+            e = q(1) - phi_q2(1);
+            e_dot = qdot(1) - phi_dot_q2(1) * qdot(2);
             obj.e_acc = max(-obj.integral_saturation, min(obj.integral_saturation, obj.e_acc + e));
             
-            part1 = [1 -phi_dot(q(2))] * inv(D) * obj.B;
-            part2 = -obj.Ki * obj.e_acc + -obj.Kp * e - obj.Kd * e_dot + phi_ddot(q(2)) * qdot(2)^2 + [1 -phi_dot(q(2))] * inv(D) * (C * qdot + P + B);
+            part1 = [1 -phi_dot_q2(1)] * inv(D) * obj.B;
+            part2 = -obj.Ki * obj.e_acc + -obj.Kp * e - obj.Kd * e_dot + phi_ddot_q2(1) * qdot(2)^2 + [1 -phi_dot_q2(1)] * inv(D) * (C * qdot + P + B);
             obj.tau = [0; inv(part1) * part2];
 
             obj.tau(2) = max(-obj.TauLimit, min(obj.TauLimit, obj.tau(2)));

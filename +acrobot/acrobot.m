@@ -17,7 +17,7 @@ classdef acrobot < handle
         
         % VHC Parameters
         B = [0; 1];
-        
+
         pre_c = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.6052, -0.0754, 0.8631, 0.0658]); % First Step
         c1 = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.0232, -0.2047, 0.5594, 0.1340]); % Third Step
         c2 = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.0602, -0.2710, 0.4843, 0.2053]); % Second Step
@@ -67,9 +67,6 @@ classdef acrobot < handle
                 obj.com(i) = norm(obj.robot.Bodies{i}.CenterOfMass(1));
                 obj.inertia(i) = obj.robot.Bodies{i}.Inertia(2);
             end
-            obj.pre_c = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.6052, -0.0754, 0.8631, 0.0658]); % First Step
-            obj.c1 = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.0232, -0.2047, 0.5594, 0.1340]); % Third Step
-            obj.c2 = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.0602, -0.2710, 0.4843, 0.2053]); % Second Step
             
             % Create Robot Equation handles
             obj.solveRoboticsEquation();
@@ -98,12 +95,12 @@ classdef acrobot < handle
         
         function updateCurves(obj)
             
-            
             % Curves
             data = load("data/curve_parameters");
             obj.pre_c = data.pre_c;
             obj.c1 = data.c1;
             obj.c2 = data.c2;
+            
             obj.leg_length = data.leg_length;
             obj.mass = data.mass;
             obj.com = data.com;
@@ -145,7 +142,7 @@ classdef acrobot < handle
             inertia = obj.inertia(num);
         end
         
-        function curve = lcurve(obj)
+        function curve = lcurve(obj) %#codegen
             if obj.step_count == 0
                 curve = obj.pre_c;
             elseif rem(obj.step_count,2) == 0
@@ -296,8 +293,8 @@ classdef acrobot < handle
             X = obj.getFallingCurve(curve.xp, obj.fall_duration, curve.tau_m);
             X = obj.clipCurve(X);
             [~,idx] = unique(X(:,2));
-            curve.x_fall = X(idx,:);
-            curve.phi = spline(curve.x_fall(:,2), curve.x_fall(:,1));
+            X = X(idx,:);
+            curve.phi = spline(X(:,2), X(:,1));
             curve.phi_dot = fnder(curve.phi,1);
             curve.phi_ddot = fnder(curve.phi,2);
             plot(curve.x_fall(:,1), curve.x_fall(:,2), 'Color', 'red')

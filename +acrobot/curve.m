@@ -18,10 +18,9 @@ classdef curve < handle
         tau_m_guess;
         tau_m;
         
-        x_fall;
-        phi = struct([]);         % Function phi(q2) = q1
-        phi_dot = struct([]);
-        phi_ddot = struct([]);
+        phi;         % Function phi(q2) = q1
+        phi_dot;
+        phi_ddot;
         
     end
     
@@ -32,6 +31,10 @@ classdef curve < handle
             obj.impact_velocity = impact_velocity;
             obj.energy_loss = energy_loss;
             obj.tau_m_guess = tau_m_guess;
+            
+            obj.phi = struct([]);
+            obj.phi_dot = struct([]);
+            obj.phi_ddot = struct([]);
         end
     end
 end
