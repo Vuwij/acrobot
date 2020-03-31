@@ -27,14 +27,16 @@ classdef acrobot_walker < acrobot.acrobot_control & matlab.System
             obj.tau_q = [0;0];
             obj.tau = [0;0];
             obj.t = 0;
-            obj.step_count = 0;
             if (obj.display && coder.target('MATLAB'))
                 obj.fig = figure;
                 set(obj.fig, 'Position',  [100, 100, 1500, 700]);                
             end
+            obj.resetRobot();
+            fprintf("%f", obj.step_count);
         end
 
         function tau = stepImpl(obj, state, collision)
+
             obj.x = state;
             if (collision)
                 obj.step_count = obj.step_count +1;
@@ -50,6 +52,10 @@ classdef acrobot_walker < acrobot.acrobot_control & matlab.System
             else
                 tau = -tau_vec(2);
             end
+        end
+        
+        function resetImpl(obj)
+            obj.resetRobot();
         end
         
         function s1 = getOutputSizeImpl(~)

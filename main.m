@@ -61,7 +61,7 @@ end
 estimator.sample_time = tstep;
 estimator.setupImplPublic();
 encoder.resetCount();
-robot.reset();
+robot.resetRobot();
 
 last_motor_step = encoder.readCount();
 t = 0;

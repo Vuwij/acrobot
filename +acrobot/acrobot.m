@@ -22,7 +22,7 @@ classdef acrobot < handle
         c1 = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.0232, -0.2047, 0.5594, 0.1340]); % Third Step
         c2 = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.0602, -0.2710, 0.4843, 0.2053]); % Second Step
     end
-    properties(Access = public)
+    properties(Access = protected)
         % Physical Parameters
         g = 9.81;
         
@@ -52,7 +52,6 @@ classdef acrobot < handle
             else
                 obj.updateCurves();
             end
-            
         end
             
         function calcCurves(obj)

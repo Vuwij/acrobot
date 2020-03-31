@@ -33,7 +33,7 @@ classdef acrobot_control < acrobot.acrobot
             obj = obj@acrobot.acrobot(recalculate);
         end
         
-        function reset(obj)
+        function resetRobot(obj)
             obj.x = [pi/2; 0; -0.005; -0.05];
             obj.tau = [0; 0];
             obj.holo_point = [0; 0];
@@ -112,7 +112,6 @@ classdef acrobot_control < acrobot.acrobot
         function tau = getTau(obj, x)
             q = [x(1); x(2)];
             qdot = [x(3); x(4)];
-            
             dist = obj.dist_to_floor(0, x);
             if (dist(1) < obj.floor_limit && q(2) < 0)
                 tau = [0; 0];
@@ -136,16 +135,13 @@ classdef acrobot_control < acrobot.acrobot
             phi_dot = @(q2) ppval(phi_dot_curve,q2);
             phi_ddot = @(q2) ppval(phi_ddot_curve,q2);
             
-            if (coder.target('MATLAB'))
-                obj.holo_point = [phi(q(2)); q(2)];
-            end
-            
             % Code generation hack
             phi_q2 = phi(q(2));
             phi_dot_q2 = phi_dot(q(2));
             phi_ddot_q2 = phi_ddot(q(2));
             
-            
+            obj.holo_point = [phi_q2(1); q(2)];
+
             % PD Control
             e = q(1) - phi_q2(1);
             e_dot = qdot(1) - phi_dot_q2(1) * qdot(2);
