@@ -18,18 +18,16 @@ classdef acrobot < handle
         % VHC Parameters
         B = [0; 1];
 
-        pre_c = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.6052, -0.0754, 0.8631, 0.0658]); % First Step
+        pre_c = acrobot.curve(pi/9.5, pi*0.25, 1.8, 0.48, [0.6052, -0.0754, 0.8631, 0.0658]); % First Step
         c1 = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.0232, -0.2047, 0.5594, 0.1340]); % Third Step
         c2 = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.0602, -0.2710, 0.4843, 0.2053]); % Second Step
-    end
-    properties(Access = protected)
+
         % Physical Parameters
         g = 9.81;
         
         % Mechanical Parameters
         leg_length = 0;
         foot_radius = 0.018;
-        angle_limit = pi/20;
         motor_friction = 0.01;
 
         step_count = 0;
@@ -42,6 +40,9 @@ classdef acrobot < handle
         % Curves
         top_clip = 0;
         bottom_clip = 10;
+    end
+    properties(Access = public)
+        angle_limit = pi/20;
     end
     
     methods
@@ -95,7 +96,7 @@ classdef acrobot < handle
         function updateCurves(obj)
             
             % Curves
-            data = load("data/curve_parameters");
+            data = coder.load("data/curve_parameters");
             obj.pre_c = data.pre_c;
             obj.c1 = data.c1;
             obj.c2 = data.c2;
@@ -175,6 +176,7 @@ classdef acrobot < handle
                 end
             end
             X = X(i+1:j,:);
+            X = X(1:2:end,:); % Reduce size
         end
         
         function calcRobotStates(obj)

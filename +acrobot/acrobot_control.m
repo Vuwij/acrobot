@@ -42,10 +42,6 @@ classdef acrobot_control < acrobot.acrobot
             obj.step_count = 0;
         end
         
-        function TauLimit = TauLimit(obj)
-            TauLimit = obj.tau_limit;
-        end
-        
         function Kp = Kp(obj)
             if (obj.actual_robot)
                 Kp = obj.kp;
@@ -123,37 +119,42 @@ classdef acrobot_control < acrobot.acrobot
             C = acrobot.gen.calc_C(obj.leg_length, obj.lcom(2), obj.lmass(2), q(2), qdot(1), qdot(2));
             P = acrobot.gen.calc_P(obj.g, obj.leg_length, obj.lcom(1), obj.lcom(2), obj.lmass(1), obj.lmass(2), q(1), q(2));
             B = acrobot.gen.calc_B(qdot(2));
-            
-            [breaks, coefs] = unmkpp(obj.lcurve.phi);
+
+            % Could use lcurve, codegen workaround
+            curve = obj.lcurve;
+
+            [breaks, coefs] = unmkpp(curve.phi);
             phi_curve = mkpp(breaks, coefs);
-            [breaks, coefs] = unmkpp(obj.lcurve.phi_dot);
+            [breaks, coefs] = unmkpp(curve.phi_dot);
             phi_dot_curve = mkpp(breaks, coefs);
-            [breaks, coefs] = unmkpp(obj.lcurve.phi_ddot);
+            [breaks, coefs] = unmkpp(curve.phi_ddot);
             phi_ddot_curve = mkpp(breaks, coefs);
             
-            phi = @(q2) ppval(phi_curve,q2);
-            phi_dot = @(q2) ppval(phi_dot_curve,q2);
-            phi_ddot = @(q2) ppval(phi_ddot_curve,q2);
+            phi_q2 = ppval(phi_curve, q(2));
+            phi_dot_q2 = ppval(phi_dot_curve, q(2));
+            phi_ddot_q2 = ppval(phi_ddot_curve, q(2));
             
             % Code generation hack
-            phi_q2 = phi(q(2));
-            phi_dot_q2 = phi_dot(q(2));
-            phi_ddot_q2 = phi_ddot(q(2));
-            
             obj.holo_point = [phi_q2(1); q(2)];
-
+            
             % PD Control
             e = q(1) - phi_q2(1);
             e_dot = qdot(1) - phi_dot_q2(1) * qdot(2);
-            obj.e_acc = max(-obj.integral_saturation, min(obj.integral_saturation, obj.e_acc + e));
+            
+            if coder.target('MATLAB')
+                obj.e_acc = max(-obj.integral_saturation, min(obj.integral_saturation, obj.e_acc + e));
+            end
             
             part1 = [1 -phi_dot_q2(1)] * inv(D) * obj.B;
             part2 = -obj.Ki * obj.e_acc + -obj.Kp * e - obj.Kd * e_dot + phi_ddot_q2(1) * qdot(2)^2 + [1 -phi_dot_q2(1)] * inv(D) * (C * qdot + P + B);
-            obj.tau = [0; inv(part1) * part2];
+            
+            tau_value = max(-obj.tau_limit, min(obj.tau_limit, part1 \ part2));
+            tau = [0; tau_value];
 
-            obj.tau(2) = max(-obj.TauLimit, min(obj.TauLimit, obj.tau(2)));
-            tau = obj.tau;
-            obj.tau_q = D \ tau;
+            if coder.target('MATLAB')
+                obj.tau = tau;
+                obj.tau_q = D \ tau;
+            end
 %             fprintf("E: %.3f\t Edot: %.3f\t Eacc: %.3f Part 2:%.3f Tau: %.3f\n", e, e_dot, obj.e_acc, part2, obj.tau(2));
         end
         
@@ -271,7 +272,7 @@ classdef acrobot_control < acrobot.acrobot
             ylabel('Tau N*m');
             xlabel('Time (s)');
             title("Torque over Time Plot")
-            ylim([-obj.TauLimit - 0.1 obj.TauLimit + 0.1]);
+            ylim([-obj.tau_limit - 0.1 obj.tau_limit + 0.1]);
             grid on;
         end
         

@@ -2,14 +2,13 @@
 
 clear a imu encoder BNO1 BNO2;
 robotParameters;
-a = arduino('/dev/ttyACM1','MKR1000','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
-writeDigitalPin(a, 'D6', 0);
-writeDigitalPin(a, 'D7', 1);
-writePWMDutyCycle(a, 'D10',0);
+a = arduino('/dev/ttyACM0','MKR1000','BaudRate',115200,'Libraries',{'RotaryEncoder', 'I2C','Adafruit/BNO055'});
 %%
-scanI2CBus(a)
+writeDigitalPin(a, 'D2', 0);
+writeDigitalPin(a, 'D3', 1);
+writePWMDutyCycle(a, 'D4',1);
 %%
-BNO1 = device(a,'I2CAddress', '0x60');
+BNO1 = device(a,'I2CAddress', '0x28');
 BNO2 = device(a,'I2CAddress', '0x29');
 encoder = rotaryEncoder(a, 'D0','D1', steps_per_rotation);
 
@@ -36,7 +35,7 @@ close all;
 writePWMDutyCycle(a,'D8',0);
 
 robotParameters;
-robot = acrobot.acrobot_control();
+robot = acrobot.acrobot_control(false);
 estimator = acrobot.acrobot_state_estimator();
 torque_control = acrobot.acrobot_torque_control();
 robot.actual_robot = 1;
@@ -101,11 +100,11 @@ try
         pwm_new = torque_control.getPWM(tau(2));
 
         if (pwm_new < 0 && pwm >= 0)
-            writeDigitalPin(a, 'D6', 1);
-            writeDigitalPin(a, 'D7', 0);
+            writeDigitalPin(a, 'D2', 1);
+            writeDigitalPin(a, 'D3', 0);
         elseif (pwm_new > 0 && pwm <= 0)
-            writeDigitalPin(a, 'D6', 0);
-            writeDigitalPin(a, 'D7', 1);
+            writeDigitalPin(a, 'D3', 0);
+            writeDigitalPin(a, 'D2', 1);
         end
         pwm = pwm_new;
         if test_state_estimation
@@ -124,13 +123,13 @@ try
     end
 catch ex
     disp(ex)
-    writeDigitalPin(a, 'D6', 0);
-    writeDigitalPin(a, 'D7', 1);
-    writePWMDutyCycle(a,'D8',0);
+    writeDigitalPin(a, 'D2', 0);
+    writeDigitalPin(a, 'D3', 1);
+    writePWMDutyCycle(a,'D4',0);
 end
-writeDigitalPin(a, 'D6', 0);
-writeDigitalPin(a, 'D7', 1);
-writePWMDutyCycle(a,'D8',0);
+writeDigitalPin(a, 'D2', 0);
+writeDigitalPin(a, 'D3', 1);
+writePWMDutyCycle(a,'D4',0);
 
 filename = sprintf('data/tests/test_%s', datestr(now,'mm-dd-yyyy HH-MM'));
 save(filename, 'ts')

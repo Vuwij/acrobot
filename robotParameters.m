@@ -33,7 +33,7 @@ angle_noise = 0.000000;
 encoder_noise = 0.000;
 
 %% Simulation parameters
-VSS_MODE=1;
+VSS_MODE=2;
 ROBOT_CONTROLLER=1;
 ts = 0.001;
 robot_description = importrobot("acrobot_description/models/acrobot.urdf");
