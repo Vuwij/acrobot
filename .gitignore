@@ -46,3 +46,4 @@ acrobot_sim_ert_rtw/
 *.hex
 *.eep
 acrobot_sim.bin
++acrobot/+gen/*.m

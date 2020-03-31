@@ -75,11 +75,11 @@ classdef acrobot < handle
             obj.calcRobotStates();
             
             obj.step_count = 0;
-            obj.calcHolonomicCurves(obj.pre_c, false);
+            obj.calcHolonomicCurves(obj.pre_c, true);
             obj.step_count = 0;
-            obj.calcHolonomicCurves(obj.c1, false);
+            obj.calcHolonomicCurves(obj.c1, true);
             obj.step_count = 1;
-            obj.calcHolonomicCurves(obj.c2, false);
+            obj.calcHolonomicCurves(obj.c2, true);
             obj.step_count = 0;
             
             pre_c = struct(obj.pre_c);
@@ -218,7 +218,7 @@ classdef acrobot < handle
         
         % objective [dist to final point; velocity to final point]
         function objective = calcHolonomicCurveHelper(obj, xm, xp, tau_m, q2_min)
-            if (nargin == 4)
+            if (nargin == 5)
                 [X, fail] = obj.getFallingCurve(xm, obj.fall_duration, tau_m, q2_min);
             else
                 [X, fail] = obj.getFallingCurve(xm, obj.fall_duration, tau_m);
@@ -297,7 +297,7 @@ classdef acrobot < handle
             curve.phi = spline(X(:,2), X(:,1));
             curve.phi_dot = fnder(curve.phi,1);
             curve.phi_ddot = fnder(curve.phi,2);
-            plot(curve.x_fall(:,1), curve.x_fall(:,2), 'Color', 'red')
+            plot(X(:,1), X(:,2), 'Color', 'red')
             hold off;
         end
         
