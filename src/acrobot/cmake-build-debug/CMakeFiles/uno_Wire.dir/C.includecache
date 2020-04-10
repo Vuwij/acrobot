@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/utility/twi.c
+math.h
+-
+stdlib.h
+-
+inttypes.h
+-
+avr/io.h
+-
+avr/interrupt.h
+-
+compat/twi.h
+-
+Arduino.h
+/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/utility/Arduino.h
+pins_arduino.h
+/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/utility/pins_arduino.h
+twi.h
+/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/utility/twi.h
+
+/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/utility/twi.h
+inttypes.h
+-
+

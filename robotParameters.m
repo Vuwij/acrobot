@@ -33,9 +33,9 @@ angle_noise = 0.000000;
 encoder_noise = 0.000;
 
 %% Simulation parameters
-VSS_MODE=2;
-ROBOT_CONTROLLER=1;
-ts = 0.001;
+ROBOT_CONTROLLER=2;
+SIM_OUTPUT=2;
+ts = 0.01;
 robot_description = importrobot("acrobot_description/models/acrobot.urdf");
 foot_radius = 0.01;
 t = robot_description.getTransform(robot_description.homeConfiguration, 'base_link', 'leg1');

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
+    <generated>
+      <config projectName="acrobot" targetName="acrobot" />
+    </generated>
+  </component>
+  <component name="CMakeSettings">
+    <configurations>
+      <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" />
+    </configurations>
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="1422914a-d2c8-4741-acdd-16023b5433ba" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/../data/torque_calculation.mat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../figures/report/final_curves.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../figures/report/following.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../figures/report/original_curve.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../figures/report/pre_curve.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../figures/report/replay.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../figures/sim_walk.avi" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/plot_acrobot.m" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../+acrobot/acrobot.m" beforeDir="false" afterPath="$PROJECT_DIR$/../+acrobot/acrobot.m" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../+acrobot/acrobot_control.m" beforeDir="false" afterPath="$PROJECT_DIR$/../+acrobot/acrobot_control.m" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../+acrobot/acrobot_state_estimator.m" beforeDir="false" afterPath="$PROJECT_DIR$/../+acrobot/acrobot_state_estimator.m" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../+acrobot/acrobot_torque_control.m" beforeDir="false" afterPath="$PROJECT_DIR$/../+acrobot/acrobot_torque_control.m" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../acrobot_sim.slx" beforeDir="false" afterPath="$PROJECT_DIR$/../acrobot_sim.slx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../acrobot_sim_Robot_Controller_Acrobot_Walker_report.htmx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/curve_parameters.mat" beforeDir="false" afterPath="$PROJECT_DIR$/../data/curve_parameters.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../figures/report/final_curves.fig" beforeDir="false" afterPath="$PROJECT_DIR$/../figures/report/final_curves.fig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../replay.m" beforeDir="false" afterPath="$PROJECT_DIR$/../replay.m" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../robotParameters.m" beforeDir="false" afterPath="$PROJECT_DIR$/../robotParameters.m" afterDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectId" id="1aEmbjopumfbBO1BZY0vqw014iL" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="PropertiesComponent">
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/CMakeLists.txt" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager">
+    <configuration name="acrobot" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="acrobot" TARGET_NAME="acrobot" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="acrobot" RUN_TARGET_NAME="acrobot">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="1422914a-d2c8-4741-acdd-16023b5433ba" name="Default Changelist" comment="" />
+      <created>1586309200791</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1586309200791</updated>
+      <workItem from="1586309201908" duration="690000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

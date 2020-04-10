@@ -1,0 +1,616 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="acrobot"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;CMake Files\cmake\;CMake Files\cmake\Platform\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="acrobot-burn">
+				<Option working_dir="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 acrobot-burn"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="uno_Wire">
+				<Option output="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/libuno_Wire.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_ADXL343"/>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_BNO055"/>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_Unified_Sensor"/>
+					<Add directory="/opt/local/arduino/libraries/Adafruit_Circuit_Playground"/>
+					<Add directory="/opt/local/arduino/libraries/Bridge"/>
+					<Add directory="/opt/local/arduino/libraries/Esplora"/>
+					<Add directory="/opt/local/arduino/libraries/Ethernet"/>
+					<Add directory="/opt/local/arduino/libraries/Firmata"/>
+					<Add directory="/opt/local/arduino/libraries/GSM"/>
+					<Add directory="/opt/local/arduino/libraries/Keyboard"/>
+					<Add directory="/opt/local/arduino/libraries/LiquidCrystal"/>
+					<Add directory="/opt/local/arduino/libraries/Mouse"/>
+					<Add directory="/opt/local/arduino/libraries/RobotIRremote"/>
+					<Add directory="/opt/local/arduino/libraries/Robot_Control"/>
+					<Add directory="/opt/local/arduino/libraries/Robot_Motor"/>
+					<Add directory="/opt/local/arduino/libraries/SD"/>
+					<Add directory="/opt/local/arduino/libraries/Servo"/>
+					<Add directory="/opt/local/arduino/libraries/SpacebrewYun"/>
+					<Add directory="/opt/local/arduino/libraries/Stepper"/>
+					<Add directory="/opt/local/arduino/libraries/TFT"/>
+					<Add directory="/opt/local/arduino/libraries/Temboo"/>
+					<Add directory="/opt/local/arduino/libraries/WiFi"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/utility"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi/src"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi/utility"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/include"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/include-fixed"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/../../../../avr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 uno_Wire"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="uno_Wire/fast">
+				<Option output="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/libuno_Wire.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_ADXL343"/>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_BNO055"/>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_Unified_Sensor"/>
+					<Add directory="/opt/local/arduino/libraries/Adafruit_Circuit_Playground"/>
+					<Add directory="/opt/local/arduino/libraries/Bridge"/>
+					<Add directory="/opt/local/arduino/libraries/Esplora"/>
+					<Add directory="/opt/local/arduino/libraries/Ethernet"/>
+					<Add directory="/opt/local/arduino/libraries/Firmata"/>
+					<Add directory="/opt/local/arduino/libraries/GSM"/>
+					<Add directory="/opt/local/arduino/libraries/Keyboard"/>
+					<Add directory="/opt/local/arduino/libraries/LiquidCrystal"/>
+					<Add directory="/opt/local/arduino/libraries/Mouse"/>
+					<Add directory="/opt/local/arduino/libraries/RobotIRremote"/>
+					<Add directory="/opt/local/arduino/libraries/Robot_Control"/>
+					<Add directory="/opt/local/arduino/libraries/Robot_Motor"/>
+					<Add directory="/opt/local/arduino/libraries/SD"/>
+					<Add directory="/opt/local/arduino/libraries/Servo"/>
+					<Add directory="/opt/local/arduino/libraries/SpacebrewYun"/>
+					<Add directory="/opt/local/arduino/libraries/Stepper"/>
+					<Add directory="/opt/local/arduino/libraries/TFT"/>
+					<Add directory="/opt/local/arduino/libraries/Temboo"/>
+					<Add directory="/opt/local/arduino/libraries/WiFi"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/utility"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi/src"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi/utility"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/include"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/include-fixed"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/../../../../avr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 uno_Wire/fast"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="uno_twi">
+				<Option output="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/libuno_twi.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_ADXL343"/>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_BNO055"/>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_Unified_Sensor"/>
+					<Add directory="/opt/local/arduino/libraries/Adafruit_Circuit_Playground"/>
+					<Add directory="/opt/local/arduino/libraries/Bridge"/>
+					<Add directory="/opt/local/arduino/libraries/Esplora"/>
+					<Add directory="/opt/local/arduino/libraries/Ethernet"/>
+					<Add directory="/opt/local/arduino/libraries/Firmata"/>
+					<Add directory="/opt/local/arduino/libraries/GSM"/>
+					<Add directory="/opt/local/arduino/libraries/Keyboard"/>
+					<Add directory="/opt/local/arduino/libraries/LiquidCrystal"/>
+					<Add directory="/opt/local/arduino/libraries/Mouse"/>
+					<Add directory="/opt/local/arduino/libraries/RobotIRremote"/>
+					<Add directory="/opt/local/arduino/libraries/Robot_Control"/>
+					<Add directory="/opt/local/arduino/libraries/Robot_Motor"/>
+					<Add directory="/opt/local/arduino/libraries/SD"/>
+					<Add directory="/opt/local/arduino/libraries/Servo"/>
+					<Add directory="/opt/local/arduino/libraries/SpacebrewYun"/>
+					<Add directory="/opt/local/arduino/libraries/Stepper"/>
+					<Add directory="/opt/local/arduino/libraries/TFT"/>
+					<Add directory="/opt/local/arduino/libraries/Temboo"/>
+					<Add directory="/opt/local/arduino/libraries/WiFi"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/utility"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi/src"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi/utility"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/include"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/include-fixed"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/../../../../avr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 uno_twi"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="uno_twi/fast">
+				<Option output="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/libuno_twi.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_ADXL343"/>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_BNO055"/>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_Unified_Sensor"/>
+					<Add directory="/opt/local/arduino/libraries/Adafruit_Circuit_Playground"/>
+					<Add directory="/opt/local/arduino/libraries/Bridge"/>
+					<Add directory="/opt/local/arduino/libraries/Esplora"/>
+					<Add directory="/opt/local/arduino/libraries/Ethernet"/>
+					<Add directory="/opt/local/arduino/libraries/Firmata"/>
+					<Add directory="/opt/local/arduino/libraries/GSM"/>
+					<Add directory="/opt/local/arduino/libraries/Keyboard"/>
+					<Add directory="/opt/local/arduino/libraries/LiquidCrystal"/>
+					<Add directory="/opt/local/arduino/libraries/Mouse"/>
+					<Add directory="/opt/local/arduino/libraries/RobotIRremote"/>
+					<Add directory="/opt/local/arduino/libraries/Robot_Control"/>
+					<Add directory="/opt/local/arduino/libraries/Robot_Motor"/>
+					<Add directory="/opt/local/arduino/libraries/SD"/>
+					<Add directory="/opt/local/arduino/libraries/Servo"/>
+					<Add directory="/opt/local/arduino/libraries/SpacebrewYun"/>
+					<Add directory="/opt/local/arduino/libraries/Stepper"/>
+					<Add directory="/opt/local/arduino/libraries/TFT"/>
+					<Add directory="/opt/local/arduino/libraries/Temboo"/>
+					<Add directory="/opt/local/arduino/libraries/WiFi"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/utility"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi/src"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi/utility"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/include"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/include-fixed"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/../../../../avr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 uno_twi/fast"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="uno_CORE">
+				<Option output="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/libuno_CORE.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_ADXL343"/>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_BNO055"/>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_Unified_Sensor"/>
+					<Add directory="/opt/local/arduino/libraries/Adafruit_Circuit_Playground"/>
+					<Add directory="/opt/local/arduino/libraries/Bridge"/>
+					<Add directory="/opt/local/arduino/libraries/Esplora"/>
+					<Add directory="/opt/local/arduino/libraries/Ethernet"/>
+					<Add directory="/opt/local/arduino/libraries/Firmata"/>
+					<Add directory="/opt/local/arduino/libraries/GSM"/>
+					<Add directory="/opt/local/arduino/libraries/Keyboard"/>
+					<Add directory="/opt/local/arduino/libraries/LiquidCrystal"/>
+					<Add directory="/opt/local/arduino/libraries/Mouse"/>
+					<Add directory="/opt/local/arduino/libraries/RobotIRremote"/>
+					<Add directory="/opt/local/arduino/libraries/Robot_Control"/>
+					<Add directory="/opt/local/arduino/libraries/Robot_Motor"/>
+					<Add directory="/opt/local/arduino/libraries/SD"/>
+					<Add directory="/opt/local/arduino/libraries/Servo"/>
+					<Add directory="/opt/local/arduino/libraries/SpacebrewYun"/>
+					<Add directory="/opt/local/arduino/libraries/Stepper"/>
+					<Add directory="/opt/local/arduino/libraries/TFT"/>
+					<Add directory="/opt/local/arduino/libraries/Temboo"/>
+					<Add directory="/opt/local/arduino/libraries/WiFi"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/utility"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi/src"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi/utility"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/include"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/include-fixed"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/../../../../avr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 uno_CORE"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="uno_CORE/fast">
+				<Option output="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/libuno_CORE.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_ADXL343"/>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_BNO055"/>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_Unified_Sensor"/>
+					<Add directory="/opt/local/arduino/libraries/Adafruit_Circuit_Playground"/>
+					<Add directory="/opt/local/arduino/libraries/Bridge"/>
+					<Add directory="/opt/local/arduino/libraries/Esplora"/>
+					<Add directory="/opt/local/arduino/libraries/Ethernet"/>
+					<Add directory="/opt/local/arduino/libraries/Firmata"/>
+					<Add directory="/opt/local/arduino/libraries/GSM"/>
+					<Add directory="/opt/local/arduino/libraries/Keyboard"/>
+					<Add directory="/opt/local/arduino/libraries/LiquidCrystal"/>
+					<Add directory="/opt/local/arduino/libraries/Mouse"/>
+					<Add directory="/opt/local/arduino/libraries/RobotIRremote"/>
+					<Add directory="/opt/local/arduino/libraries/Robot_Control"/>
+					<Add directory="/opt/local/arduino/libraries/Robot_Motor"/>
+					<Add directory="/opt/local/arduino/libraries/SD"/>
+					<Add directory="/opt/local/arduino/libraries/Servo"/>
+					<Add directory="/opt/local/arduino/libraries/SpacebrewYun"/>
+					<Add directory="/opt/local/arduino/libraries/Stepper"/>
+					<Add directory="/opt/local/arduino/libraries/TFT"/>
+					<Add directory="/opt/local/arduino/libraries/Temboo"/>
+					<Add directory="/opt/local/arduino/libraries/WiFi"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/utility"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi/src"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi/utility"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/include"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/include-fixed"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/../../../../avr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 uno_CORE/fast"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="acrobot">
+				<Option output="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/acrobot.elf" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_ADXL343"/>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_BNO055"/>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_Unified_Sensor"/>
+					<Add directory="/opt/local/arduino/libraries/Adafruit_Circuit_Playground"/>
+					<Add directory="/opt/local/arduino/libraries/Bridge"/>
+					<Add directory="/opt/local/arduino/libraries/Esplora"/>
+					<Add directory="/opt/local/arduino/libraries/Ethernet"/>
+					<Add directory="/opt/local/arduino/libraries/Firmata"/>
+					<Add directory="/opt/local/arduino/libraries/GSM"/>
+					<Add directory="/opt/local/arduino/libraries/Keyboard"/>
+					<Add directory="/opt/local/arduino/libraries/LiquidCrystal"/>
+					<Add directory="/opt/local/arduino/libraries/Mouse"/>
+					<Add directory="/opt/local/arduino/libraries/RobotIRremote"/>
+					<Add directory="/opt/local/arduino/libraries/Robot_Control"/>
+					<Add directory="/opt/local/arduino/libraries/Robot_Motor"/>
+					<Add directory="/opt/local/arduino/libraries/SD"/>
+					<Add directory="/opt/local/arduino/libraries/Servo"/>
+					<Add directory="/opt/local/arduino/libraries/SpacebrewYun"/>
+					<Add directory="/opt/local/arduino/libraries/Stepper"/>
+					<Add directory="/opt/local/arduino/libraries/TFT"/>
+					<Add directory="/opt/local/arduino/libraries/Temboo"/>
+					<Add directory="/opt/local/arduino/libraries/WiFi"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/utility"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi/src"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi/utility"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/include"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/include-fixed"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/../../../../avr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 acrobot"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="acrobot/fast">
+				<Option output="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/acrobot.elf" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_ADXL343"/>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_BNO055"/>
+					<Add directory="/home/vuwij/Arduino/libraries/Adafruit_Unified_Sensor"/>
+					<Add directory="/opt/local/arduino/libraries/Adafruit_Circuit_Playground"/>
+					<Add directory="/opt/local/arduino/libraries/Bridge"/>
+					<Add directory="/opt/local/arduino/libraries/Esplora"/>
+					<Add directory="/opt/local/arduino/libraries/Ethernet"/>
+					<Add directory="/opt/local/arduino/libraries/Firmata"/>
+					<Add directory="/opt/local/arduino/libraries/GSM"/>
+					<Add directory="/opt/local/arduino/libraries/Keyboard"/>
+					<Add directory="/opt/local/arduino/libraries/LiquidCrystal"/>
+					<Add directory="/opt/local/arduino/libraries/Mouse"/>
+					<Add directory="/opt/local/arduino/libraries/RobotIRremote"/>
+					<Add directory="/opt/local/arduino/libraries/Robot_Control"/>
+					<Add directory="/opt/local/arduino/libraries/Robot_Motor"/>
+					<Add directory="/opt/local/arduino/libraries/SD"/>
+					<Add directory="/opt/local/arduino/libraries/Servo"/>
+					<Add directory="/opt/local/arduino/libraries/SpacebrewYun"/>
+					<Add directory="/opt/local/arduino/libraries/Stepper"/>
+					<Add directory="/opt/local/arduino/libraries/TFT"/>
+					<Add directory="/opt/local/arduino/libraries/Temboo"/>
+					<Add directory="/opt/local/arduino/libraries/WiFi"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/utility"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi/src"/>
+					<Add directory="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/twi/utility"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/include"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/include-fixed"/>
+					<Add directory="/opt/local/arduino/hardware/tools/avr/bin/../lib/gcc/avr/7.3.0/../../../../avr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 acrobot/fast"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="acrobot-size">
+				<Option working_dir="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 acrobot-size"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="upload">
+				<Option working_dir="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 upload"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="acrobot-upload">
+				<Option working_dir="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 acrobot-upload"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/acrobot.ino">
+			<Option target="acrobot"/>
+		</Unit>
+		<Unit filename="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/acrobot_acrobot.ino.cpp">
+			<Option target="acrobot"/>
+		</Unit>
+		<Unit filename="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/acrobot_acrobot.ino.cpp.rule">
+			<Option target="acrobot"/>
+		</Unit>
+		<Unit filename="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/main.ino">
+			<Option target="acrobot"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/Arduino.h">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/CDC.cpp">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/Client.h">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/HardwareSerial.cpp">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/HardwareSerial.h">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/HardwareSerial0.cpp">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/HardwareSerial1.cpp">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/HardwareSerial2.cpp">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/HardwareSerial3.cpp">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/HardwareSerial_private.h">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/IPAddress.cpp">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/IPAddress.h">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/PluggableUSB.cpp">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/PluggableUSB.h">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/Print.cpp">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/Print.h">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/Printable.h">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/Server.h">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/Stream.cpp">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/Stream.h">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/Tone.cpp">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/USBAPI.h">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/USBCore.cpp">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/USBCore.h">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/USBDesc.h">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/Udp.h">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/WCharacter.h">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/WInterrupts.c">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/WMath.cpp">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/WString.cpp">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/WString.h">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/abi.cpp">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/binary.h">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/hooks.c">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/main.cpp">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/new.cpp">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/new.h">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/wiring.c">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/wiring_analog.c">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/wiring_digital.c">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/wiring_private.h">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/wiring_pulse.c">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/cores/arduino/wiring_shift.c">
+			<Option target="uno_CORE"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/Wire.cpp">
+			<Option target="uno_Wire"/>
+			<Option target="uno_twi"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/Wire.h">
+			<Option target="uno_Wire"/>
+			<Option target="uno_twi"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/utility/twi.c">
+			<Option target="uno_Wire"/>
+			<Option target="uno_twi"/>
+		</Unit>
+		<Unit filename="/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/utility/twi.h">
+			<Option target="uno_Wire"/>
+			<Option target="uno_twi"/>
+		</Unit>
+		<Unit filename="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake/ArduinoToolchain.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake/Platform/Arduino.cmake">
+			<Option virtualFolder="CMake Files\cmake\Platform\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
+    <generated>
+      <config projectName="acrobot" targetName="uno_twi" />
+      <config projectName="acrobot" targetName="acrobot" />
+      <config projectName="acrobot" targetName="uno_Wire" />
+      <config projectName="acrobot" targetName="acrobot-size" />
+      <config projectName="acrobot" targetName="acrobot-upload" />
+      <config projectName="acrobot" targetName="upload" />
+      <config projectName="acrobot" targetName="uno_CORE" />
+      <config projectName="acrobot" targetName="acrobot-burn" />
+    </generated>
+  </component>
+  <component name="CMakeSettings">
+    <configurations>
+      <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" />
+    </configurations>
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="ce58d08d-23d1-40b9-9f05-5c9186ed7d1d" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/../../data/torque_calculation.mat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../figures/report/final_curves.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../figures/report/following.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../figures/report/original_curve.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../figures/report/pre_curve.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../figures/report/replay.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../figures/sim_walk.avi" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../plot_acrobot.m" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../+acrobot/acrobot.m" beforeDir="false" afterPath="$PROJECT_DIR$/../../+acrobot/acrobot.m" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../+acrobot/acrobot_control.m" beforeDir="false" afterPath="$PROJECT_DIR$/../../+acrobot/acrobot_control.m" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../+acrobot/acrobot_state_estimator.m" beforeDir="false" afterPath="$PROJECT_DIR$/../../+acrobot/acrobot_state_estimator.m" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../+acrobot/acrobot_torque_control.m" beforeDir="false" afterPath="$PROJECT_DIR$/../../+acrobot/acrobot_torque_control.m" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../acrobot_sim.slx" beforeDir="false" afterPath="$PROJECT_DIR$/../../acrobot_sim.slx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../acrobot_sim_Robot_Controller_Acrobot_Walker_report.htmx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../data/curve_parameters.mat" beforeDir="false" afterPath="$PROJECT_DIR$/../../data/curve_parameters.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../figures/report/final_curves.fig" beforeDir="false" afterPath="$PROJECT_DIR$/../../figures/report/final_curves.fig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../replay.m" beforeDir="false" afterPath="$PROJECT_DIR$/../../replay.m" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../robotParameters.m" beforeDir="false" afterPath="$PROJECT_DIR$/../../robotParameters.m" afterDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
+  </component>
+  <component name="OCFindUsagesOptions" text="true" ivars="false" properties="true" derivedClasses="false" />
+  <component name="ProjectId" id="1aEniGfOnlQaFk9f63e7ECu3L6q" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="PropertiesComponent">
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="nodejs_package_manager_path" value="npm" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/gen" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="CMake Application.acrobot">
+    <configuration name="acrobot-burn" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="acrobot" TARGET_NAME="acrobot-burn" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="acrobot-size" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="acrobot" TARGET_NAME="acrobot-size" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="acrobot-upload" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="acrobot" TARGET_NAME="acrobot-upload" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="acrobot" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="acrobot" TARGET_NAME="acrobot" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="acrobot" RUN_TARGET_NAME="acrobot">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="uno_CORE" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="acrobot" TARGET_NAME="uno_CORE" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="uno_Wire" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="acrobot" TARGET_NAME="uno_Wire" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="uno_twi" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="acrobot" TARGET_NAME="uno_twi" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="upload" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="acrobot" TARGET_NAME="upload" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="CMake Application.acrobot" />
+      <item itemvalue="CMake Application.acrobot-burn" />
+      <item itemvalue="CMake Application.acrobot-size" />
+      <item itemvalue="CMake Application.acrobot-upload" />
+      <item itemvalue="CMake Application.uno_CORE" />
+      <item itemvalue="CMake Application.uno_twi" />
+      <item itemvalue="CMake Application.uno_Wire" />
+      <item itemvalue="CMake Application.upload" />
+    </list>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="ce58d08d-23d1-40b9-9f05-5c9186ed7d1d" name="Default Changelist" comment="" />
+      <created>1586309745826</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1586309745826</updated>
+      <workItem from="1586309746926" duration="14579000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

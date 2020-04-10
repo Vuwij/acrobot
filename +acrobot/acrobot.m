@@ -18,9 +18,9 @@ classdef acrobot < handle
         % VHC Parameters
         B = [0; 1];
 
-        pre_c = acrobot.curve(pi/9.5, pi*0.25, 1.8, 0.48, [0.6052, -0.0754, 0.8631, 0.0658]); % First Step
-        c1 = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.0232, -0.2047, 0.5594, 0.1340]); % Third Step
-        c2 = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.48, [0.0602, -0.2710, 0.4843, 0.2053]); % Second Step
+        pre_c = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.5, [0.6052, -0.0754, 0.8631, 0.0658]); % First Step
+        c1 = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.5, [0.0232, -0.2047, 0.5594, 0.1340]); % Third Step
+        c2 = acrobot.curve(pi/9.5, pi*0.25, 1.5, 0.5, [0.0602, -0.2710, 0.4843, 0.2053]); % Second Step
 
         % Physical Parameters
         g = 9.81;
@@ -29,20 +29,16 @@ classdef acrobot < handle
         leg_length = 0;
         foot_radius = 0.018;
         motor_friction = 0.01;
-
-        step_count = 0;
         
         % Energy Loss
         fall_duration = 1.8;            % Max Fall duration (not desired)
         tau_limit = 0.33;
         floor_limit = 0.0;             % Distance to the floor where no torque is allowed
         
-        % Curves
-        top_clip = 0;
-        bottom_clip = 10;
     end
     properties(Access = public)
         angle_limit = pi/20;
+        step_count = 0;
     end
     
     methods
@@ -185,7 +181,7 @@ classdef acrobot < handle
             
             % First Step
             obj.step_count = 0;
-            obj.pre_c.xp = [pi/2; 0; -0.005; -0.05];
+            obj.pre_c.xp = [pi/2; 0; 0; -0.05];
             pre_c_qm = [(pi - obj.pre_c.beta)/2; obj.pre_c.beta - pi]; % Joint angles pre impact
             pre_c_qp = [(pi + obj.pre_c.beta)/2; pi - obj.pre_c.beta]; % Joint angles pre impact
             [~, pre_c_w] = obj.getImpactVelocities(pre_c_qm, pre_c_qp, obj.pre_c.impact_angle, obj.pre_c.impact_velocity);
@@ -341,7 +337,7 @@ classdef acrobot < handle
             obj.plotQField();
             hold on;
             obj.plotPField();
-            obj.plotControllerSensitivityField();
+%            obj.plotControllerSensitivityField();
 
             plot(curve.xp(1), curve.xp(2),'o', 'MarkerSize',5,'color',color);
             plot(curve.xm(1), curve.xm(2),'o', 'MarkerSize',5,'color',color);
@@ -384,8 +380,8 @@ classdef acrobot < handle
             hold on;
 
             % Plot impact surfaces S+, S-
-            plot(q1_range, -2 * q1_range + 2 * pi,'color','cyan');
-            plot(q1_range, -2 * q1_range, 'color','cyan');
+            plot(q1_range, -2 * q1_range + 2 * pi,'color','magenta', 'LineWidth', 2);
+            plot(q1_range, -2 * q1_range, 'color','magenta', 'LineWidth', 2);
             xlim([0, pi]);
             ylim([-pi, pi]);
             
@@ -416,8 +412,7 @@ classdef acrobot < handle
                     Z(i,j) = temp(2);
                 end
             end
-            
-            quiver(X1,X2,R,Z,'color',[1 0 1])
+            quiver(X1,X2,R,Z,'color',[1 0.6 1])
         end
         
         % tau_m = [t1, tau_1, t2, tau_2]

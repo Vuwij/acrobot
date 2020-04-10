@@ -1,0 +1,2 @@
+/opt/local/arduino/hardware/tools/avr/bin/avr-ar qc libuno_Wire.a  CMakeFiles/uno_Wire.dir/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/Wire.cpp.obj CMakeFiles/uno_Wire.dir/opt/local/arduino/hardware/arduino/avr/libraries/Wire/src/utility/twi.c.obj
+/opt/local/arduino/hardware/tools/avr/bin/avr-ranlib libuno_Wire.a

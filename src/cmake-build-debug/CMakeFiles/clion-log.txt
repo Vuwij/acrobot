@@ -1,0 +1,11 @@
+/home/vuwij/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/192.7142.39/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/vuwij/catkin_ws/src/acrobot/src
+CMake Error at CMakeLists.txt:7 (set_target_properties):
+  set_target_properties Can not find target to add properties to: hello
+
+
+CMake Error at CMakeLists.txt:11 (target_include_directories):
+  target_include_directories called with invalid arguments
+
+
+-- Configuring incomplete, errors occurred!
+See also "/home/vuwij/catkin_ws/src/acrobot/src/cmake-build-debug/CMakeFiles/CMakeOutput.log".

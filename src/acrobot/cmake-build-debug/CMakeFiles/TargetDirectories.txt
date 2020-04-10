@@ -1,0 +1,10 @@
+/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/CMakeFiles/acrobot-burn.dir
+/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/CMakeFiles/uno_Wire.dir
+/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/CMakeFiles/uno_twi.dir
+/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/CMakeFiles/uno_CORE.dir
+/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/CMakeFiles/acrobot.dir
+/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/CMakeFiles/acrobot-size.dir
+/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/CMakeFiles/upload.dir
+/home/vuwij/catkin_ws/src/acrobot/src/acrobot/cmake-build-debug/CMakeFiles/acrobot-upload.dir

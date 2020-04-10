@@ -260,8 +260,8 @@ classdef acrobot_control < acrobot.acrobot
             q1 = obj.x(1);
             q2 = obj.x(2);
             
-            plot(q1(1), q2(1), '.', 'markersize',10,'color',[0 0 0]);
-            plot(obj.holo_point(1), obj.holo_point(2), '.', 'markersize',5,'color',[0 1 0]);
+            plot(q1(1), q2(1), '.', 'markersize',5,'color',[0 0 0]);
+%             plot(obj.holo_point(1), obj.holo_point(2), '.', 'markersize',5,'color',[0 1 0]);
             quiver(q1(1), q2(1), obj.tau_q(1) * 0.005, obj.tau_q(2) * 0.005);
         end
         

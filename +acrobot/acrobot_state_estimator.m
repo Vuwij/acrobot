@@ -4,12 +4,13 @@ classdef acrobot_state_estimator < matlab.System
         steps_per_rotation = 2797;
         sample_time = 0.01;
         leg_length = 0.335;
-        max_velocity_change = 10;
+        max_velocity_change = 100;
+        flip_direction = 1;
     end
 
     % Pre-computed constants
     properties(Access = private)
-        state = [0;0;0;0];
+        state = [pi/2;0;0;0];
         cycleCount = 0;
         timeOut = false;
         step_count = 0;
@@ -36,10 +37,27 @@ classdef acrobot_state_estimator < matlab.System
             if (mod(step, 2) == 1)
                 qm = 2*pi - qm;
             end
-            pos = quat2eul(quatmultiply(eul2quat([pi/2 0 pi]), pos'));
-            q1 = -pos(3) + pi/2;
+                        
+            if (obj.flip_direction == -1)
+                pos(2) = pos(2) * obj.flip_direction;
+                qm = qm * obj.flip_direction + 2 * pi;
+            end
+            
+            if (pos(2) < 0)
+                pos(2) = -pos(2) - pi;
+            else
+                pos(2) = -pos(2) + pi;
+            end
+            
+            % Detect jumps in position
+            if abs(pos(2) + pi/2 - obj.state(1)) > pi/4
+                q1 = obj.state(1);
+            else
+                q1 = (pos(2) + pi/2);
+            end
+            
             q1_dot = (q1 - obj.state(1))/obj.sample_time;
-            q2 = qm - pi;
+            q2 = (qm - pi);
             q2_dot = (q2 - obj.state(2))/obj.sample_time;
             
             if(abs(q1_dot) > obj.max_velocity_change)

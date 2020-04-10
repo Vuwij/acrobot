@@ -6,7 +6,6 @@ classdef acrobot_torque_control < matlab.System
         p1;
         p2;
         moi_motor;
-        motor_power_ratio;
     end
 
     properties(DiscreteState)
@@ -20,9 +19,10 @@ classdef acrobot_torque_control < matlab.System
     
     methods(Access = public)
         function obj = acrobot_torque_control()
-            obj.p1 = load('data/torque_calculations.mat', 'p1').p1;
-            obj.p2 = load('data/torque_calculations.mat', 'p2').p2;
-            obj.moi_motor = load('data/torque_calculations.mat', 'moi_motor').moi_motor;
+            torque_info = coder.load('data/torque_calculation.mat');
+            obj.p1 = torque_info.p1;
+            obj.p2 = torque_info.p2;
+            obj.moi_motor = torque_info.moi_motor;
         end
         
         function pwm = getPWM(obj, tau)
